@@ -15,6 +15,9 @@ import {
   FileSignature,
   Boxes,
   ClipboardList,
+  Wallet,
+  ArrowDownCircle,
+  ArrowUpCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -69,6 +72,29 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Estoque",
         icon: Boxes,
         roles: ["owner", "operacional"],
+      },
+    ],
+  },
+  {
+    titulo: "Financeiro",
+    itens: [
+      {
+        href: "/financeiro",
+        label: "Visão geral",
+        icon: Wallet,
+        roles: ["owner", "financeiro"],
+      },
+      {
+        href: "/financeiro/receber",
+        label: "A receber",
+        icon: ArrowDownCircle,
+        roles: ["owner", "financeiro"],
+      },
+      {
+        href: "/financeiro/pagar",
+        label: "A pagar",
+        icon: ArrowUpCircle,
+        roles: ["owner", "financeiro"],
       },
     ],
   },

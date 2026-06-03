@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FileText, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Trash2, Wallet } from "lucide-react";
+
+import { gerarCobrancaDaOS } from "@/app/(app)/financeiro/actions";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
@@ -125,6 +127,13 @@ export default async function OsDetailPage({
               <Button asChild variant="outline">
                 <Link href={`/os/${os.id}/certificado`}><FileText className="size-4" /> Certificado</Link>
               </Button>
+            )}
+            {os.status === "executada" && (
+              <form action={gerarCobrancaDaOS.bind(null, os.id)}>
+                <Button type="submit" className="bg-teal-700 hover:bg-teal-800">
+                  <Wallet className="size-4" /> Gerar cobrança
+                </Button>
+              </form>
             )}
             <ResourceDialog
               trigger={<Button variant="outline">Editar</Button>}

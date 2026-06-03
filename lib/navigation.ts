@@ -4,6 +4,13 @@ import {
   ScrollText,
   ShieldCheck,
   Settings,
+  Building2,
+  SprayCan,
+  Package,
+  Truck,
+  IdCard,
+  Landmark,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -17,33 +24,92 @@ export type NavItem = {
   roles?: AppRole[];
 };
 
-/**
- * Itens de navegação do app. Os módulos de negócio (Funil, OS, Estoque...)
- * entram nas próximas fases — aqui ficam só os da Fase 1.
- */
-export const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/equipe", label: "Equipe", icon: Users, roles: ["owner"] },
+export type NavSection = {
+  titulo: string | null;
+  itens: NavItem[];
+};
+
+export const NAV_SECTIONS: NavSection[] = [
   {
-    href: "/auditoria",
-    label: "Atividade",
-    icon: ScrollText,
-    roles: ["owner", "financeiro"],
+    titulo: null,
+    itens: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
   },
   {
-    href: "/lgpd",
-    label: "LGPD",
-    icon: ShieldCheck,
-    roles: ["owner", "financeiro"],
+    titulo: "Cadastros",
+    itens: [
+      {
+        href: "/clientes",
+        label: "Clientes",
+        icon: Building2,
+        roles: ["owner", "comercial", "operacional"],
+      },
+      {
+        href: "/servicos",
+        label: "Serviços",
+        icon: Wrench,
+        roles: ["owner", "comercial", "operacional"],
+      },
+      {
+        href: "/produtos",
+        label: "Produtos",
+        icon: SprayCan,
+        roles: ["owner", "operacional"],
+      },
+      {
+        href: "/fornecedores",
+        label: "Fornecedores",
+        icon: Package,
+        roles: ["owner", "operacional", "financeiro"],
+      },
+      {
+        href: "/funcionarios",
+        label: "Funcionários",
+        icon: IdCard,
+        roles: ["owner", "rh"],
+      },
+      {
+        href: "/veiculos",
+        label: "Veículos",
+        icon: Truck,
+        roles: ["owner", "operacional"],
+      },
+      {
+        href: "/plano-de-contas",
+        label: "Plano de Contas",
+        icon: Landmark,
+        roles: ["owner", "financeiro"],
+      },
+    ],
   },
   {
-    href: "/configuracoes",
-    label: "Configurações",
-    icon: Settings,
-    roles: ["owner"],
+    titulo: "Empresa",
+    itens: [
+      { href: "/equipe", label: "Equipe", icon: Users, roles: ["owner"] },
+      {
+        href: "/auditoria",
+        label: "Atividade",
+        icon: ScrollText,
+        roles: ["owner", "financeiro"],
+      },
+      {
+        href: "/lgpd",
+        label: "LGPD",
+        icon: ShieldCheck,
+        roles: ["owner", "financeiro"],
+      },
+      {
+        href: "/configuracoes",
+        label: "Configurações",
+        icon: Settings,
+        roles: ["owner"],
+      },
+    ],
   },
 ];
 
-export function visibleNav(role: AppRole | null): NavItem[] {
-  return NAV_ITEMS.filter((i) => !i.roles || (role && i.roles.includes(role)));
+export function visibleSections(role: AppRole | null): NavSection[] {
+  return NAV_SECTIONS.map((s) => ({
+    ...s,
+    itens: s.itens.filter((i) => !i.roles || (role && i.roles.includes(role))),
+  })).filter((s) => s.itens.length > 0);
 }

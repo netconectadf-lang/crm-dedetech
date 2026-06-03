@@ -40,9 +40,7 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic =
     pathname === "/" ||
-    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p)) ||
-    pathname.startsWith("/servicos") ||
-    pathname.startsWith("/cidades");
+    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

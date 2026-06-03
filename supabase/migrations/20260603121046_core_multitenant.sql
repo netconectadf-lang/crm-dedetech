@@ -188,8 +188,10 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- ─── 6. Custom Access Token Hook (injeta tenant_id + role no JWT) ─────
+-- SECURITY DEFINER: roda como dono e lê profiles/memberships sem esbarrar na
+-- RLS (validado ao vivo — sem isso o hook dá "Error running hook" 500).
 create or replace function public.custom_access_token_hook(event jsonb)
-returns jsonb language plpgsql stable as $$
+returns jsonb language plpgsql stable security definer set search_path = public as $$
 declare
   claims jsonb := event->'claims';
   v_uid uuid := (event->>'user_id')::uuid;

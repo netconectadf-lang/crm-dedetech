@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useActionState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useActionState } from "react";
 
-import { loginAction, type FormState } from "@/app/(auth)/actions";
+import { signupAction, type FormState } from "@/app/(auth)/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { GoogleButton } from "@/components/auth/google-button";
 import {
@@ -17,26 +16,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
-  );
-}
-
-function LoginForm() {
+export default function SignupPage() {
   const [state, formAction] = useActionState<FormState, FormData>(
-    loginAction,
+    signupAction,
     null,
   );
-  const next = useSearchParams().get("next") ?? "/dashboard";
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Entrar</CardTitle>
-        <CardDescription>Acesse o painel da sua empresa.</CardDescription>
+        <CardTitle>Criar conta</CardTitle>
+        <CardDescription>
+          Comece o teste grátis da sua dedetizadora.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <GoogleButton />
@@ -45,38 +37,44 @@ function LoginForm() {
           <span className="h-px flex-1 bg-border" />
         </div>
         <form action={formAction} className="space-y-4">
-          <input type="hidden" name="next" value={next} />
+          <div className="grid gap-2">
+            <Label htmlFor="fullName">Seu nome</Label>
+            <Input id="fullName" name="fullName" required />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="empresa">Empresa (razão social)</Label>
+            <Input id="empresa" name="empresa" required />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="cnpj">CNPJ (opcional)</Label>
+            <Input id="cnpj" name="cnpj" inputMode="numeric" placeholder="00.000.000/0000-00" />
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="email">E-mail</Label>
             <Input id="email" name="email" type="email" autoComplete="email" required />
           </div>
           <div className="grid gap-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Senha</Label>
-              <Link
-                href="/recuperar"
-                className="text-xs text-muted-foreground hover:underline"
-              >
-                Esqueci a senha
-              </Link>
-            </div>
+            <Label htmlFor="password">Senha</Label>
             <Input
               id="password"
               name="password"
               type="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               required
             />
           </div>
           {state?.error && (
             <p className="text-sm text-destructive">{state.error}</p>
           )}
-          <SubmitButton>Entrar</SubmitButton>
+          {state?.message && (
+            <p className="text-sm text-teal-700">{state.message}</p>
+          )}
+          <SubmitButton>Criar conta</SubmitButton>
         </form>
         <p className="text-center text-sm text-muted-foreground">
-          Não tem conta?{" "}
-          <Link href="/signup" className="font-medium text-foreground hover:underline">
-            Cadastre sua empresa
+          Já tem conta?{" "}
+          <Link href="/login" className="font-medium text-foreground hover:underline">
+            Entrar
           </Link>
         </p>
       </CardContent>

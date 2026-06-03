@@ -1,16 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-import type { Database } from "@/lib/database.types";
-
 /**
  * Cliente Supabase para Server Components, Server Actions e Route Handlers.
  * Usa os cookies da requisição — respeita a sessão do usuário e as policies de RLS.
+ *
+ * TODO: tipar com `<Database>` após `pnpm gen:types` (banco no ar).
  */
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

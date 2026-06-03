@@ -19,6 +19,7 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   MessageSquareHeart,
+  Radar,
   type LucideIcon,
 } from "lucide-react";
 
@@ -73,6 +74,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Estoque",
         icon: Boxes,
         roles: ["owner", "operacional"],
+      },
+      {
+        href: "/mip",
+        label: "MIP / Monitoramento",
+        icon: Radar,
+        roles: ["owner", "operacional", "tecnico"],
       },
       {
         href: "/comunicacao",

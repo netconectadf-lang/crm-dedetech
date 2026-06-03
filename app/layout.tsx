@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/providers/analytics";
+import { PwaRegister } from "@/components/providers/pwa-register";
 
 const sans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -23,6 +24,10 @@ export const metadata: Metadata = {
     "Plataforma de gestão para empresas de controle de pragas: funil, contratos, ordens de serviço, estoque e financeiro.",
 };
 
+export const viewport: Viewport = {
+  themeColor: "#0F766E",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,6 +42,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <Analytics />
+        <PwaRegister />
         <Toaster richColors position="top-right" />
       </body>
     </html>

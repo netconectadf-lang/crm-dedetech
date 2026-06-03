@@ -14,6 +14,7 @@ import {
   KanbanSquare,
   FileSignature,
   Boxes,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
@@ -57,6 +58,12 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: "Operação",
     itens: [
+      {
+        href: "/os",
+        label: "Ordens de serviço",
+        icon: ClipboardList,
+        roles: ["owner", "operacional", "tecnico"],
+      },
       {
         href: "/estoque",
         label: "Estoque",

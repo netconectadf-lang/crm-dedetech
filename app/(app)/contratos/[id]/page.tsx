@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarClock, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, Trash2, ClipboardList } from "lucide-react";
+
+import { criarOSDoContrato } from "@/app/(app)/os/actions";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
@@ -161,6 +163,13 @@ export default async function ContratoPage({
           </span>
         )}
         <ContractStatusActions contractId={c.id} status={c.status} />
+        {c.status === "ativo" && (
+          <form action={criarOSDoContrato.bind(null, c.id)}>
+            <Button type="submit" variant="outline">
+              <ClipboardList className="size-4" /> Gerar visita (OS)
+            </Button>
+          </form>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

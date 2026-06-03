@@ -1,0 +1,166 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft, ShieldAlert } from "lucide-react";
+
+import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
+import { formatDate } from "@/lib/format";
+import {
+  ABSENCE_TYPE_LABEL,
+  ABSENCE_STATUS_LABEL,
+  EXAM_TYPE_LABEL,
+  type AbsenceType,
+  type AbsenceStatus,
+  type ExamType,
+} from "@/lib/rh";
+import type { Field } from "@/components/app/resource-form";
+import { ResourceForm } from "@/components/app/resource-form";
+import { PontoButton } from "@/components/rh/ponto-button";
+import { solicitarAusencia, decidirAusencia, salvarEPI, salvarASO } from "../actions";
+import { PageHeader } from "@/components/app/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export const metadata = { title: "Funcionário" };
+
+export default async function RhEmployeePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  await requireRole(["owner", "rh"]);
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data: empData } = await supabase
+    .from("employees")
+    .select("id, nome, cargo, responsavel_tecnico, registro_conselho")
+    .eq("id", id)
+    .maybeSingle();
+  if (!empData) notFound();
+  const emp = empData as { id: string; nome: string; cargo: string | null; responsavel_tecnico: boolean; registro_conselho: string | null };
+
+  const [{ data: pontos }, { data: ausencias }, { data: epis }, { data: asos }] =
+    await Promise.all([
+      supabase.from("time_entries").select("id, tipo, registrado_em").eq("employee_id", id).order("registrado_em", { ascending: false }).limit(10),
+      supabase.from("absences").select("id, tipo, inicio, fim, status, motivo").eq("employee_id", id).order("inicio", { ascending: false }),
+      supabase.from("epi_deliveries").select("id, descricao, entregue_em, validade, assinado").eq("employee_id", id).order("entregue_em", { ascending: false }),
+      supabase.from("occupational_exams").select("id, tipo, data, validade, resultado").eq("employee_id", id).order("data", { ascending: false }),
+    ]);
+
+  const ponto = (pontos as { id: string; tipo: string; registrado_em: string }[] | null) ?? [];
+  const ausList = (ausencias as { id: string; tipo: AbsenceType; inicio: string; fim: string; status: AbsenceStatus; motivo: string | null }[] | null) ?? [];
+  const epiList = (epis as { id: string; descricao: string; entregue_em: string; validade: string | null; assinado: boolean }[] | null) ?? [];
+  const asoList = (asos as { id: string; tipo: ExamType; data: string; validade: string | null; resultado: string | null }[] | null) ?? [];
+
+  const ausFields: Field[] = [
+    { name: "tipo", label: "Tipo", type: "select", options: (Object.keys(ABSENCE_TYPE_LABEL) as AbsenceType[]).map((k) => ({ value: k, label: ABSENCE_TYPE_LABEL[k] })) },
+    { name: "inicio", label: "Início", type: "date", required: true },
+    { name: "fim", label: "Fim", type: "date", required: true },
+    { name: "motivo", label: "Motivo", type: "textarea" },
+  ];
+  const epiFields: Field[] = [
+    { name: "descricao", label: "EPI", required: true, full: true },
+    { name: "entregue_em", label: "Entregue em", type: "date", required: true },
+    { name: "validade", label: "Troca / validade", type: "date" },
+    { name: "assinado", label: "Recebimento assinado", type: "switch" },
+  ];
+  const asoFields: Field[] = [
+    { name: "tipo", label: "Tipo", type: "select", options: (Object.keys(EXAM_TYPE_LABEL) as ExamType[]).map((k) => ({ value: k, label: EXAM_TYPE_LABEL[k] })) },
+    { name: "data", label: "Data", type: "date", required: true },
+    { name: "validade", label: "Validade", type: "date" },
+    { name: "resultado", label: "Resultado (apto/inapto)" },
+  ];
+
+  return (
+    <main className="flex flex-1 flex-col gap-6 p-8">
+      <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
+        <Link href="/rh"><ArrowLeft className="size-4" /> RH</Link>
+      </Button>
+      <PageHeader
+        title={emp.nome}
+        description={`${emp.cargo ?? ""}${emp.responsavel_tecnico ? ` · RT ${emp.registro_conselho ?? ""}` : ""}`}
+      />
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Ponto eletrônico</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <PontoButton employeeId={emp.id} />
+          {ponto.length > 0 && (
+            <ul className="divide-y text-sm">
+              {ponto.map((p) => (
+                <li key={p.id} className="flex justify-between py-1.5">
+                  <span className="capitalize">{p.tipo}</span>
+                  <span className="text-muted-foreground tabular-nums">{new Date(p.registrado_em).toLocaleString("pt-BR")}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-base">Férias & ausências</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <ResourceForm fields={ausFields} action={solicitarAusencia.bind(null, emp.id)} submitLabel="Registrar ausência" />
+            <ul className="divide-y text-sm">
+              {ausList.map((a) => (
+                <li key={a.id} className="flex items-center justify-between py-2">
+                  <span>{ABSENCE_TYPE_LABEL[a.tipo]} · {formatDate(a.inicio)}–{formatDate(a.fim)}</span>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={a.status === "aprovada" ? "default" : a.status === "recusada" ? "destructive" : "secondary"}>{ABSENCE_STATUS_LABEL[a.status]}</Badge>
+                    {a.status === "solicitada" && (
+                      <>
+                        <form action={decidirAusencia.bind(null, a.id, emp.id, "aprovada")}><Button type="submit" variant="ghost" size="sm" className="text-emerald-700">Aprovar</Button></form>
+                        <form action={decidirAusencia.bind(null, a.id, emp.id, "recusada")}><Button type="submit" variant="ghost" size="sm" className="text-destructive">Recusar</Button></form>
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-base">EPI (NR-6)</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <ResourceForm fields={epiFields} action={salvarEPI.bind(null, emp.id)} submitLabel="Registrar entrega" />
+            <ul className="divide-y text-sm">
+              {epiList.map((e) => (
+                <li key={e.id} className="flex items-center justify-between py-2">
+                  <span>{e.descricao} · {formatDate(e.entregue_em)}{e.validade ? ` → ${formatDate(e.validade)}` : ""}</span>
+                  {e.assinado ? <Badge variant="secondary">assinado</Badge> : <Badge variant="outline">pendente</Badge>}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            Exames ocupacionais (ASO)
+            <span className="inline-flex items-center gap-1 text-xs font-normal text-amber-700">
+              <ShieldAlert className="size-3.5" /> dado sensível (LGPD)
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ResourceForm fields={asoFields} action={salvarASO.bind(null, emp.id)} submitLabel="Registrar exame" />
+          <ul className="divide-y text-sm">
+            {asoList.map((a) => (
+              <li key={a.id} className="flex items-center justify-between py-2">
+                <span>{EXAM_TYPE_LABEL[a.tipo]} · {formatDate(a.data)}{a.validade ? ` → ${formatDate(a.validade)}` : ""}</span>
+                {a.resultado && <Badge variant="outline">{a.resultado}</Badge>}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}

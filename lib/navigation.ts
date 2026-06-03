@@ -20,6 +20,7 @@ import {
   ArrowUpCircle,
   MessageSquareHeart,
   Radar,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -156,6 +157,17 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Plano de Contas",
         icon: Landmark,
         roles: ["owner", "financeiro"],
+      },
+    ],
+  },
+  {
+    titulo: "Pessoas",
+    itens: [
+      {
+        href: "/rh",
+        label: "Recursos Humanos",
+        icon: UsersRound,
+        roles: ["owner", "rh"],
       },
     ],
   },

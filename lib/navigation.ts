@@ -13,6 +13,7 @@ import {
   Wrench,
   KanbanSquare,
   FileSignature,
+  Boxes,
   type LucideIcon,
 } from "lucide-react";
 
@@ -50,6 +51,17 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Contratos",
         icon: FileSignature,
         roles: ["owner", "comercial"],
+      },
+    ],
+  },
+  {
+    titulo: "Operação",
+    itens: [
+      {
+        href: "/estoque",
+        label: "Estoque",
+        icon: Boxes,
+        roles: ["owner", "operacional"],
       },
     ],
   },

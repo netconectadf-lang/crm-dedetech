@@ -11,7 +11,11 @@ const PUBLIC_PREFIXES = [
   "/proposta",
   "/nps",
   "/api/webhooks",
+  "/api/planos",
+  "/api/leads",
   "/manifest",
+  "/robots",
+  "/sitemap",
 ];
 
 /**

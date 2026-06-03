@@ -12,6 +12,7 @@ import {
   Landmark,
   Wrench,
   KanbanSquare,
+  FileSignature,
   type LucideIcon,
 } from "lucide-react";
 
@@ -42,6 +43,12 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/funil",
         label: "Funil",
         icon: KanbanSquare,
+        roles: ["owner", "comercial"],
+      },
+      {
+        href: "/contratos",
+        label: "Contratos",
+        icon: FileSignature,
         roles: ["owner", "comercial"],
       },
     ],

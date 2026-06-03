@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Send, Trash2, FileSignature } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
@@ -17,6 +17,7 @@ import {
   marcarEnviado,
   excluirOrcamento,
 } from "../../../quote-actions";
+import { criarContratoDoOrcamento } from "@/app/(app)/contratos/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -124,6 +125,13 @@ export default async function OrcamentoPage({
               <Send className="size-4" /> Marcar enviado
             </Button>
           </form>
+          {quote.status === "aceito" && (
+            <form action={criarContratoDoOrcamento.bind(null, quote.id)}>
+              <Button type="submit" className="bg-teal-700 hover:bg-teal-800">
+                <FileSignature className="size-4" /> Gerar contrato
+              </Button>
+            </form>
+          )}
           <form action={excluirOrcamento.bind(null, quote.id, dealId)}>
             <Button type="submit" variant="ghost" className="text-destructive">
               <Trash2 className="size-4" />

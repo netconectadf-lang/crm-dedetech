@@ -21,6 +21,7 @@ import {
   MessageSquareHeart,
   Radar,
   UsersRound,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 
@@ -58,6 +59,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Contratos",
         icon: FileSignature,
         roles: ["owner", "comercial"],
+      },
+      {
+        href: "/chamados",
+        label: "Chamados",
+        icon: LifeBuoy,
+        roles: ["owner", "comercial", "operacional"],
       },
     ],
   },

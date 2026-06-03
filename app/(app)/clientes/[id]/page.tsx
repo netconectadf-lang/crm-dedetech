@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
 import { DeleteButton } from "@/components/app/delete-button";
+import { ConvidarPortal } from "@/components/app/convidar-portal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -95,6 +96,18 @@ export default async function ClienteDetalhePage({
           />
         }
       />
+
+      <Card>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+          <div>
+            <p className="font-medium">Portal do Cliente</p>
+            <p className="text-sm text-muted-foreground">
+              Dê acesso self-service (histórico, agenda, financeiro e chamados).
+            </p>
+          </div>
+          <ConvidarPortal clientId={id} />
+        </CardContent>
+      </Card>
 
       {unidades.length === 0 ? (
         <EmptyState

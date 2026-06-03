@@ -3,9 +3,10 @@ import { z } from "zod";
 import { ASSIGNABLE_ROLES } from "@/lib/types";
 
 const senha = z.string().min(8, "Mínimo de 8 caracteres");
+const emailField = z.string().trim().toLowerCase().email("E-mail inválido");
 
 export const loginSchema = z.object({
-  email: z.string().email("E-mail inválido"),
+  email: emailField,
   password: z.string().min(1, "Informe a senha"),
 });
 
@@ -17,12 +18,12 @@ export const signupSchema = z.object({
     .optional()
     .transform((v) => v?.replace(/\D/g, "") || undefined)
     .refine((v) => !v || v.length === 14, "CNPJ deve ter 14 dígitos"),
-  email: z.string().email("E-mail inválido"),
+  email: emailField,
   password: senha,
 });
 
 export const resetRequestSchema = z.object({
-  email: z.string().email("E-mail inválido"),
+  email: emailField,
 });
 
 export const inviteSchema = z.object({

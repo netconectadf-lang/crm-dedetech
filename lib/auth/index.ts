@@ -63,7 +63,12 @@ export async function requireTenant(): Promise<
   AuthContext & { tenantId: string; role: AppRole }
 > {
   const ctx = await requireAuth();
-  if (!ctx.tenantId || !ctx.role) redirect("/signup");
+  if (!ctx.tenantId || !ctx.role) {
+    // Pode ser um usuário do Portal do Cliente (sem membership de empresa).
+    const { hasPortalAccess } = await import("@/lib/portal");
+    if (await hasPortalAccess(ctx.userId)) redirect("/portal");
+    redirect("/signup");
+  }
   return ctx as AuthContext & { tenantId: string; role: AppRole };
 }
 

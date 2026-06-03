@@ -7,6 +7,7 @@ import { formatBRL, formatDate } from "@/lib/format";
 import { effectiveStatus, PAYMENT_LABEL, type FinanceStatus, type PaymentMethod } from "@/lib/financeiro";
 import type { Field } from "@/components/app/resource-form";
 import { salvarReceber, receber, cancelarReceber, excluirReceber } from "../actions";
+import { gerarCobranca } from "../charge-actions";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -139,6 +140,12 @@ export default async function ReceberPage() {
                         <div className="flex justify-end gap-1">
                           {aberto && (
                             <>
+                              <form action={gerarCobranca.bind(null, c.id, "pix")}>
+                                <Button type="submit" variant="ghost" size="sm" title="Gerar cobrança PIX">PIX</Button>
+                              </form>
+                              <form action={gerarCobranca.bind(null, c.id, "boleto")}>
+                                <Button type="submit" variant="ghost" size="sm" title="Gerar boleto">Boleto</Button>
+                              </form>
                               <ResourceDialog
                                 trigger={<Button variant="ghost" size="sm" className="text-emerald-700"><Check className="size-4" /> Receber</Button>}
                                 title="Registrar recebimento"

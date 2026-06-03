@@ -18,6 +18,7 @@ import {
   Wallet,
   ArrowDownCircle,
   ArrowUpCircle,
+  MessageSquareHeart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -72,6 +73,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Estoque",
         icon: Boxes,
         roles: ["owner", "operacional"],
+      },
+      {
+        href: "/comunicacao",
+        label: "Comunicação & NPS",
+        icon: MessageSquareHeart,
+        roles: ["owner", "comercial", "operacional"],
       },
     ],
   },

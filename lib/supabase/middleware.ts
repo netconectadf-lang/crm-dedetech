@@ -9,6 +9,8 @@ const PUBLIC_PREFIXES = [
   "/convite",
   "/auth",
   "/proposta",
+  "/nps",
+  "/api/webhooks",
 ];
 
 /**

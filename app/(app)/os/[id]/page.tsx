@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, FileText, Trash2, Wallet } from "lucide-react";
 
 import { gerarCobrancaDaOS } from "@/app/(app)/financeiro/actions";
+import { enviarNPS } from "../nps-actions";
+import { Star } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
@@ -132,6 +134,13 @@ export default async function OsDetailPage({
               <form action={gerarCobrancaDaOS.bind(null, os.id)}>
                 <Button type="submit" className="bg-teal-700 hover:bg-teal-800">
                   <Wallet className="size-4" /> Gerar cobrança
+                </Button>
+              </form>
+            )}
+            {finalizada && (
+              <form action={enviarNPS.bind(null, os.id)}>
+                <Button type="submit" variant="outline">
+                  <Star className="size-4" /> Enviar NPS
                 </Button>
               </form>
             )}

@@ -2,7 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /** Rotas públicas (não exigem sessão). */
-const PUBLIC_PREFIXES = ["/login", "/signup", "/recuperar", "/convite", "/auth"];
+const PUBLIC_PREFIXES = [
+  "/login",
+  "/signup",
+  "/recuperar",
+  "/convite",
+  "/auth",
+  "/proposta",
+];
 
 /**
  * Atualiza a sessão do Supabase em toda requisição e protege as rotas do app.

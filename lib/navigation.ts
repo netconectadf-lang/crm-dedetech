@@ -11,6 +11,7 @@ import {
   IdCard,
   Landmark,
   Wrench,
+  KanbanSquare,
   type LucideIcon,
 } from "lucide-react";
 
@@ -33,6 +34,17 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: null,
     itens: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    titulo: "Comercial",
+    itens: [
+      {
+        href: "/funil",
+        label: "Funil",
+        icon: KanbanSquare,
+        roles: ["owner", "comercial"],
+      },
+    ],
   },
   {
     titulo: "Cadastros",

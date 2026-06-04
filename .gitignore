@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Certificados digitais e material sensível NFS-e (NUNCA commitar)
+*.pfx
+*.p12
+docs/nfse-gov/test-cert.pem
+docs/nfse-gov/test-key.pem

@@ -10,7 +10,7 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { rotuloCliente } from "@/lib/clientes";
+import { rotuloCliente, nomeCurto } from "@/lib/clientes";
 import {
   OS_STATUS_LABEL,
   OS_STATUS_TONE,
@@ -58,12 +58,6 @@ type OS = {
   clients: { razao_social: string; cidade: string | null; uf: string | null } | null;
   employees: { nome: string } | null;
 };
-
-/** Só as duas primeiras palavras do nome do cliente (ex: "BLUEFIT BRASILIA"). */
-function nomeCurto(razao: string | null | undefined): string {
-  if (!razao) return "—";
-  return razao.trim().split(/\s+/).slice(0, 2).join(" ") || "—";
-}
 
 export default async function OsPage({
   searchParams,

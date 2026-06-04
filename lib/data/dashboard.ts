@@ -5,6 +5,7 @@ import { PERIODICITY_MONTHS, type ContractPeriodicity } from "@/lib/contratos";
 import { effectiveStatus, type FinanceStatus } from "@/lib/financeiro";
 import { isCritical, type MipReadingStatus } from "@/lib/mip";
 import { STAGES, type DealStage } from "@/lib/funil";
+import { OS_PENDENTE } from "@/lib/os";
 
 export type DashboardMetrics = {
   mrr: number;
@@ -18,8 +19,17 @@ export type DashboardMetrics = {
   funil: { stage: DealStage; count: number; valor: number }[];
   conversao: number;
   ganhos: number;
+  trend: { mes: string; recebido: number; pago: number }[];
   osHoje: number;
   osPorStatus: Record<string, number>;
+  proximasOs: {
+    id: string;
+    numero: number;
+    status: string;
+    scheduled_at: string | null;
+    cliente: string | null;
+    cidade: string | null;
+  }[];
   estoqueCritico: number;
   mipCritico: number;
   clientesAtivos: number;
@@ -42,6 +52,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     { data: batchData },
     { data: mipReadData },
     { count: clientesAtivos },
+    { data: proximasOsData },
   ] = await Promise.all([
     supabase.from("contracts").select("valor, periodicidade, status").eq("status", "ativo"),
     supabase.from("accounts_receivable").select("valor, valor_pago, status, vencimento, pago_em"),
@@ -52,6 +63,12 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     supabase.from("stock_batches").select("product_id, qtd_atual"),
     supabase.from("mip_readings").select("device_id, status, lida_em").order("lida_em", { ascending: false }),
     supabase.from("clients").select("id", { count: "exact", head: true }).eq("ativo", true),
+    supabase
+      .from("service_orders")
+      .select("id, numero, status, scheduled_at, clients(razao_social, cidade)")
+      .in("status", OS_PENDENTE as unknown as string[])
+      .order("scheduled_at", { ascending: true, nullsFirst: false })
+      .limit(6),
   ]);
 
   // MRR
@@ -72,6 +89,32 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const recebidoMes = ar.filter(noMes).reduce((s, c) => s + Number(c.valor_pago), 0);
   const pagoMes = ap.filter(noMes).reduce((s, c) => s + Number(c.valor_pago), 0);
 
+  // Tendência de caixa dos últimos 6 meses (a partir do que já foi buscado)
+  const base = new Date();
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(base.getFullYear(), base.getMonth() - (5 - i), 1);
+    return {
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      mes: d
+        .toLocaleDateString("pt-BR", { month: "short" })
+        .replace(".", ""),
+    };
+  });
+  const trendMap = new Map(
+    months.map((m) => [m.key, { mes: m.mes, recebido: 0, pago: 0 }]),
+  );
+  for (const c of ar) {
+    if (!c.pago_em) continue;
+    const b = trendMap.get(c.pago_em.slice(0, 7));
+    if (b) b.recebido += Number(c.valor_pago);
+  }
+  for (const c of ap) {
+    if (!c.pago_em) continue;
+    const b = trendMap.get(c.pago_em.slice(0, 7));
+    if (b) b.pago += Number(c.valor_pago);
+  }
+  const trend = months.map((m) => trendMap.get(m.key)!);
+
   // funil
   const deals = (dealsData as { stage: DealStage; valor_estimado: number }[] | null) ?? [];
   const funil = STAGES.map((s) => {
@@ -87,6 +130,25 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const osPorStatus: Record<string, number> = {};
   for (const o of oss) osPorStatus[o.status] = (osPorStatus[o.status] ?? 0) + 1;
   const osHoje = oss.filter((o) => o.scheduled_at?.slice(0, 10) === hoje).length;
+
+  type ProxRaw = {
+    id: string;
+    numero: number;
+    status: string;
+    scheduled_at: string | null;
+    clients: { razao_social: string | null; cidade: string | null } | { razao_social: string | null; cidade: string | null }[] | null;
+  };
+  const proximasOs = ((proximasOsData as ProxRaw[] | null) ?? []).map((o) => {
+    const c = Array.isArray(o.clients) ? o.clients[0] : o.clients;
+    return {
+      id: o.id,
+      numero: o.numero,
+      status: o.status,
+      scheduled_at: o.scheduled_at,
+      cliente: c?.razao_social ?? null,
+      cidade: c?.cidade ?? null,
+    };
+  });
 
   // estoque crítico
   const produtos = (prodData as { id: string; estoque_minimo: number }[] | null) ?? [];
@@ -114,8 +176,10 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     funil,
     conversao,
     ganhos,
+    trend,
     osHoje,
     osPorStatus,
+    proximasOs,
     estoqueCritico,
     mipCritico,
     clientesAtivos: clientesAtivos ?? 0,

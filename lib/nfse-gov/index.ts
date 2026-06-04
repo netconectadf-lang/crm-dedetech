@@ -2,11 +2,13 @@ import "server-only";
 
 import { lerCertificado } from "./cert";
 import { montarDps } from "./dps";
-import { assinarDps } from "./sign";
+import { montarPedidoCancelamento, type DadosCancelamento } from "./evento";
+import { assinarDps, assinarXml } from "./sign";
 import { baseUrls, gzipBase64, requestMtls, unBase64Gzip } from "./transport";
 import type { Ambiente, Certificado, DadosEmissao, ResultadoNfse } from "./types";
 
 export type { DadosEmissao, Certificado, ResultadoNfse } from "./types";
+export type { DadosCancelamento, MotivoCancelamento } from "./evento";
 export { montarDps, montarIdDps } from "./dps";
 
 /** Tenta extrair a chave de acesso (50 dígitos) do XML da NFS-e. */
@@ -115,13 +117,42 @@ export async function baixarDanfse(
 
 /**
  * Cancela uma NFS-e via evento de cancelamento (e101101).
- * TODO(fase-3): montar e assinar o XML de pedido de evento conforme
- * pedRegEvento_v1.01.xsd e enviar em POST /nfse/{chave}/eventos.
- * Estrutura pronta; o leiaute do evento será preenchido no teste com o certificado real.
+ * Monta o pedido de registro de evento, assina (infPedReg), comprime e envia
+ * em POST /nfse/{chave}/eventos por mTLS.
  */
-export async function cancelarNfse(): Promise<ResultadoNfse> {
-  return {
-    ok: false,
-    error: "Cancelamento por evento ainda não implementado (fase 3, requer certificado para validar o leiaute).",
-  };
+export async function cancelarNfse(
+  dados: DadosCancelamento,
+  certificado: Certificado,
+): Promise<ResultadoNfse> {
+  try {
+    const cert = lerCertificado(certificado);
+    const { xml, id } = montarPedidoCancelamento(dados, new Date());
+    const assinado = assinarXml(xml, id, cert, "infPedReg");
+    const eventoB64 = gzipBase64(assinado);
+
+    const chave = dados.chaveAcesso.replace(/\D/g, "");
+    const { sefin } = baseUrls(dados.ambiente);
+    const res = await requestMtls(`${sefin}/nfse/${encodeURIComponent(chave)}/eventos`, certificado, {
+      method: "POST",
+      body: JSON.stringify({ pedidoRegistroEventoXmlGZipB64: eventoB64 }),
+    });
+
+    const data = parseBody(res.body);
+    if (res.status >= 200 && res.status < 300) {
+      return { ok: true, status: "cancelada", chaveAcesso: chave };
+    }
+    const erros = data.erros as
+      | { codigo?: string; descricao?: string; Codigo?: string; Descricao?: string }[]
+      | undefined;
+    const mensagem =
+      erros
+        ?.map((e) => `${e.Codigo ?? e.codigo ?? ""} ${e.Descricao ?? e.descricao ?? ""}`.trim())
+        .filter(Boolean)
+        .join("; ") ||
+      (data.mensagem as string) ||
+      `HTTP ${res.status}`;
+    return { ok: false, status: "erro", error: mensagem, mensagem };
+  } catch (e) {
+    return { ok: false, status: "erro", error: e instanceof Error ? e.message : String(e) };
+  }
 }

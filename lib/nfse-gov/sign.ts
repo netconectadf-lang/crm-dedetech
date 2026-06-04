@@ -11,15 +11,21 @@ const RSA_SHA1 = "http://www.w3.org/2000/09/xmldsig#rsa-sha1";
 const SHA1 = "http://www.w3.org/2000/09/xmldsig#sha1";
 
 /**
- * Assina a DPS com XMLDSIG (assinatura envelopada).
- * A <Signature> é inserida como irmã de <infDPS>, dentro de <DPS>,
- * referenciando o atributo Id de infDPS (URI="#<Id>").
+ * Assina um documento com XMLDSIG (assinatura envelopada), referenciando o
+ * elemento `elemento` pelo seu atributo Id. A <Signature> entra logo após ele.
  *
- * @param xml  XML da DPS não assinado
- * @param id   valor do atributo Id de infDPS
- * @param cert material do certificado A1 (chave + cert em PEM)
+ * @param xml      XML não assinado
+ * @param id       valor do atributo Id do elemento referenciado
+ * @param cert     material do certificado A1 (chave + cert em PEM)
+ * @param elemento nome local do elemento assinado (ex.: "infDPS", "infPedReg")
  */
-export function assinarDps(xml: string, id: string, cert: CertMaterial): string {
+export function assinarXml(
+  xml: string,
+  id: string,
+  cert: CertMaterial,
+  elemento = "infDPS",
+): string {
+  const xpath = `//*[local-name(.)='${elemento}']`;
   const sig = new SignedXml({
     privateKey: cert.privateKeyPem,
     publicCert: cert.certificatePem,
@@ -27,17 +33,13 @@ export function assinarDps(xml: string, id: string, cert: CertMaterial): string 
     canonicalizationAlgorithm: C14N,
   });
 
-  sig.addReference({
-    xpath: "//*[local-name(.)='infDPS']",
-    transforms: [ENVELOPED, C14N],
-    digestAlgorithm: SHA1,
-    uri: id,
-  });
-
-  sig.computeSignature(xml, {
-    // a assinatura vai logo após infDPS (irmã), conforme o XSD (DPS > infDPS, Signature)
-    location: { reference: "//*[local-name(.)='infDPS']", action: "after" },
-  });
+  sig.addReference({ xpath, transforms: [ENVELOPED, C14N], digestAlgorithm: SHA1, uri: id });
+  sig.computeSignature(xml, { location: { reference: xpath, action: "after" } });
 
   return sig.getSignedXml();
+}
+
+/** Assina a DPS (referencia infDPS). */
+export function assinarDps(xml: string, id: string, cert: CertMaterial): string {
+  return assinarXml(xml, id, cert, "infDPS");
 }

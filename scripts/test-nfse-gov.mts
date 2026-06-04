@@ -14,7 +14,8 @@ import { DOMParser } from "@xmldom/xmldom";
 import { SignedXml } from "xml-crypto";
 
 import { montarDps } from "../lib/nfse-gov/dps";
-import { assinarDps } from "../lib/nfse-gov/sign";
+import { montarPedidoCancelamento } from "../lib/nfse-gov/evento";
+import { assinarDps, assinarXml } from "../lib/nfse-gov/sign";
 import { lerCertificado } from "../lib/nfse-gov/cert";
 import { gzipBase64, unBase64Gzip } from "../lib/nfse-gov/transport";
 import type { DadosEmissao } from "../lib/nfse-gov/types";
@@ -99,10 +100,10 @@ console.log("\n[2] Validação contra o XSD oficial");
 const tmp = mkdtempSync(join(tmpdir(), "dps-"));
 const xmlPath = join(tmp, "dps.xml");
 writeFileSync(xmlPath, xml);
-function validarXsd(arquivo: string, label: string) {
+function validarXsd(arquivo: string, label: string, xsd = XSD) {
   try {
-    execFileSync("xmllint", ["--noout", "--schema", XSD, arquivo], { stdio: "pipe" });
-    ok(`${label} válido contra DPS_v1.01.xsd`);
+    execFileSync("xmllint", ["--noout", "--schema", xsd, arquivo], { stdio: "pipe" });
+    ok(`${label} válido contra o XSD`);
   } catch (e: any) {
     const out = (e.stderr?.toString() ?? e.stdout?.toString() ?? String(e)).trim();
     fail(`${label} inválido:\n${out.split("\n").slice(0, 8).map((l: string) => "      " + l).join("\n")}`);
@@ -149,6 +150,28 @@ const b64 = gzipBase64(assinado);
 ok(`comprimido: ${assinado.length} → ${b64.length} bytes (base64)`);
 if (unBase64Gzip(b64) === assinado) ok("round-trip íntegro (descompacta idêntico)");
 else fail("round-trip corrompido");
+
+// --- 6. Evento de cancelamento (e101101) ---
+console.log("\n[6] Evento de cancelamento (e101101)");
+const evXsd = XSD.replace("DPS_v1.01.xsd", "pedRegEvento_v1.01.xsd");
+const canc = montarPedidoCancelamento(
+  {
+    ambiente: 2,
+    chaveAcesso: "5".repeat(50),
+    cnpjAutor: "50213173000166",
+    motivo: 9,
+    justificativa: "Cancelamento de teste para validacao do schema XSD",
+  },
+  new Date(Date.UTC(2026, 5, 4, 15, 0, 0)),
+);
+if (/^PRE\d{56}$/.test(canc.id)) ok(`Id do evento: ${canc.id}`);
+else fail(`Id do evento fora do padrão (esperado PRE+56 díg): ${canc.id}`);
+const evPath = join(tmp, "evento.xml");
+writeFileSync(evPath, canc.xml);
+validarXsd(evPath, "pedRegEvento não assinado", evXsd);
+const evAssinado = assinarXml(canc.xml, canc.id, cert, "infPedReg");
+writeFileSync(join(tmp, "evento-signed.xml"), evAssinado);
+validarXsd(join(tmp, "evento-signed.xml"), "pedRegEvento ASSINADO", evXsd);
 
 console.log(`\n${falhas === 0 ? "✅ TODOS OS TESTES PASSARAM" : `❌ ${falhas} FALHA(S)`}\n`);
 process.exit(falhas === 0 ? 0 : 1);

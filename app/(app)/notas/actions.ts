@@ -171,9 +171,44 @@ export async function sincronizarNota(id: string): Promise<void> {
   revalidatePath("/notas");
 }
 
-/** Cancela a NFS-e (evento de cancelamento — fase 3). */
-export async function cancelarNota(id: string, _justificativa: string): Promise<SaveState> {
-  await requireRole(FISCAL);
-  const r = await cancelarNfse();
-  return r.ok ? { message: "NFS-e cancelada." } : { error: r.error ?? "Não foi possível cancelar." };
+/** Cancela a NFS-e via evento de cancelamento (e101101) no Ambiente Nacional. */
+export async function cancelarNota(id: string, justificativa: string): Promise<SaveState> {
+  const ctx = await requireRole(FISCAL);
+  const supabase = await createClient();
+
+  const just = (justificativa ?? "").trim();
+  if (just.length < 15) return { error: "A justificativa deve ter ao menos 15 caracteres." };
+  if (just.length > 255) return { error: "A justificativa deve ter no máximo 255 caracteres." };
+
+  const { data } = await supabase
+    .from("nfse")
+    .select("chave_acesso, ambiente, status")
+    .eq("id", id)
+    .eq("tenant_id", ctx.tenantId)
+    .maybeSingle();
+  const nota = data as { chave_acesso: string | null; ambiente: number | null; status: string } | null;
+  if (!nota) return { error: "Nota não encontrada." };
+  if (nota.status !== "autorizada") return { error: "Só é possível cancelar nota autorizada." };
+  if (!nota.chave_acesso) return { error: "Nota sem chave de acesso." };
+
+  const certificado = await carregarCertificado(ctx.tenantId);
+  if (!certificado) return { error: "Certificado digital não configurado." };
+  const cfg = await carregarConfigFiscal(ctx.tenantId);
+  if (!cfg?.cnpj) return { error: "CNPJ da empresa não configurado." };
+
+  const r = await cancelarNfse(
+    {
+      ambiente: (nota.ambiente ?? 2) as 1 | 2,
+      chaveAcesso: nota.chave_acesso,
+      cnpjAutor: cfg.cnpj,
+      motivo: 9, // Outros (a justificativa detalha)
+      justificativa: just,
+    },
+    certificado,
+  );
+  if (!r.ok) return { error: r.error ?? "Não foi possível cancelar." };
+
+  await supabase.from("nfse").update({ status: "cancelada" }).eq("id", id).eq("tenant_id", ctx.tenantId);
+  revalidatePath("/notas");
+  return { message: "NFS-e cancelada." };
 }

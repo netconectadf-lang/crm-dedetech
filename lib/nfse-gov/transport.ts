@@ -3,7 +3,7 @@ import "server-only";
 import { gzipSync, gunzipSync } from "node:zlib";
 import https from "node:https";
 
-import type { CertMaterial } from "./cert";
+import type { Certificado } from "./types";
 
 /** Comprime (GZip) e codifica (Base64) o XML para envio no corpo JSON. */
 export function gzipBase64(xml: string): string {
@@ -23,7 +23,7 @@ export function baseUrls(ambiente: 1 | 2) {
         adn: "https://adn.nfse.gov.br",
       }
     : {
-        sefin: "https://sefin.producaorestrita.nfse.gov.br/API/SefinNacional",
+        sefin: "https://sefin.producaorestrita.nfse.gov.br/SefinNacional",
         adn: "https://adn.producaorestrita.nfse.gov.br",
       };
 }
@@ -36,7 +36,7 @@ export type HttpResposta = { status: number; body: string; raw: Buffer };
  */
 export function requestMtls(
   url: string,
-  cert: CertMaterial,
+  cert: Certificado,
   options: { method?: string; body?: string; headers?: Record<string, string> } = {},
 ): Promise<HttpResposta> {
   const u = new URL(url);
@@ -49,9 +49,9 @@ export function requestMtls(
         port: u.port || 443,
         path: u.pathname + u.search,
         method: options.method ?? "GET",
-        // material do certificado para o handshake mTLS
-        key: cert.privateKeyPem,
-        cert: cert.chainPem,
+        // PFX direto no handshake mTLS — o OpenSSL nativo monta o certificado de cliente
+        pfx: cert.pfx,
+        passphrase: cert.senha,
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",

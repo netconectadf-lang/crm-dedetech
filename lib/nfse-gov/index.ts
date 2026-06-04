@@ -39,7 +39,7 @@ export async function emitirNfse(dados: DadosEmissao, certificado: Certificado):
     const dpsXmlGZipB64 = gzipBase64(assinado);
 
     const { sefin } = baseUrls(dados.ambiente);
-    const res = await requestMtls(`${sefin}/nfse`, cert, {
+    const res = await requestMtls(`${sefin}/nfse`, certificado, {
       method: "POST",
       body: JSON.stringify({ dpsXmlGZipB64 }),
     });
@@ -73,9 +73,8 @@ export async function consultarNfse(
   ambiente: Ambiente,
 ): Promise<ResultadoNfse> {
   try {
-    const cert = lerCertificado(certificado);
     const { sefin } = baseUrls(ambiente);
-    const res = await requestMtls(`${sefin}/nfse/${encodeURIComponent(chaveAcesso)}`, cert);
+    const res = await requestMtls(`${sefin}/nfse/${encodeURIComponent(chaveAcesso)}`, certificado);
     const data = parseBody(res.body);
     if (res.status >= 200 && res.status < 300) {
       const nfseB64 = (data.nfseXmlGZipB64 ?? data.NfseXmlGZipB64) as string | undefined;
@@ -98,9 +97,8 @@ export async function baixarDanfse(
   ambiente: Ambiente,
 ): Promise<Buffer | null> {
   try {
-    const cert = lerCertificado(certificado);
     const { adn } = baseUrls(ambiente);
-    const res = await requestMtls(`${adn}/danfse/${encodeURIComponent(chaveAcesso)}`, cert, {
+    const res = await requestMtls(`${adn}/danfse/${encodeURIComponent(chaveAcesso)}`, certificado, {
       headers: { Accept: "application/pdf" },
     });
     if (res.status >= 200 && res.status < 300) return res.raw;

@@ -28,7 +28,7 @@ export function baseUrls(ambiente: 1 | 2) {
       };
 }
 
-export type HttpResposta = { status: number; body: string };
+export type HttpResposta = { status: number; body: string; raw: Buffer };
 
 /**
  * Requisição HTTPS com autenticação mútua (mTLS) usando o certificado A1.
@@ -62,9 +62,10 @@ export function requestMtls(
       (res) => {
         const chunks: Buffer[] = [];
         res.on("data", (c) => chunks.push(c as Buffer));
-        res.on("end", () =>
-          resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString("utf-8") }),
-        );
+        res.on("end", () => {
+          const raw = Buffer.concat(chunks);
+          resolve({ status: res.statusCode ?? 0, body: raw.toString("utf-8"), raw });
+        });
       },
     );
     req.on("error", reject);

@@ -103,7 +103,7 @@ export async function baixarDanfse(
     const res = await requestMtls(`${adn}/danfse/${encodeURIComponent(chaveAcesso)}`, cert, {
       headers: { Accept: "application/pdf" },
     });
-    if (res.status >= 200 && res.status < 300) return Buffer.from(res.body, "binary");
+    if (res.status >= 200 && res.status < 300) return res.raw;
     return null;
   } catch {
     return null;

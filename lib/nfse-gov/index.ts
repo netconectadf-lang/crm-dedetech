@@ -54,10 +54,15 @@ export async function emitirNfse(dados: DadosEmissao, certificado: Certificado):
       return { ok: true, status: "autorizada", idDps, chaveAcesso, xmlNfse };
     }
 
-    // Erros de negócio: a API devolve `erros: [{ codigo, descricao }]` ou `mensagem`.
-    const erros = data.erros as { codigo?: string; descricao?: string }[] | undefined;
+    // Erros de negócio: a API devolve `erros: [{ Codigo, Descricao }]` ou `mensagem`.
+    const erros = data.erros as
+      | { codigo?: string; descricao?: string; Codigo?: string; Descricao?: string }[]
+      | undefined;
     const mensagem =
-      erros?.map((e) => `${e.codigo ?? ""} ${e.descricao ?? ""}`.trim()).join("; ") ||
+      erros
+        ?.map((e) => `${e.Codigo ?? e.codigo ?? ""} ${e.Descricao ?? e.descricao ?? ""}`.trim())
+        .filter(Boolean)
+        .join("; ") ||
       (data.mensagem as string) ||
       `HTTP ${res.status}`;
     return { ok: false, status: "erro", idDps, error: mensagem, mensagem };

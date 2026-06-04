@@ -55,9 +55,16 @@ type OS = {
   scheduled_at: string | null;
   contract_id: string | null;
   quote_id: string | null;
+  observacoes: string | null;
   clients: { razao_social: string; cidade: string | null; uf: string | null } | null;
   employees: { nome: string } | null;
 };
+
+/** Extrai "Tipo de serviço: X" das observações (OS importadas do Trílogo). */
+function tipoServicoDasObs(obs: string | null): string | null {
+  const m = obs?.match(/Tipo de servi[çc]o:\s*(.+)/i);
+  return m ? m[1].trim() : null;
+}
 
 export default async function OsPage({
   searchParams,
@@ -75,7 +82,7 @@ export default async function OsPage({
 
   let query = supabase
     .from("service_orders")
-    .select("id, numero, status, scheduled_at, contract_id, quote_id, clients(razao_social, cidade, uf), employees(nome)")
+    .select("id, numero, status, scheduled_at, contract_id, quote_id, observacoes, clients(razao_social, cidade, uf), employees(nome)")
     .order("scheduled_at", { ascending: true, nullsFirst: false });
   if (status) query = query.eq("status", status);
 
@@ -119,8 +126,12 @@ export default async function OsPage({
       : o.quote_id
         ? servQuote.get(o.quote_id)
         : undefined;
-    if (!descs || descs.length === 0) return "—";
-    return descs.length > 1 ? `${descs[0]} +${descs.length - 1}` : descs[0];
+    if (descs && descs.length > 0) {
+      return descs.length > 1 ? `${descs[0]} +${descs.length - 1}` : descs[0];
+    }
+    // Fallback: OS sem contrato/orçamento (ex: importadas do Trílogo) trazem o
+    // tipo de serviço nas observações.
+    return tipoServicoDasObs(o.observacoes) ?? "—";
   };
 
   const all = (allOs as { status: OsStatus; scheduled_at: string | null }[] | null) ?? [];

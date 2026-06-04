@@ -98,3 +98,114 @@ export async function logoutInstance(): Promise<boolean> {
     return false;
   }
 }
+
+// ─── Envio e extração (campanhas) ────────────────────────────────────
+
+export type SendTextResult = { ok: boolean; providerId?: string; error?: string };
+
+/** Envia uma mensagem de texto. `numero` deve estar em dígitos (55DDDNNN...). */
+export async function sendText(numero: string, text: string): Promise<SendTextResult> {
+  if (!evolutionConfigured()) return { ok: false, error: "WhatsApp não configurado." };
+  const num = (numero ?? "").replace(/\D/g, "");
+  if (!num) return { ok: false, error: "Número inválido." };
+  try {
+    const res = await fetch(`${URL}/message/sendText/${INSTANCE}`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ number: num, text }),
+    });
+    const d = (await res.json().catch(() => ({}))) as { key?: { id?: string }; message?: string };
+    if (!res.ok) return { ok: false, error: d?.message ?? JSON.stringify(d) };
+    return { ok: true, providerId: d?.key?.id };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export type ContatoWa = { nome: string; telefone: string };
+
+function numeroDeJid(jid: string): string {
+  return (jid ?? "").split("@")[0]?.replace(/\D/g, "") ?? "";
+}
+
+/** Lista os contatos salvos no WhatsApp conectado (exclui grupos/broadcast). */
+export async function findContacts(): Promise<ContatoWa[]> {
+  if (!evolutionConfigured()) return [];
+  try {
+    const res = await fetch(`${URL}/chat/findContacts/${INSTANCE}`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ where: {} }),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = (await res.json().catch(() => [])) as Array<{
+      remoteJid?: string;
+      id?: string;
+      pushName?: string;
+      name?: string;
+    }>;
+    const lista = Array.isArray(data) ? data : [];
+    return lista
+      .map((c) => {
+        const jid = c.remoteJid ?? c.id ?? "";
+        return { jid, nome: c.name ?? c.pushName ?? "", telefone: numeroDeJid(jid) };
+      })
+      .filter(
+        (c) =>
+          !c.jid.endsWith("@g.us") &&
+          !c.jid.endsWith("@broadcast") &&
+          !c.jid.endsWith("@lid") &&
+          c.telefone.length >= 12 &&
+          c.telefone.length <= 13,
+      )
+      .map(({ nome, telefone }) => ({ nome, telefone }));
+  } catch {
+    return [];
+  }
+}
+
+export type GrupoWa = { jid: string; nome: string; participantes: number };
+
+/** Lista os grupos do WhatsApp conectado. */
+export async function fetchGroups(): Promise<GrupoWa[]> {
+  if (!evolutionConfigured()) return [];
+  try {
+    const res = await fetch(
+      `${URL}/group/fetchAllGroups/${INSTANCE}?getParticipants=false`,
+      { headers: headers(), cache: "no-store" },
+    );
+    if (!res.ok) return [];
+    const data = (await res.json().catch(() => [])) as Array<{
+      id?: string;
+      subject?: string;
+      size?: number;
+    }>;
+    const lista = Array.isArray(data) ? data : [];
+    return lista
+      .filter((g) => g.id)
+      .map((g) => ({ jid: g.id as string, nome: g.subject ?? "Grupo", participantes: g.size ?? 0 }));
+  } catch {
+    return [];
+  }
+}
+
+/** Extrai os participantes (números) de um grupo. */
+export async function groupParticipants(groupJid: string): Promise<ContatoWa[]> {
+  if (!evolutionConfigured()) return [];
+  try {
+    const res = await fetch(
+      `${URL}/group/participants/${INSTANCE}?groupJid=${encodeURIComponent(groupJid)}`,
+      { headers: headers(), cache: "no-store" },
+    );
+    if (!res.ok) return [];
+    const data = (await res.json().catch(() => ({}))) as {
+      participants?: Array<{ id?: string }>;
+    };
+    return (data?.participants ?? [])
+      .map((p) => ({ nome: "", telefone: numeroDeJid(p.id ?? "") }))
+      .filter((c) => c.telefone.length >= 12 && c.telefone.length <= 13);
+  } catch {
+    return [];
+  }
+}

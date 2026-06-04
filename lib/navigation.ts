@@ -27,6 +27,9 @@ import {
   UsersRound,
   LifeBuoy,
   Plug,
+  Megaphone,
+  Send,
+  Contact,
   type LucideIcon,
 } from "lucide-react";
 
@@ -111,6 +114,29 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Comunicação & NPS",
         icon: MessageSquareHeart,
         roles: ["owner", "comercial", "operacional"],
+      },
+    ],
+  },
+  {
+    titulo: "WhatsApp",
+    itens: [
+      {
+        href: "/whatsapp/campanhas",
+        label: "Campanhas",
+        icon: Megaphone,
+        roles: ["owner", "comercial"],
+      },
+      {
+        href: "/whatsapp/contatos",
+        label: "Contatos",
+        icon: Contact,
+        roles: ["owner", "comercial"],
+      },
+      {
+        href: "/whatsapp/scripts",
+        label: "Scripts",
+        icon: Send,
+        roles: ["owner", "comercial"],
       },
     ],
   },

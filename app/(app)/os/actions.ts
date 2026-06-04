@@ -37,21 +37,25 @@ export async function criarOSDoOrcamento(quoteId: string) {
   const supabase = await createClient();
   const { data: quote } = await supabase
     .from("quotes")
-    .select("id, deal_id, deals(client_id)")
+    .select("id, deal_id, client_id, deals(client_id)")
     .eq("id", quoteId)
     .maybeSingle();
   const q = quote as unknown as {
     id: string;
-    deal_id: string;
+    deal_id: string | null;
+    client_id: string | null;
     deals: { client_id: string | null } | null;
   } | null;
-  if (!q?.deals?.client_id) redirect(`/funil/${q?.deal_id ?? ""}`);
+  const clientId = q?.client_id ?? q?.deals?.client_id ?? null;
+  if (!q || !clientId) {
+    redirect(q?.deal_id ? `/funil/${q.deal_id}` : `/orcamentos/${q?.id ?? ""}`);
+  }
 
   const { data, error } = await supabase
     .from("service_orders")
     .insert({
       tenant_id: ctx.tenantId,
-      client_id: q.deals.client_id,
+      client_id: clientId,
       quote_id: q.id,
     })
     .select("id")
@@ -192,10 +196,17 @@ export async function finalizarOS(
 
   const { data: osData } = await supabase
     .from("service_orders")
-    .select("id, status, garantia_meses")
+    .select("id, status, garantia_meses, km_rodado, tempo_execucao_min, vehicle_id, tecnico_id")
     .eq("id", id)
     .maybeSingle();
-  const os = osData as { status: OsStatus; garantia_meses: number } | null;
+  const os = osData as {
+    status: OsStatus;
+    garantia_meses: number;
+    km_rodado: number | null;
+    tempo_execucao_min: number | null;
+    vehicle_id: string | null;
+    tecnico_id: string | null;
+  } | null;
   if (!os) return { error: "OS não encontrada." };
   if (os.status === "executada" || os.status === "faturada") {
     return { error: "OS já finalizada." };
@@ -203,13 +214,13 @@ export async function finalizarOS(
 
   const { data: linhasData } = await supabase
     .from("service_order_products")
-    .select("product_id, quantidade, products(nome_comercial)")
+    .select("product_id, quantidade, products(nome_comercial, preco_custo)")
     .eq("os_id", id);
   const linhas =
     (linhasData as {
       product_id: string;
       quantidade: number;
-      products: { nome_comercial: string } | null;
+      products: { nome_comercial: string; preco_custo: number | null } | null;
     }[] | null) ?? [];
 
   // 1) valida estoque de TODOS os produtos antes de escrever
@@ -260,7 +271,43 @@ export async function finalizarOS(
     await supabase.from("stock_movements").insert(movimentos);
   }
 
-  // 3) marca executada + próxima revisão de garantia
+  // 3) custeio da OS (snapshot — congela os preços do momento da execução)
+  const HORAS_MES = 220;
+  const custoProdutos = linhas.reduce(
+    (s, l) => s + Number(l.quantidade) * Number(l.products?.preco_custo ?? 0),
+    0,
+  );
+
+  const [{ data: tenantCfg }, { data: vehCfg }, { data: tecCfg }] = await Promise.all([
+    supabase.from("tenants").select("preco_combustivel_litro, custo_hora_padrao").eq("id", ctx.tenantId).maybeSingle(),
+    os.vehicle_id
+      ? supabase.from("vehicles").select("consumo_km_l").eq("id", os.vehicle_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    os.tecnico_id
+      ? supabase.from("employees").select("salario").eq("id", os.tecnico_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const cfg = (tenantCfg as { preco_combustivel_litro: number | null; custo_hora_padrao: number | null } | null) ?? null;
+  const consumo = (vehCfg as { consumo_km_l: number | null } | null)?.consumo_km_l ?? null;
+  const salario = (tecCfg as { salario: number | null } | null)?.salario ?? null;
+
+  // combustível = km × (preço/L ÷ consumo km/L) — 0 se faltar algum dado
+  const precoLitro = Number(cfg?.preco_combustivel_litro ?? 0);
+  const custoCombustivel =
+    os.km_rodado && consumo && precoLitro > 0 && Number(consumo) > 0
+      ? (Number(os.km_rodado) / Number(consumo)) * precoLitro
+      : 0;
+
+  // mão de obra = tempo × custo/hora (salário ÷ 220h, ou custo/hora padrão)
+  const custoHora =
+    salario && Number(salario) > 0
+      ? Number(salario) / HORAS_MES
+      : Number(cfg?.custo_hora_padrao ?? 0);
+  const custoMaoObra = os.tempo_execucao_min
+    ? (Number(os.tempo_execucao_min) / 60) * custoHora
+    : 0;
+
+  // 4) marca executada + próxima revisão de garantia + custos
   const proxima =
     os.garantia_meses > 0
       ? (() => {
@@ -277,10 +324,13 @@ export async function finalizarOS(
       executada_em: new Date().toISOString(),
       saida_em: new Date().toISOString(),
       proxima_revisao_em: proxima,
+      custo_produtos: Math.round(custoProdutos * 100) / 100,
+      custo_combustivel: Math.round(custoCombustivel * 100) / 100,
+      custo_mao_obra: Math.round(custoMaoObra * 100) / 100,
     })
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
 
   revalidatePath(`/os/${id}`);
-  return { message: "OS finalizada — estoque baixado e certificado disponível." };
+  return { message: "OS finalizada — estoque baixado, custo apurado e certificado disponível." };
 }

@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { ROLE_LABELS, type AppRole } from "@/lib/types";
 import { InviteForm } from "@/components/app/invite-form";
 import { revokeInvitation } from "./actions";
+import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,13 +57,12 @@ export default async function EquipePage() {
       | null) ?? [];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Equipe</h1>
-        <p className="text-sm text-muted-foreground">
-          Convide pessoas e defina o papel de cada uma na empresa.
-        </p>
-      </div>
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
+      <PageHeader
+        title="Equipe"
+        description="Convide pessoas e defina o papel de cada uma na empresa."
+        count={members.length}
+      />
 
       <Card>
         <CardHeader>

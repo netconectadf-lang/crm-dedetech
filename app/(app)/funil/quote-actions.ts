@@ -47,6 +47,7 @@ export async function salvarDadosOrcamento(
     .eq("tenant_id", ctx.tenantId);
   if (error) return { error: "Não foi possível salvar." };
   revalidatePath(`/funil`);
+  revalidatePath("/orcamentos", "layout");
   return { message: "Orçamento salvo." };
 }
 
@@ -66,6 +67,7 @@ export async function adicionarItem(
     .insert({ ...parsed.data, tenant_id: ctx.tenantId, quote_id: quoteId });
   if (error) return { error: "Não foi possível adicionar o item." };
   revalidatePath(`/funil`);
+  revalidatePath("/orcamentos", "layout");
   return { message: "Item adicionado." };
 }
 
@@ -78,6 +80,7 @@ export async function removerItem(itemId: string) {
     .eq("id", itemId)
     .eq("tenant_id", ctx.tenantId);
   revalidatePath(`/funil`);
+  revalidatePath("/orcamentos", "layout");
 }
 
 export async function marcarEnviado(quoteId: string) {
@@ -89,6 +92,7 @@ export async function marcarEnviado(quoteId: string) {
     .eq("id", quoteId)
     .eq("tenant_id", ctx.tenantId);
   revalidatePath(`/funil`);
+  revalidatePath("/orcamentos", "layout");
 }
 
 export async function excluirOrcamento(quoteId: string, dealId: string) {
@@ -131,6 +135,7 @@ export async function alternarTarefa(id: string, done: boolean) {
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
   revalidatePath(`/funil`);
+  revalidatePath("/orcamentos", "layout");
 }
 
 export async function excluirTarefa(id: string) {
@@ -142,4 +147,5 @@ export async function excluirTarefa(id: string) {
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
   revalidatePath(`/funil`);
+  revalidatePath("/orcamentos", "layout");
 }

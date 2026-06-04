@@ -92,10 +92,11 @@ export default async function ProdutosPage() {
   ];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="Produtos / saneantes"
         description="Saneantes com registro ANVISA, diluição e dose por m²."
+        count={produtos.length}
         action={
           <ResourceDialog
             trigger={<Button><Plus className="size-4" /> Novo produto</Button>}
@@ -124,7 +125,7 @@ export default async function ProdutosPage() {
               </TableHeader>
               <TableBody>
                 {produtos.map((p) => (
-                  <TableRow key={p.id}>
+                  <TableRow key={p.id} className={p.ativo ? undefined : "opacity-55"}>
                     <TableCell className="font-medium">{p.nome_comercial}</TableCell>
                     <TableCell className="font-mono text-sm">
                       {p.registro_anvisa ?? "—"}

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Plus, ExternalLink, QrCode, AlertTriangle } from "lucide-react";
+import { Plus, ExternalLink, QrCode, AlertTriangle, Radar, Building2 } from "lucide-react";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
@@ -70,6 +71,7 @@ export default async function MipPage() {
 
   const criticos = devices.filter((d) => isCritical(last.get(d.id)?.status ?? null));
   const unidadesMonitoradas = new Set(devices.map((d) => d.unit_id)).size;
+  const semLeitura = devices.filter((d) => !last.has(d.id)).length;
 
   const fields: Field[] = [
     {
@@ -93,7 +95,7 @@ export default async function MipPage() {
   ];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="MIP / Monitoramento"
         description="Dispositivos com QR, leitura por visita e pontos críticos."
@@ -107,22 +109,23 @@ export default async function MipPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card><CardContent className="pt-6"><p className="text-xs uppercase tracking-wide text-muted-foreground">Dispositivos</p><p className="mt-1 text-2xl font-semibold tabular-nums">{devices.length}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-xs uppercase tracking-wide text-muted-foreground">Pontos críticos</p><p className={`mt-1 text-2xl font-semibold tabular-nums ${criticos.length ? "text-rose-600" : ""}`}>{criticos.length}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-xs uppercase tracking-wide text-muted-foreground">Unidades monitoradas</p><p className="mt-1 text-2xl font-semibold tabular-nums">{unidadesMonitoradas}</p></CardContent></Card>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard icon={Radar} label="Dispositivos" value={String(devices.length)} hint="ativos" />
+        <KpiCard icon={AlertTriangle} label="Pontos críticos" value={String(criticos.length)} hint={criticos.length ? "infestação ativa" : "sob controle"} tone={criticos.length ? "danger" : "default"} />
+        <KpiCard icon={QrCode} label="Sem leitura" value={String(semLeitura)} hint={semLeitura ? "escanear na visita" : "todos lidos"} tone={semLeitura ? "warning" : "default"} />
+        <KpiCard icon={Building2} label="Unidades monitoradas" value={String(unidadesMonitoradas)} />
       </div>
 
       {criticos.length > 0 && (
-        <Card className="border-rose-200">
+        <Card className="border-rose-500/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-rose-700">
+            <CardTitle className="flex items-center gap-2 text-base text-rose-300">
               <AlertTriangle className="size-4" /> Pontos críticos (infestação ativa)
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2 text-sm">
             {criticos.map((d) => (
-              <Link key={d.id} href={`/mip/${d.id}`} className="rounded-md bg-rose-50 px-2 py-1 text-rose-700 hover:underline">
+              <Link key={d.id} href={`/mip/${d.id}`} className="rounded-md bg-rose-500/10 px-2 py-1 text-rose-300 hover:underline">
                 #{d.numero} · {d.client_units?.apelido}
               </Link>
             ))}

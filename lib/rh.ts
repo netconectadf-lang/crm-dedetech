@@ -36,3 +36,24 @@ export function vencendo(date: string | null, dias = 30): boolean {
   const d = daysUntil(date);
   return d != null && d <= dias;
 }
+
+export type ConfKey = "sem" | "vencido" | "vencendo" | "ok";
+
+/** Classifica a conformidade de uma validade (ASO, EPI, anuidade). */
+export function conformidade(
+  date: string | null | undefined,
+): { key: ConfKey; label: string; dot: string } {
+  if (!date) return { key: "sem", label: "Sem registro", dot: "bg-muted-foreground/50" };
+  const d = daysUntil(date)!;
+  if (d < 0) return { key: "vencido", label: "Vencido", dot: "bg-destructive" };
+  if (d <= 30) return { key: "vencendo", label: `Vence em ${d}d`, dot: "bg-warning" };
+  return { key: "ok", label: "Em dia", dot: "bg-primary" };
+}
+
+/** Formata uma duração em milissegundos como "8h 30m". */
+export function formatDuracao(ms: number): string {
+  if (ms <= 0) return "—";
+  const h = Math.floor(ms / 3_600_000);
+  const m = Math.floor((ms % 3_600_000) / 60_000);
+  return `${h}h${m > 0 ? ` ${m}m` : ""}`;
+}

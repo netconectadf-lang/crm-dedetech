@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { MobileNav } from "@/components/app/mobile-nav";
 
 type TenantOption = { id: string; nome: string };
 
@@ -39,12 +40,14 @@ export function Topbar({
     .toUpperCase();
 
   return (
-    <header className="flex h-14 items-center justify-between border-b px-4">
-      {/* Seletor de empresa */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="gap-2">
-            <Building2 className="size-4 text-teal-700" />
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 bg-background/70 px-4 backdrop-blur-xl">
+      <div className="flex items-center gap-1">
+        <MobileNav role={role} />
+        {/* Seletor de empresa */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="gap-2">
+              <Building2 className="size-4 text-primary" />
             <span className="max-w-[180px] truncate font-medium">
               {active?.nome ?? "Selecionar empresa"}
             </span>
@@ -71,7 +74,8 @@ export function Topbar({
             ))}
           </DropdownMenuContent>
         )}
-      </DropdownMenu>
+        </DropdownMenu>
+      </div>
 
       {/* Menu do usuário */}
       <DropdownMenu>
@@ -89,7 +93,7 @@ export function Topbar({
               {userEmail}
             </span>
             {role && (
-              <span className="mt-1 text-xs font-normal text-teal-700">
+              <span className="mt-1 text-xs font-normal text-primary">
                 {ROLE_LABELS[role]}
               </span>
             )}

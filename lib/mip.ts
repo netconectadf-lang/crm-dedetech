@@ -31,12 +31,12 @@ export const READING_STATUS_LABEL: Record<MipReadingStatus, string> = {
 };
 
 export const READING_STATUS_TONE: Record<MipReadingStatus, string> = {
-  sem_atividade: "bg-emerald-100 text-emerald-700",
-  consumo_baixo: "bg-sky-100 text-sky-700",
-  consumo_alto: "bg-rose-100 text-rose-700",
-  captura: "bg-orange-100 text-orange-700",
-  danificado: "bg-amber-100 text-amber-700",
-  reposto: "bg-slate-100 text-slate-700",
+  sem_atividade: "bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-500/25",
+  consumo_baixo: "bg-sky-500/15 text-sky-300 ring-1 ring-inset ring-sky-500/25",
+  consumo_alto: "bg-rose-500/15 text-rose-300 ring-1 ring-inset ring-rose-500/25",
+  captura: "bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-500/25",
+  danificado: "bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/25",
+  reposto: "bg-muted text-muted-foreground ring-1 ring-inset ring-border",
 };
 
 /** Ponto crítico: última leitura indica infestação ativa. */

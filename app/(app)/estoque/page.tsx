@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowDownToLine, ArrowUpFromLine, History, AlertTriangle } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, History, AlertTriangle, Ban, CalendarDays, Boxes, Pencil } from "lucide-react";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
@@ -11,6 +12,7 @@ import {
   registrarSaida,
   registrarPerda,
   ajustarInventario,
+  editarLote,
   excluirLote,
 } from "./actions";
 import { PageHeader } from "@/components/app/page-header";
@@ -35,6 +37,9 @@ type Batch = {
   product_id: string;
   lote: string | null;
   validade: string | null;
+  fabricante: string | null;
+  nf_entrada: string | null;
+  data_entrada: string | null;
   qtd_atual: number;
   products: { nome_comercial: string } | null;
 };
@@ -46,7 +51,7 @@ export default async function EstoquePage() {
   const [{ data: batchesData }, { data: prodData }] = await Promise.all([
     supabase
       .from("stock_batches")
-      .select("id, product_id, lote, validade, qtd_atual, products(nome_comercial)")
+      .select("id, product_id, lote, validade, fabricante, nf_entrada, data_entrada, qtd_atual, products(nome_comercial)")
       .order("validade", { ascending: true, nullsFirst: false }),
     supabase
       .from("products")
@@ -95,15 +100,8 @@ export default async function EstoquePage() {
     { name: "motivo", label: "Motivo / destino", full: true },
   ];
 
-  const kpis = [
-    { label: "Produtos críticos", value: criticos.length, tone: criticos.length > 0 },
-    { label: "Lotes vencidos", value: vencidos.length, tone: vencidos.length > 0 },
-    { label: "A vencer (90d)", value: aVencer.length, tone: aVencer.length > 0 },
-    { label: "Lotes em estoque", value: comSaldo.length, tone: false },
-  ];
-
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="Estoque"
         description="Lotes, validade e movimentações (saída por FEFO)."
@@ -132,28 +130,22 @@ export default async function EstoquePage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((k) => (
-          <Card key={k.label}>
-            <CardContent className="pt-6">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{k.label}</p>
-              <p className={`mt-1 text-2xl font-semibold tabular-nums ${k.tone ? "text-rose-600" : ""}`}>
-                {k.value}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        <KpiCard icon={AlertTriangle} label="Produtos críticos" value={String(criticos.length)} hint={criticos.length ? "abaixo do mínimo" : "níveis ok"} tone={criticos.length ? "danger" : "default"} />
+        <KpiCard icon={Ban} label="Lotes vencidos" value={String(vencidos.length)} hint={vencidos.length ? "descartar" : "nenhum"} tone={vencidos.length ? "danger" : "default"} />
+        <KpiCard icon={CalendarDays} label="A vencer (90d)" value={String(aVencer.length)} hint={aVencer.length ? "girar primeiro" : "tranquilo"} tone={aVencer.length ? "warning" : "default"} />
+        <KpiCard icon={Boxes} label="Lotes em estoque" value={String(comSaldo.length)} />
       </div>
 
       {criticos.length > 0 && (
-        <Card className="border-rose-200">
+        <Card className="border-rose-500/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-rose-700">
+            <CardTitle className="flex items-center gap-2 text-base text-rose-300">
               <AlertTriangle className="size-4" /> Produtos abaixo do estoque mínimo
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2 text-sm">
             {criticos.map((p) => (
-              <span key={p.id} className="rounded-md bg-rose-50 px-2 py-1 text-rose-700">
+              <span key={p.id} className="rounded-md bg-rose-500/10 px-2 py-1 text-rose-300">
                 {p.nome_comercial} ({saldoPorProduto.get(p.id) ?? 0}/{p.estoque_minimo})
               </span>
             ))}
@@ -213,6 +205,27 @@ export default async function EstoquePage() {
                             ]}
                             action={ajustarInventario.bind(null, b.id, b.product_id, Number(b.qtd_atual))}
                             submitLabel="Ajustar"
+                          />
+                          <ResourceDialog
+                            trigger={<Button variant="ghost" size="icon"><Pencil className="size-4" /></Button>}
+                            title="Editar lote"
+                            description="Ajuste validade, lote, fabricante e NF. (A quantidade muda por entrada/saída/inventário.)"
+                            fields={[
+                              { name: "lote", label: "Lote" },
+                              { name: "validade", label: "Validade", type: "date" },
+                              { name: "fabricante", label: "Fabricante" },
+                              { name: "nf_entrada", label: "NF de entrada" },
+                              { name: "data_entrada", label: "Data de entrada", type: "date" },
+                            ]}
+                            defaultValues={{
+                              lote: b.lote ?? "",
+                              validade: b.validade ?? "",
+                              fabricante: b.fabricante ?? "",
+                              nf_entrada: b.nf_entrada ?? "",
+                              data_entrada: b.data_entrada ?? "",
+                            }}
+                            action={editarLote.bind(null, b.id)}
+                            submitLabel="Salvar"
                           />
                           <DeleteButton nome={`lote ${b.lote ?? ""}`} action={excluirLote.bind(null, b.id)} />
                         </div>

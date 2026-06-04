@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getPortalContext } from "@/lib/portal";
 import { logoutAction } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function PortalLayout({
   children,
@@ -30,12 +35,17 @@ export default async function PortalLayout({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="flex h-14 items-center justify-between border-b px-6">
-        <Link href="/portal" className="flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-md bg-teal-700 text-sm font-bold text-white">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 bg-background/70 px-6 backdrop-blur-xl">
+        <Link href="/portal" className="group flex items-center gap-2.5">
+          <span className="grid size-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground shadow-[0_0_18px_-2px_var(--color-primary)] transition-transform group-hover:scale-105">
             D
           </span>
-          <span className="font-semibold">Portal do Cliente</span>
+          <span className="font-semibold tracking-tight">
+            Portal
+            <span className="ml-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              do cliente
+            </span>
+          </span>
         </Link>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-muted-foreground sm:inline">

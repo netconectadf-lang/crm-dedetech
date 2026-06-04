@@ -74,7 +74,7 @@ export default async function MipDevicePage({
   const readings = (readData as { id: string; status: MipReadingStatus; consumo_pct: number | null; captura: number; observacao: string | null; lida_em: string }[] | null) ?? [];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
         <Link href="/mip"><ArrowLeft className="size-4" /> MIP</Link>
       </Button>

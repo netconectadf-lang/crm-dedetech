@@ -13,6 +13,7 @@ type QuoteFull = {
   validade: string | null;
   desconto: number;
   observacoes: string | null;
+  clients: { razao_social: string } | null;
   deals: { nome_contato: string; clients: { razao_social: string } | null } | null;
   tenants: {
     razao_social: string;
@@ -39,7 +40,7 @@ export default async function PropostaPublicaPage({
   const { data } = await supabase
     .from("quotes")
     .select(
-      "numero, status, validade, desconto, observacoes, deals(nome_contato, clients(razao_social)), tenants(razao_social, nome_fantasia, cor_primaria, registro_vigilancia_sanitaria), quote_items(descricao, quantidade, preco_unit, subtotal)",
+      "numero, status, validade, desconto, observacoes, clients(razao_social), deals(nome_contato, clients(razao_social)), tenants(razao_social, nome_fantasia, cor_primaria, registro_vigilancia_sanitaria), quote_items(descricao, quantidade, preco_unit, subtotal)",
     )
     .eq("public_token", token)
     .maybeSingle();
@@ -51,7 +52,10 @@ export default async function PropostaPublicaPage({
     quote.tenants?.nome_fantasia || quote.tenants?.razao_social || "Empresa";
   const cor = quote.tenants?.cor_primaria || "#0F766E";
   const cliente =
-    quote.deals?.clients?.razao_social || quote.deals?.nome_contato || "Cliente";
+    quote.clients?.razao_social ||
+    quote.deals?.clients?.razao_social ||
+    quote.deals?.nome_contato ||
+    "Cliente";
 
   const subtotal = quote.quote_items.reduce((s, i) => s + Number(i.subtotal), 0);
   const total = subtotal - Number(quote.desconto);
@@ -186,9 +190,9 @@ function Banner({
   children: React.ReactNode;
 }) {
   const tones = {
-    emerald: "bg-emerald-50 text-emerald-800 border-emerald-200",
-    rose: "bg-rose-50 text-rose-800 border-rose-200",
-    amber: "bg-amber-50 text-amber-800 border-amber-200",
+    emerald: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
+    rose: "bg-rose-500/10 text-rose-300 border-rose-500/30",
+    amber: "bg-amber-500/10 text-amber-300 border-amber-500/30",
   };
   return (
     <div className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm ${tones[tone]}`}>

@@ -74,7 +74,7 @@ export default async function RhEmployeePage({
   ];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
         <Link href="/rh"><ArrowLeft className="size-4" /> RH</Link>
       </Button>
@@ -113,7 +113,7 @@ export default async function RhEmployeePage({
                     <Badge variant={a.status === "aprovada" ? "default" : a.status === "recusada" ? "destructive" : "secondary"}>{ABSENCE_STATUS_LABEL[a.status]}</Badge>
                     {a.status === "solicitada" && (
                       <>
-                        <form action={decidirAusencia.bind(null, a.id, emp.id, "aprovada")}><Button type="submit" variant="ghost" size="sm" className="text-emerald-700">Aprovar</Button></form>
+                        <form action={decidirAusencia.bind(null, a.id, emp.id, "aprovada")}><Button type="submit" variant="ghost" size="sm" className="text-emerald-300">Aprovar</Button></form>
                         <form action={decidirAusencia.bind(null, a.id, emp.id, "recusada")}><Button type="submit" variant="ghost" size="sm" className="text-destructive">Recusar</Button></form>
                       </>
                     )}
@@ -144,7 +144,7 @@ export default async function RhEmployeePage({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             Exames ocupacionais (ASO)
-            <span className="inline-flex items-center gap-1 text-xs font-normal text-amber-700">
+            <span className="inline-flex items-center gap-1 text-xs font-normal text-amber-300">
               <ShieldAlert className="size-3.5" /> dado sensível (LGPD)
             </span>
           </CardTitle>

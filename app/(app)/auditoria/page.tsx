@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,6 +20,12 @@ const ACTION_VARIANT: Record<string, "default" | "secondary" | "destructive"> =
     UPDATE: "secondary",
     DELETE: "destructive",
   };
+
+const ACTION_LABEL: Record<string, string> = {
+  INSERT: "Criação",
+  UPDATE: "Edição",
+  DELETE: "Exclusão",
+};
 
 export default async function AuditoriaPage() {
   const ctx = await requireRole(["owner", "financeiro"]);
@@ -43,13 +50,12 @@ export default async function AuditoriaPage() {
       | null) ?? [];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Atividade recente</h1>
-        <p className="text-sm text-muted-foreground">
-          Registro de alterações na empresa (últimos 100 eventos).
-        </p>
-      </div>
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
+      <PageHeader
+        title="Atividade recente"
+        description="Registro de alterações na empresa (últimos 100 eventos)."
+        count={logs.length}
+      />
 
       <Card>
         <CardContent className="pt-6">
@@ -74,7 +80,7 @@ export default async function AuditoriaPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={ACTION_VARIANT[l.action] ?? "outline"}>
-                        {l.action}
+                        {ACTION_LABEL[l.action] ?? l.action}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-mono text-xs">

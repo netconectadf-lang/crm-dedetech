@@ -17,6 +17,7 @@ import {
   type ContractStatus,
   type AdjustmentIndex,
 } from "@/lib/contratos";
+import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { ResourceForm } from "@/components/app/resource-form";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -83,14 +84,14 @@ export default async function ContratoPage({
       supabase.from("contract_amendments").select("id, data, descricao, valor_novo").eq("contract_id", id).order("data", { ascending: false }),
       supabase.from("services").select("id, nome, preco_base").eq("ativo", true).order("nome"),
       supabase.from("client_units").select("id, apelido").eq("client_id", c.client_id).order("apelido"),
-      supabase.from("clients").select("id, razao_social").eq("ativo", true).order("razao_social"),
+      supabase.from("clients").select(CLIENTE_OPCAO_COLS).eq("ativo", true).order("razao_social"),
     ]);
 
   const items = (itemsData as { id: string; descricao: string; quantidade: number; valor: number }[] | null) ?? [];
   const aditivos = (amendData as { id: string; data: string; descricao: string; valor_novo: number | null }[] | null) ?? [];
   const servicos = (servData as { id: string; nome: string; preco_base: number }[] | null) ?? [];
   const unidades = (unitData as { id: string; apelido: string }[] | null) ?? [];
-  const clients = (clientsData as { id: string; razao_social: string }[] | null) ?? [];
+  const clients = (clientsData as ClienteOpcao[] | null) ?? [];
 
   const visitas =
     c.status === "ativo"
@@ -104,7 +105,7 @@ export default async function ContratoPage({
       label: "Cliente",
       type: "select",
       required: true,
-      options: clients.map((cl) => ({ value: cl.id, label: cl.razao_social })),
+      options: clients.map((cl) => ({ value: cl.id, label: rotuloCliente(cl) })),
     },
     { name: "titulo", label: "Título", required: true, full: true },
     {
@@ -133,7 +134,7 @@ export default async function ContratoPage({
   ];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
         <Link href="/contratos"><ArrowLeft className="size-4" /> Contratos</Link>
       </Button>
@@ -204,7 +205,8 @@ export default async function ContratoPage({
               </ul>
             )}
             <p className="mt-3 text-xs text-muted-foreground">
-              Geração automática de OS entra na Fase 6.
+              Use <span className="text-foreground">Gerar visita (OS)</span> acima para
+              abrir a próxima ordem de serviço.
             </p>
           </CardContent>
         </Card>
@@ -213,9 +215,10 @@ export default async function ContratoPage({
           <CardHeader><CardTitle className="text-base">Rentabilidade</CardTitle></CardHeader>
           <CardContent className="space-y-1.5 text-sm">
             <p><span className="text-muted-foreground">Receita/ciclo:</span> <span className="tabular-nums">{formatBRL(c.valor)}</span></p>
+            <p><span className="text-muted-foreground">Receita/mês (MRR):</span> <span className="tabular-nums">{formatBRL(mrr)}</span></p>
             <p className="text-xs text-muted-foreground">
-              Custo (produto + combustível + mão de obra) será calculado a partir
-              das OS — Fases 6/8.
+              Em breve: custo real (produto + combustível + mão de obra) puxado das
+              OS executadas para apurar a margem.
             </p>
           </CardContent>
         </Card>

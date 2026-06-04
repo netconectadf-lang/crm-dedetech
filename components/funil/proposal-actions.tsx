@@ -20,7 +20,7 @@ export function ProposalActions({ token }: { token: string }) {
   return (
     <div className="flex flex-wrap gap-3 print:hidden">
       <form action={aceitarProposta.bind(null, token)}>
-        <Button type="submit" size="lg" className="bg-emerald-600 hover:bg-emerald-700">
+        <Button type="submit" size="lg" className="bg-primary hover:bg-primary/90">
           <Check className="size-4" /> Aceitar proposta
         </Button>
       </form>

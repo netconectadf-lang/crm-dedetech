@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import { signIn, listUnitsFromTickets } from "@/lib/trilogo/client";
 import { montarSugestoes, type ClienteParaMapa } from "@/lib/trilogo/match";
+import { nomeCurto } from "@/lib/clientes";
 import { sincronizarAgora } from "./actions";
 import {
   TrilogoMapa,
@@ -36,7 +37,7 @@ type SyncRun = {
 };
 
 function clienteLabel(c: ClienteParaMapa): string {
-  const nome = c.nome_fantasia?.trim() || c.razao_social;
+  const nome = nomeCurto(c.nome_fantasia?.trim() || c.razao_social);
   const local = [c.cidade, c.uf].filter(Boolean).join("/");
   return local ? `${nome} — ${local}` : nome;
 }

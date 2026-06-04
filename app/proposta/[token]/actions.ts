@@ -17,17 +17,18 @@ export async function aceitarProposta(token: string) {
     .maybeSingle();
   if (!quote || (quote as { status: string }).status === "aceito") return;
 
-  const q = quote as { id: string; deal_id: string };
+  const q = quote as { id: string; deal_id: string | null };
   await supabase
     .from("quotes")
     .update({ status: "aceito", aceito_em: new Date().toISOString() })
     .eq("id", q.id);
-  await supabase.from("deals").update({ stage: "ganho" }).eq("id", q.deal_id);
-
-  // GANCHO F4/F6: aqui o orçamento aceito deve gerar Contrato (recorrente)
-  // ou OS (avulsa). Implementar quando as fases existirem.
+  // se veio do funil, marca o negócio como ganho (orçamento avulso não tem deal)
+  if (q.deal_id) {
+    await supabase.from("deals").update({ stage: "ganho" }).eq("id", q.deal_id);
+  }
 
   revalidatePath(`/proposta/${token}`);
+  revalidatePath("/orcamentos", "layout");
 }
 
 export async function recusarProposta(token: string) {

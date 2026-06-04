@@ -57,10 +57,11 @@ export default async function ServicosPage() {
   const servicos = (data as Servico[] | null) ?? [];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="Catálogo de serviços"
         description="Serviços oferecidos, com preço e garantia padrão."
+        count={servicos.length}
         action={
           <ResourceDialog
             trigger={<Button><Plus className="size-4" /> Novo serviço</Button>}
@@ -89,7 +90,7 @@ export default async function ServicosPage() {
               </TableHeader>
               <TableBody>
                 {servicos.map((s) => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s.id} className={s.ativo ? undefined : "opacity-55"}>
                     <TableCell className="font-medium">{s.nome}</TableCell>
                     <TableCell>{formatBRL(s.preco_base)}</TableCell>
                     <TableCell>

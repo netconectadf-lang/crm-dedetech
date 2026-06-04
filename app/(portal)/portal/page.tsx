@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { CalendarDays, ArrowDownCircle, ClipboardList } from "lucide-react";
 
 import { getPortalContext } from "@/lib/portal";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -12,11 +13,18 @@ import { effectiveStatus, type FinanceStatus } from "@/lib/financeiro";
 import type { Field } from "@/components/app/resource-form";
 import { ResourceForm } from "@/components/app/resource-form";
 import { abrirChamado } from "./actions";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = { title: "Portal do Cliente" };
+
+const CHAMADO_STATUS: Record<string, string> = {
+  aberto: "Aberto",
+  em_andamento: "Em andamento",
+  resolvido: "Resolvido",
+};
 
 const chamadoFields: Field[] = [
   {
@@ -61,12 +69,45 @@ export default async function PortalHomePage() {
   ).sort((a, b) => a.data.getTime() - b.data.getTime()).slice(0, 4);
   const abertas = ar.filter((a) => a.status === "a_vencer" || a.status === "parcial");
   const chargeByAr = new Map(charges.map((c) => [c.ar_id, c.invoice_url]));
+  const totalAberto = abertas.reduce((s, a) => s + (Number(a.valor) - Number(a.valor_pago)), 0);
+
+  // próxima visita (data futura mais próxima entre OS agendadas e visitas de contrato)
+  const hoje = new Date().toISOString().slice(0, 10);
+  const datasFuturas = [
+    ...agendadas.map((o) => o.scheduled_at?.slice(0, 10)).filter(Boolean) as string[],
+    ...proxVisitas.map((v) => v.data.toISOString().slice(0, 10)),
+  ]
+    .filter((d) => d >= hoje)
+    .sort();
+  const proximaVisita = datasFuturas[0];
 
   return (
     <main className="mx-auto flex max-w-3xl flex-1 flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold">Olá, {portal.clientName} 👋</h1>
-        <p className="text-sm text-muted-foreground">Acompanhe seus serviços, agenda e financeiro.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Olá, {portal.clientName}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Acompanhe seus serviços, agenda e financeiro.</p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <KpiCard
+          icon={CalendarDays}
+          label="Próxima visita"
+          value={proximaVisita ? formatDate(proximaVisita) : "—"}
+          hint={proximaVisita ? "agendada" : "nada agendado"}
+          tone={proximaVisita ? "ok" : "default"}
+        />
+        <KpiCard
+          icon={ArrowDownCircle}
+          label="Em aberto"
+          value={formatBRL(totalAberto)}
+          hint={`${abertas.length} ${abertas.length === 1 ? "cobrança" : "cobranças"}`}
+          tone={totalAberto > 0 ? "warning" : "default"}
+        />
+        <KpiCard
+          icon={ClipboardList}
+          label="Serviços realizados"
+          value={String(historico.length)}
+        />
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
@@ -98,7 +139,7 @@ export default async function PortalHomePage() {
           <CardHeader><CardTitle className="text-base">Financeiro</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             {abertas.length === 0 ? (
-              <p className="text-muted-foreground">Nenhuma cobrança em aberto. 🎉</p>
+              <p className="text-muted-foreground">Tudo em dia — nenhuma cobrança em aberto.</p>
             ) : (
               abertas.map((a) => {
                 const st = effectiveStatus(a);
@@ -148,7 +189,9 @@ export default async function PortalHomePage() {
               {reqs.map((r, i) => (
                 <li key={i} className="flex items-center justify-between py-2">
                   <span className="flex-1 truncate text-muted-foreground">{r.mensagem}</span>
-                  <Badge variant="outline">{r.status}</Badge>
+                  <Badge variant={r.status === "resolvido" ? "default" : "outline"}>
+                    {CHAMADO_STATUS[r.status] ?? r.status}
+                  </Badge>
                 </li>
               ))}
             </ul>

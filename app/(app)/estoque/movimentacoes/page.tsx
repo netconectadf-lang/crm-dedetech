@@ -51,7 +51,7 @@ export default async function MovimentacoesPage() {
   const movs = (data as Movement[] | null) ?? [];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
         <Link href="/estoque"><ArrowLeft className="size-4" /> Estoque</Link>
       </Button>
@@ -88,7 +88,7 @@ export default async function MovimentacoesPage() {
                     <TableCell className="font-mono text-sm">
                       {m.stock_batches?.lote ?? "—"}
                     </TableCell>
-                    <TableCell className={`text-right tabular-nums ${Number(m.quantidade) < 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                    <TableCell className={`text-right tabular-nums ${Number(m.quantidade) < 0 ? "text-rose-400" : "text-emerald-400"}`}>
                       {Number(m.quantidade) > 0 ? "+" : ""}
                       {m.quantidade}
                     </TableCell>

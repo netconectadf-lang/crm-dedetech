@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Plus, ArrowLeft, Check, Ban } from "lucide-react";
+import { Plus, ArrowLeft, Check, Ban, ArrowDownCircle, AlertTriangle, ClipboardList } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatBRL, formatDate } from "@/lib/format";
 import { effectiveStatus, PAYMENT_LABEL, type FinanceStatus, type PaymentMethod } from "@/lib/financeiro";
+import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { salvarReceber, receber, cancelarReceber, excluirReceber } from "../actions";
 import { gerarCobranca } from "../charge-actions";
@@ -12,6 +13,8 @@ import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
 import { DeleteButton } from "@/components/app/delete-button";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { EmitirNotaButton } from "@/components/notas/emitir-nota";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -36,8 +39,21 @@ type AR = {
   clients: { razao_social: string } | null;
 };
 
-export default async function ReceberPage() {
+const FILTROS = [
+  { key: "", label: "Todas" },
+  { key: "a_vencer", label: "A vencer" },
+  { key: "vencido", label: "Vencidas" },
+  { key: "parcial", label: "Parciais" },
+  { key: "quitado", label: "Quitadas" },
+] as const;
+
+export default async function ReceberPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ f?: string }>;
+}) {
   await requireRole(["owner", "financeiro"]);
+  const { f } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: arData }, { data: clientsData }, { data: banksData }] =
@@ -46,12 +62,12 @@ export default async function ReceberPage() {
         .from("accounts_receivable")
         .select("id, descricao, valor, valor_pago, vencimento, status, forma_pagamento, clients(razao_social)")
         .order("vencimento"),
-      supabase.from("clients").select("id, razao_social").eq("ativo", true).order("razao_social"),
+      supabase.from("clients").select(CLIENTE_OPCAO_COLS).eq("ativo", true).order("razao_social"),
       supabase.from("bank_accounts").select("id, nome").eq("ativo", true).order("nome"),
     ]);
 
   const contas = (arData as AR[] | null) ?? [];
-  const clients = (clientsData as { id: string; razao_social: string }[] | null) ?? [];
+  const clients = (clientsData as ClienteOpcao[] | null) ?? [];
   const banks = (banksData as { id: string; nome: string }[] | null) ?? [];
 
   const abertas = contas.filter((c) => c.status === "a_vencer" || c.status === "parcial");
@@ -60,8 +76,10 @@ export default async function ReceberPage() {
     .filter((c) => effectiveStatus(c).key === "vencido")
     .reduce((s, c) => s + (Number(c.valor) - Number(c.valor_pago)), 0);
 
+  const filtradas = f ? contas.filter((c) => effectiveStatus(c).key === f) : contas;
+
   const createFields: Field[] = [
-    { name: "client_id", label: "Cliente", type: "select", options: [{ value: "none", label: "—" }, ...clients.map((c) => ({ value: c.id, label: c.razao_social }))] },
+    { name: "client_id", label: "Cliente", type: "select", options: [{ value: "none", label: "—" }, ...clients.map((c) => ({ value: c.id, label: rotuloCliente(c) }))] },
     { name: "descricao", label: "Descrição", required: true, full: true },
     { name: "valor", label: "Valor (R$)", type: "number", required: true },
     { name: "vencimento", label: "Vencimento", type: "date", required: true },
@@ -79,7 +97,7 @@ export default async function ReceberPage() {
   ];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
         <Link href="/financeiro"><ArrowLeft className="size-4" /> Financeiro</Link>
       </Button>
@@ -97,12 +115,20 @@ export default async function ReceberPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card><CardContent className="pt-6"><p className="text-xs uppercase tracking-wide text-muted-foreground">Em aberto</p><p className="mt-1 text-2xl font-semibold tabular-nums">{formatBRL(emAberto)}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-xs uppercase tracking-wide text-muted-foreground">Vencido</p><p className="mt-1 text-2xl font-semibold tabular-nums text-rose-600">{formatBRL(vencido)}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-xs uppercase tracking-wide text-muted-foreground">Contas</p><p className="mt-1 text-2xl font-semibold tabular-nums">{contas.length}</p></CardContent></Card>
+        <KpiCard icon={ArrowDownCircle} label="Em aberto" value={formatBRL(emAberto)} hint={`${abertas.length} contas`} />
+        <KpiCard icon={AlertTriangle} label="Vencido" value={formatBRL(vencido)} tone={vencido > 0 ? "danger" : "default"} hint={vencido > 0 ? "ação necessária" : "em dia"} />
+        <KpiCard icon={ClipboardList} label="Total de contas" value={String(contas.length)} />
       </div>
 
-      {contas.length === 0 ? (
+      <div className="flex flex-wrap gap-2">
+        {FILTROS.map((flt) => (
+          <Button key={flt.key} asChild size="sm" variant={(f ?? "") === flt.key ? "default" : "outline"}>
+            <Link href={flt.key ? `/financeiro/receber?f=${flt.key}` : "/financeiro/receber"}>{flt.label}</Link>
+          </Button>
+        ))}
+      </div>
+
+      {filtradas.length === 0 ? (
         <EmptyState title="Nada a receber" description="Cadastre cobranças ou gere a partir de uma OS." />
       ) : (
         <Card>
@@ -119,7 +145,7 @@ export default async function ReceberPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contas.map((c) => {
+                {filtradas.map((c) => {
                   const st = effectiveStatus(c);
                   const aberto = c.status === "a_vencer" || c.status === "parcial";
                   return (
@@ -147,7 +173,7 @@ export default async function ReceberPage() {
                                 <Button type="submit" variant="ghost" size="sm" title="Gerar boleto">Boleto</Button>
                               </form>
                               <ResourceDialog
-                                trigger={<Button variant="ghost" size="sm" className="text-emerald-700"><Check className="size-4" /> Receber</Button>}
+                                trigger={<Button variant="ghost" size="sm" className="text-emerald-300"><Check className="size-4" /> Receber</Button>}
                                 title="Registrar recebimento"
                                 description={`Saldo: ${formatBRL(Number(c.valor) - Number(c.valor_pago))}`}
                                 fields={baixaFields}
@@ -159,6 +185,7 @@ export default async function ReceberPage() {
                               </form>
                             </>
                           )}
+                          <EmitirNotaButton arId={c.id} />
                           <DeleteButton nome={c.descricao} action={excluirReceber.bind(null, c.id)} />
                         </div>
                       </TableCell>

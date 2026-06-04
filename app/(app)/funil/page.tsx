@@ -1,16 +1,17 @@
-import { Plus } from "lucide-react";
+import { Plus, Wallet, KanbanSquare, Landmark, Check } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatBRL } from "@/lib/format";
+import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import type { DealCard } from "@/components/funil/kanban-board";
 import { KanbanBoard } from "@/components/funil/kanban-board";
 import { criarLead } from "./actions";
 import { PageHeader } from "@/components/app/page-header";
 import { ResourceDialog } from "@/components/app/resource-dialog";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Funil" };
 
@@ -23,12 +24,11 @@ export default async function FunilPage() {
       .from("deals")
       .select("id, nome_contato, valor_estimado, origem, stage")
       .order("created_at", { ascending: false }),
-    supabase.from("clients").select("id, razao_social").eq("ativo", true).order("razao_social"),
+    supabase.from("clients").select(CLIENTE_OPCAO_COLS).eq("ativo", true).order("razao_social"),
   ]);
 
   const deals = (dealsData as DealCard[] | null) ?? [];
-  const clients =
-    (clientsData as { id: string; razao_social: string }[] | null) ?? [];
+  const clients = (clientsData as ClienteOpcao[] | null) ?? [];
 
   // Métricas
   const ganhos = deals.filter((d) => d.stage === "ganho");
@@ -67,21 +67,14 @@ export default async function FunilPage() {
       type: "select",
       options: [
         { value: "none", label: "Sem vínculo" },
-        ...clients.map((c) => ({ value: c.id, label: c.razao_social })),
+        ...clients.map((c) => ({ value: c.id, label: rotuloCliente(c) })),
       ],
     },
     { name: "descricao", label: "Observações", type: "textarea" },
   ];
 
-  const kpis = [
-    { label: "Em aberto", value: formatBRL(emAberto) },
-    { label: "Conversão", value: `${conversao}%` },
-    { label: "Ticket médio", value: formatBRL(ticket) },
-    { label: "Ganhos", value: String(ganhos.length) },
-  ];
-
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="Funil comercial"
         description="Arraste os cartões entre os estágios."
@@ -96,16 +89,10 @@ export default async function FunilPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((k) => (
-          <Card key={k.label}>
-            <CardContent className="pt-6">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                {k.label}
-              </p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">{k.value}</p>
-            </CardContent>
-          </Card>
-        ))}
+        <KpiCard icon={Wallet} label="Em aberto" value={formatBRL(emAberto)} hint="negócios no funil" tone="ok" />
+        <KpiCard icon={KanbanSquare} label="Conversão" value={`${conversao}%`} hint={`${ganhos.length} ganhos · ${perdidos.length} perdidos`} />
+        <KpiCard icon={Landmark} label="Ticket médio" value={formatBRL(ticket)} hint="por negócio ganho" />
+        <KpiCard icon={Check} label="Ganhos" value={String(ganhos.length)} tone={ganhos.length > 0 ? "ok" : "default"} />
       </div>
 
       <KanbanBoard initialDeals={deals} />

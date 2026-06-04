@@ -32,9 +32,9 @@ export function expiryStatus(validade: string | null): {
 }
 
 export const EXPIRY_BADGE: Record<ExpiryTone, string> = {
-  vencido: "bg-rose-100 text-rose-700",
-  critico: "bg-orange-100 text-orange-700",
-  atencao: "bg-amber-100 text-amber-700",
-  ok: "bg-emerald-100 text-emerald-700",
-  none: "bg-muted text-muted-foreground",
+  vencido: "bg-rose-500/15 text-rose-300 ring-1 ring-inset ring-rose-500/25",
+  critico: "bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-500/25",
+  atencao: "bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/25",
+  ok: "bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-500/25",
+  none: "bg-muted text-muted-foreground ring-1 ring-inset ring-border",
 };

@@ -30,7 +30,7 @@ export function StageActions({ dealId }: { dealId: string }) {
     <div className="flex gap-2">
       <Button
         variant="outline"
-        className="text-emerald-700"
+        className="text-emerald-300"
         onClick={() => moverDeal(dealId, "ganho")}
       >
         <Trophy className="size-4" /> Ganhar
@@ -38,7 +38,7 @@ export function StageActions({ dealId }: { dealId: string }) {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" className="text-rose-700">
+          <Button variant="outline" className="text-rose-300">
             <X className="size-4" /> Perder
           </Button>
         </DialogTrigger>

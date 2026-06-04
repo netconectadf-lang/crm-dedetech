@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus, FileText } from "lucide-react";
+import { ArrowLeft, Plus, FileText, MessageCircle } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { formatBRL, formatPhone } from "@/lib/format";
+import { formatBRL, formatPhone, onlyDigits } from "@/lib/format";
+import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import {
   STAGE_LABEL,
+  STAGE_TONE,
   ORIGIN_LABEL,
   LOSS_LABEL,
   QUOTE_STATUS_LABEL,
@@ -18,6 +20,7 @@ import {
 import type { Field } from "@/components/app/resource-form";
 import { TaskList, type Task } from "@/components/funil/task-list";
 import { StageActions } from "@/components/funil/stage-actions";
+import { StageStepper } from "@/components/funil/stage-stepper";
 import { atualizarDeal, excluirDeal } from "../actions";
 import { criarOrcamento } from "../quote-actions";
 import { PageHeader } from "@/components/app/page-header";
@@ -86,16 +89,22 @@ export default async function DealPage({
         .select("id, numero, status, desconto, quote_items(subtotal)")
         .eq("deal_id", id)
         .order("numero", { ascending: false }),
-      supabase.from("clients").select("id, razao_social").eq("ativo", true).order("razao_social"),
+      supabase.from("clients").select(CLIENTE_OPCAO_COLS).eq("ativo", true).order("razao_social"),
     ]);
 
   const tasks = (tasksData as Task[] | null) ?? [];
   const quotes = (quotesData as QuoteRow[] | null) ?? [];
-  const clients =
-    (clientsData as { id: string; razao_social: string }[] | null) ?? [];
+  const clients = (clientsData as ClienteOpcao[] | null) ?? [];
 
   const quoteTotal = (q: QuoteRow) =>
     q.quote_items.reduce((s, i) => s + Number(i.subtotal), 0) - Number(q.desconto);
+
+  const waDigits = deal.telefone ? onlyDigits(deal.telefone) : "";
+  const waLink = waDigits
+    ? `https://wa.me/${waDigits.startsWith("55") ? waDigits : `55${waDigits}`}?text=${encodeURIComponent(
+        `Olá ${deal.nome_contato}!`,
+      )}`
+    : null;
 
   const leadFields: Field[] = [
     { name: "nome_contato", label: "Nome do contato", required: true, full: true },
@@ -117,14 +126,14 @@ export default async function DealPage({
       type: "select",
       options: [
         { value: "none", label: "Sem vínculo" },
-        ...clients.map((c) => ({ value: c.id, label: c.razao_social })),
+        ...clients.map((c) => ({ value: c.id, label: rotuloCliente(c) })),
       ],
     },
     { name: "descricao", label: "Observações", type: "textarea" },
   ];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
         <Link href="/funil">
           <ArrowLeft className="size-4" /> Funil
@@ -150,15 +159,22 @@ export default async function DealPage({
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Badge variant="secondary">{STAGE_LABEL[deal.stage]}</Badge>
-        {deal.stage === "perdido" && deal.motivo_perda && (
-          <Badge variant="outline" className="text-rose-700">
-            Perda: {LOSS_LABEL[deal.motivo_perda]}
-          </Badge>
-        )}
-        <StageActions dealId={deal.id} />
-      </div>
+      <Card>
+        <CardContent className="space-y-5 pt-6">
+          <StageStepper stage={deal.stage} />
+          <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+            <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${STAGE_TONE[deal.stage]}`}>
+              {STAGE_LABEL[deal.stage]}
+            </span>
+            {deal.stage === "perdido" && deal.motivo_perda && (
+              <Badge variant="outline" className="text-rose-300">
+                Perda: {LOSS_LABEL[deal.motivo_perda]}
+              </Badge>
+            )}
+            <StageActions dealId={deal.id} />
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
@@ -172,6 +188,13 @@ export default async function DealPage({
             <p><span className="text-muted-foreground">Valor estimado:</span> <span className="tabular-nums">{formatBRL(deal.valor_estimado)}</span></p>
             {deal.descricao && (
               <p className="pt-2 text-muted-foreground">{deal.descricao}</p>
+            )}
+            {waLink && (
+              <Button asChild variant="outline" size="sm" className="mt-2 w-full">
+                <a href={waLink} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="size-4" /> Chamar no WhatsApp
+                </a>
+              </Button>
             )}
           </CardContent>
         </Card>

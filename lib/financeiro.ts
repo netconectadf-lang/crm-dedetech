@@ -45,16 +45,16 @@ export function effectiveStatus(row: {
   if (row.status === "cancelado")
     return { key: "cancelado", label: "Cancelado", tone: "bg-muted text-muted-foreground" };
   if (row.status === "quitado")
-    return { key: "quitado", label: "Quitado", tone: "bg-emerald-100 text-emerald-700" };
+    return { key: "quitado", label: "Quitado", tone: "bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-500/25" };
 
   const vencido = new Date(`${row.vencimento}T23:59:59`) < new Date();
   if (row.status === "parcial")
     return {
       key: "parcial",
       label: vencido ? "Parcial (vencido)" : "Parcial",
-      tone: "bg-amber-100 text-amber-700",
+      tone: "bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/25",
     };
   return vencido
-    ? { key: "vencido", label: "Vencido", tone: "bg-rose-100 text-rose-700" }
-    : { key: "a_vencer", label: "A vencer", tone: "bg-slate-100 text-slate-700" };
+    ? { key: "vencido", label: "Vencido", tone: "bg-rose-500/15 text-rose-300 ring-1 ring-inset ring-rose-500/25" }
+    : { key: "a_vencer", label: "A vencer", tone: "bg-muted text-muted-foreground ring-1 ring-inset ring-border" };
 }

@@ -121,14 +121,16 @@ export async function criarContratoDoOrcamento(quoteId: string) {
 
   const { data: quote } = await supabase
     .from("quotes")
-    .select("id, deal_id, deals(client_id, nome_contato), quote_items(descricao, quantidade, preco_unit, service_id)")
+    .select("id, deal_id, client_id, clients(razao_social), deals(client_id, nome_contato), quote_items(descricao, quantidade, preco_unit, service_id)")
     .eq("id", quoteId)
     .maybeSingle();
   if (!quote) redirect("/contratos");
 
   const q = quote as unknown as {
     id: string;
-    deal_id: string;
+    deal_id: string | null;
+    client_id: string | null;
+    clients: { razao_social: string } | null;
     deals: { client_id: string | null; nome_contato: string } | null;
     quote_items: {
       descricao: string;
@@ -138,10 +140,11 @@ export async function criarContratoDoOrcamento(quoteId: string) {
     }[];
   };
 
-  if (!q.deals?.client_id) {
-    // sem cliente vinculado ao lead → manda cadastrar/vincular antes
-    redirect(`/funil/${q.deal_id}`);
+  const clientId = q.client_id ?? q.deals?.client_id ?? null;
+  if (!clientId) {
+    redirect(q.deal_id ? `/funil/${q.deal_id}` : `/orcamentos/${q.id}`);
   }
+  const nomeCliente = q.clients?.razao_social ?? q.deals?.nome_contato ?? "Cliente";
 
   const total = q.quote_items.reduce(
     (s, i) => s + Number(i.quantidade) * Number(i.preco_unit),
@@ -152,9 +155,9 @@ export async function criarContratoDoOrcamento(quoteId: string) {
     .from("contracts")
     .insert({
       tenant_id: ctx.tenantId,
-      client_id: q.deals.client_id,
+      client_id: clientId,
       origem_quote_id: q.id,
-      titulo: `Contrato — ${q.deals.nome_contato}`,
+      titulo: `Contrato — ${nomeCliente}`,
       valor: total,
     })
     .select("id")

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Plus, ExternalLink } from "lucide-react";
+import { Plus, ExternalLink, Wallet, FileSignature, ClipboardList, CalendarClock } from "lucide-react";
+import { KpiCard } from "@/components/dashboard/kpi-card";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
@@ -11,6 +12,7 @@ import {
   type ContractPeriodicity,
   type ContractStatus,
 } from "@/lib/contratos";
+import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { salvarContrato } from "./actions";
 import { PageHeader } from "@/components/app/page-header";
@@ -57,18 +59,25 @@ export default async function ContratosPage() {
       .from("contracts")
       .select("id, titulo, periodicidade, valor, status, vigencia_inicio, vigencia_fim, clients(razao_social)")
       .order("created_at", { ascending: false }),
-    supabase.from("clients").select("id, razao_social").eq("ativo", true).order("razao_social"),
+    supabase.from("clients").select(CLIENTE_OPCAO_COLS).eq("ativo", true).order("razao_social"),
   ]);
 
   const contratos = (contractsData as Contrato[] | null) ?? [];
   const clients =
-    (clientsData as { id: string; razao_social: string }[] | null) ?? [];
+    (clientsData as ClienteOpcao[] | null) ?? [];
 
   const ativos = contratos.filter((c) => c.status === "ativo");
   const mrr = ativos.reduce(
     (s, c) => s + Number(c.valor) / PERIODICITY_MONTHS[c.periodicidade],
     0,
   );
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const vencendo = ativos.filter((c) => {
+    if (!c.vigencia_fim) return false;
+    const dias = Math.floor((new Date(`${c.vigencia_fim}T00:00:00`).getTime() - hoje.getTime()) / 86_400_000);
+    return dias >= 0 && dias <= 30;
+  }).length;
 
   const fields: Field[] = [
     {
@@ -76,7 +85,7 @@ export default async function ContratosPage() {
       label: "Cliente",
       type: "select",
       required: true,
-      options: clients.map((c) => ({ value: c.id, label: c.razao_social })),
+      options: clients.map((c) => ({ value: c.id, label: rotuloCliente(c) })),
     },
     { name: "titulo", label: "Título do contrato", required: true, full: true },
     {
@@ -105,14 +114,8 @@ export default async function ContratosPage() {
     { name: "observacoes", label: "Observações", type: "textarea" },
   ];
 
-  const kpis = [
-    { label: "Receita recorrente (MRR)", value: formatBRL(mrr) },
-    { label: "Contratos ativos", value: String(ativos.length) },
-    { label: "Total de contratos", value: String(contratos.length) },
-  ];
-
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="Contratos recorrentes"
         description="Planos de manutenção que geram visitas e cobranças periódicas."
@@ -126,15 +129,11 @@ export default async function ContratosPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {kpis.map((k) => (
-          <Card key={k.label}>
-            <CardContent className="pt-6">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{k.label}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">{k.value}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard icon={Wallet} label="Receita recorrente (MRR)" value={formatBRL(mrr)} hint="contratos ativos" tone="ok" />
+        <KpiCard icon={FileSignature} label="Contratos ativos" value={String(ativos.length)} />
+        <KpiCard icon={CalendarClock} label="Vencendo (30d)" value={String(vencendo)} hint={vencendo > 0 ? "renovar/avisar" : "nenhum"} tone={vencendo > 0 ? "warning" : "default"} />
+        <KpiCard icon={ClipboardList} label="Total de contratos" value={String(contratos.length)} />
       </div>
 
       {contratos.length === 0 ? (

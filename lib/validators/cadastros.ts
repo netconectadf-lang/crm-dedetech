@@ -3,6 +3,22 @@ import { z } from "zod";
 const opt = (s: z.ZodTypeAny) =>
   z.preprocess((v) => (v === "" || v == null ? undefined : v), s.optional());
 
+// ─── Pragas / Estruturas (listas selecionáveis na OS) ────────────────
+const switchBool = z.preprocess(
+  (v) => v === "on" || v === "true" || v === true,
+  z.boolean(),
+);
+
+export const pragaSchema = z.object({
+  nome: z.string().trim().min(2, "Informe o nome da praga"),
+  ativo: switchBool.default(true),
+});
+
+export const estruturaSchema = z.object({
+  nome: z.string().trim().min(2, "Informe o nome da estrutura"),
+  ativo: switchBool.default(true),
+});
+
 const digits = z
   .string()
   .optional()

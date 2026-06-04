@@ -25,14 +25,29 @@ export async function salvarCertificadoNfse(
   }
   if (!senha) return { error: "Informe a senha do certificado." };
 
+  if (!process.env.NFSE_CERT_KEY) {
+    return { error: "Servidor sem NFSE_CERT_KEY. Se estiver rodando local, reinicie o servidor (pnpm dev) após adicionar a chave ao .env.local." };
+  }
+
   const pfx = Buffer.from(await arquivo.arrayBuffer());
   try {
     const { titularDoc, validade } = await salvarCertificado(ctx.tenantId, pfx, senha);
     revalidatePath("/integracoes/nfse");
     const venc = validade ? ` Válido até ${validade.toLocaleDateString("pt-BR")}.` : "";
     return { message: `Certificado salvo${titularDoc ? ` (titular ${titularDoc})` : ""}.${venc}` };
-  } catch {
-    return { error: "Não foi possível ler o certificado. Confira o arquivo e a senha." };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[nfse] falha ao salvar certificado:", msg);
+    if (/PKCS#12 MAC|mac|integrity|password|senha/i.test(msg)) {
+      return { error: "Senha do certificado incorreta." };
+    }
+    if (/Unsupported|PBE|PBES2|algorithm|OID|Unable to read|ASN\.1|Too few/i.test(msg)) {
+      return {
+        error:
+          "Formato do .pfx não suportado na leitura (provável criptografia AES/PBES2 de exportação recente). Me avise — ajusto o leitor.",
+      };
+    }
+    return { error: `Não foi possível ler o certificado: ${msg}` };
   }
 }
 

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { ConfigForm } from "@/components/app/config-form";
+import { PageHeader } from "@/components/app/page-header";
 import {
   Card,
   CardContent,
@@ -18,7 +19,7 @@ export default async function ConfiguracoesPage() {
   const { data } = await supabase
     .from("tenants")
     .select(
-      "razao_social, nome_fantasia, registro_vigilancia_sanitaria, cor_primaria",
+      "razao_social, nome_fantasia, registro_vigilancia_sanitaria, cor_primaria, preco_combustivel_litro, custo_hora_padrao, nfse_inscricao_municipal, nfse_codigo_municipio, nfse_item_lista_servico, nfse_aliquota_iss, nfse_iss_retido",
     )
     .eq("id", ctx.tenantId)
     .single();
@@ -28,16 +29,21 @@ export default async function ConfiguracoesPage() {
     nome_fantasia: string | null;
     registro_vigilancia_sanitaria: string | null;
     cor_primaria: string | null;
+    preco_combustivel_litro: number | null;
+    custo_hora_padrao: number | null;
+    nfse_inscricao_municipal: string | null;
+    nfse_codigo_municipio: string | null;
+    nfse_item_lista_servico: string | null;
+    nfse_aliquota_iss: number | null;
+    nfse_iss_retido: boolean | null;
   } | null;
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Configurações</h1>
-        <p className="text-sm text-muted-foreground">
-          Dados da empresa, usados nos documentos e no mini-site.
-        </p>
-      </div>
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
+      <PageHeader
+        title="Configurações"
+        description="Dados da empresa, usados nos documentos e no mini-site."
+      />
 
       <Card>
         <CardHeader>

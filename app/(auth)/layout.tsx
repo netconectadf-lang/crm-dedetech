@@ -8,7 +8,7 @@ export default function AuthLayout({
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 py-16">
       <Link href="/" className="mb-8 flex items-center gap-2">
-        <span className="grid size-9 place-items-center rounded-lg bg-teal-700 font-bold text-white">
+        <span className="grid size-9 place-items-center rounded-lg bg-primary font-bold text-primary-foreground">
           D
         </span>
         <span className="text-lg font-semibold tracking-tight">Dedetech</span>

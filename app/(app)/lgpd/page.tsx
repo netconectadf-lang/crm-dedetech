@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { LgpdRequestForm } from "@/components/app/lgpd-request-form";
 import { resolveLgpdRequest } from "./actions";
+import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,13 +59,12 @@ export default async function LgpdPage() {
       | null) ?? [];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
-      <div>
-        <h1 className="text-2xl font-semibold">LGPD</h1>
-        <p className="text-sm text-muted-foreground">
-          Registre e acompanhe solicitações de titulares de dados.
-        </p>
-      </div>
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
+      <PageHeader
+        title="LGPD"
+        description="Registre e acompanhe solicitações de titulares de dados."
+        count={requests.length}
+      />
 
       <Card>
         <CardHeader>

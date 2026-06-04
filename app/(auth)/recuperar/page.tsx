@@ -39,7 +39,7 @@ export default function RecuperarPage() {
             <p className="text-sm text-destructive">{state.error}</p>
           )}
           {state?.message && (
-            <p className="text-sm text-teal-700">{state.message}</p>
+            <p className="text-sm text-primary">{state.message}</p>
           )}
           <SubmitButton>Enviar link</SubmitButton>
         </form>

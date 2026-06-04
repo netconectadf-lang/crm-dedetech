@@ -22,7 +22,7 @@ export function FinalizeButton({ osId }: { osId: string }) {
 
   return (
     <form action={formAction}>
-      <Button type="submit" size="lg" disabled={pending} className="bg-emerald-600 hover:bg-emerald-700">
+      <Button type="submit" size="lg" disabled={pending} className="bg-primary hover:bg-primary/90">
         {pending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
         Finalizar OS (baixa estoque)
       </Button>

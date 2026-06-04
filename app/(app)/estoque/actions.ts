@@ -10,6 +10,7 @@ import {
   saidaSchema,
   perdaSchema,
   ajusteSchema,
+  loteEditSchema,
 } from "@/lib/validators/estoque";
 import type { AppRole } from "@/lib/types";
 
@@ -162,6 +163,29 @@ export async function ajustarInventario(
   });
   revalidatePath("/estoque");
   return { message: "Inventário ajustado." };
+}
+
+/** Edita os dados do lote (lote, validade, fabricante, NF, data de entrada). */
+export async function editarLote(
+  id: string,
+  _prev: SaveState,
+  formData: FormData,
+): Promise<SaveState> {
+  const ctx = await requireRole(ROLES);
+  const parsed = loteEditSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("stock_batches")
+    .update(parsed.data)
+    .eq("id", id)
+    .eq("tenant_id", ctx.tenantId);
+  if (error) return { error: "Não foi possível salvar o lote." };
+
+  revalidatePath("/estoque");
+  return { message: "Lote atualizado." };
 }
 
 export async function excluirLote(id: string) {

@@ -67,10 +67,11 @@ export default async function FuncionariosPage() {
   const funcionarios = (data as Funcionario[] | null) ?? [];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="Funcionários"
         description="Equipe, cargos e responsável técnico."
+        count={funcionarios.length}
         action={
           <ResourceDialog
             trigger={<Button><Plus className="size-4" /> Novo funcionário</Button>}
@@ -98,7 +99,7 @@ export default async function FuncionariosPage() {
               </TableHeader>
               <TableBody>
                 {funcionarios.map((f) => (
-                  <TableRow key={f.id}>
+                  <TableRow key={f.id} className={f.ativo ? undefined : "opacity-55"}>
                     <TableCell className="font-medium">
                       {f.nome}
                       {f.responsavel_tecnico && (

@@ -1,7 +1,10 @@
+import { Gauge, Star, ThumbsUp, ThumbsDown } from "lucide-react";
+
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
+import { KpiCard, Panel } from "@/components/dashboard/kpi-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -47,39 +50,62 @@ export default async function ComunicacaoPage() {
   const total = respostas.length;
   const promotores = respostas.filter((r) => (r.score ?? 0) >= 9).length;
   const detratores = respostas.filter((r) => (r.score ?? 0) <= 6).length;
+  const neutros = total - promotores - detratores;
   const nps = total > 0 ? Math.round(((promotores - detratores) / total) * 100) : 0;
   const media =
     total > 0 ? (respostas.reduce((s, r) => s + (r.score ?? 0), 0) / total).toFixed(1) : "—";
+  const npsTone = total === 0 ? "default" : nps >= 50 ? "ok" : nps < 0 ? "danger" : "warning";
+  const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
+
+  const comentarios = respostas.filter((r) => r.comentario);
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader title="Comunicação & NPS" description="Satisfação dos clientes e histórico de mensagens." />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card><CardContent className="pt-6"><p className="text-xs uppercase tracking-wide text-muted-foreground">NPS</p><p className="mt-1 text-2xl font-semibold tabular-nums">{total > 0 ? nps : "—"}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-xs uppercase tracking-wide text-muted-foreground">Nota média</p><p className="mt-1 text-2xl font-semibold tabular-nums">{media}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-xs uppercase tracking-wide text-muted-foreground">Respostas</p><p className="mt-1 text-2xl font-semibold tabular-nums">{total}</p></CardContent></Card>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard icon={Gauge} label="NPS" value={total > 0 ? String(nps) : "—"} hint={`${total} respostas`} tone={npsTone} />
+        <KpiCard icon={Star} label="Nota média" value={String(media)} hint="de 0 a 10" />
+        <KpiCard icon={ThumbsUp} label="Promotores" value={String(promotores)} tone={promotores > 0 ? "ok" : "default"} hint="nota 9–10" />
+        <KpiCard icon={ThumbsDown} label="Detratores" value={String(detratores)} tone={detratores > 0 ? "danger" : "default"} hint="nota 0–6" />
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Comentários dos clientes</CardTitle></CardHeader>
-        <CardContent>
-          {respostas.filter((r) => r.comentario).length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">Nenhum comentário ainda.</p>
-          ) : (
-            <ul className="space-y-3">
-              {respostas.filter((r) => r.comentario).map((r, i) => (
-                <li key={i} className="flex items-start gap-3 border-b pb-3 text-sm">
-                  <Badge variant={(r.score ?? 0) >= 9 ? "default" : (r.score ?? 0) <= 6 ? "destructive" : "secondary"}>
-                    {r.score}
-                  </Badge>
-                  <span className="text-muted-foreground">{r.comentario}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      {total > 0 && (
+        <Panel title="Distribuição das respostas">
+          <div className="space-y-2.5 text-sm">
+            {[
+              { label: "Promotores (9–10)", n: promotores, tone: "bg-primary/70" },
+              { label: "Neutros (7–8)", n: neutros, tone: "bg-warning/70" },
+              { label: "Detratores (0–6)", n: detratores, tone: "bg-destructive/70" },
+            ].map((r) => (
+              <div key={r.label} className="flex items-center gap-3">
+                <span className="w-36 shrink-0 text-xs text-muted-foreground">{r.label}</span>
+                <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted/60">
+                  <div className={`h-full rounded-full ${r.tone}`} style={{ width: `${r.n > 0 ? Math.max(4, pct(r.n)) : 0}%` }} />
+                </div>
+                <span className="w-16 text-right tabular-nums">{r.n} · {Math.round(pct(r.n))}%</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
+
+      <Panel title="Comentários dos clientes">
+        {comentarios.length === 0 ? (
+          <p className="py-4 text-center text-sm text-muted-foreground">Nenhum comentário ainda.</p>
+        ) : (
+          <ul className="space-y-3">
+            {comentarios.map((r, i) => (
+              <li key={i} className="flex items-start gap-3 border-b pb-3 text-sm last:border-b-0">
+                <Badge variant={(r.score ?? 0) >= 9 ? "default" : (r.score ?? 0) <= 6 ? "destructive" : "secondary"}>
+                  {r.score}
+                </Badge>
+                <span className="text-muted-foreground">{r.comentario}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Mensagens enviadas</CardTitle></CardHeader>

@@ -6,7 +6,7 @@ import { ArrowLeft, Send, Trash2, FileSignature, ClipboardList } from "lucide-re
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatBRL } from "@/lib/format";
-import { QUOTE_STATUS_LABEL, type QuoteStatus } from "@/lib/funil";
+import { QUOTE_STATUS_LABEL, QUOTE_STATUS_TONE, type QuoteStatus } from "@/lib/funil";
 import type { Field } from "@/components/app/resource-form";
 import { AddItemForm } from "@/components/funil/add-item-form";
 import { CopyLink } from "@/components/funil/copy-link";
@@ -19,7 +19,6 @@ import {
 } from "../../../quote-actions";
 import { criarContratoDoOrcamento } from "@/app/(app)/contratos/actions";
 import { criarOSDoOrcamento } from "@/app/(app)/os/actions";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -108,7 +107,7 @@ export default async function OrcamentoPage({
   ];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
         <Link href={`/funil/${dealId}`}>
           <ArrowLeft className="size-4" /> Voltar ao negócio
@@ -116,9 +115,14 @@ export default async function OrcamentoPage({
       </Button>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold">Orçamento #{quote.numero}</h1>
-          <Badge variant="outline">{QUOTE_STATUS_LABEL[quote.status]}</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">Orçamento #{quote.numero}</h1>
+          <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${QUOTE_STATUS_TONE[quote.status]}`}>
+            {QUOTE_STATUS_LABEL[quote.status]}
+          </span>
+          <span className="rounded-md border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-primary">
+            {formatBRL(total)}
+          </span>
         </div>
         <div className="flex gap-2">
           <form action={marcarEnviado.bind(null, quote.id)}>
@@ -129,7 +133,7 @@ export default async function OrcamentoPage({
           {quote.status === "aceito" && (
             <>
               <form action={criarContratoDoOrcamento.bind(null, quote.id)}>
-                <Button type="submit" className="bg-teal-700 hover:bg-teal-800">
+                <Button type="submit" className="bg-primary hover:bg-primary/90">
                   <FileSignature className="size-4" /> Gerar contrato
                 </Button>
               </form>

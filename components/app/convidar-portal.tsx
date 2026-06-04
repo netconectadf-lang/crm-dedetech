@@ -24,7 +24,7 @@ export function ConvidarPortal({ clientId }: { clientId: string }) {
       </form>
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
       {state?.message && (
-        <p className="rounded-md bg-emerald-50 p-2 text-sm text-emerald-800">
+        <p className="rounded-md bg-emerald-500/10 p-2 text-sm text-emerald-300">
           {state.message}
         </p>
       )}

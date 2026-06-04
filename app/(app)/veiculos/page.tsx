@@ -48,6 +48,7 @@ const fields: Field[] = [
   { name: "vencimento_licenciamento", label: "Venc. licenciamento", type: "date" },
   { name: "km_atual", label: "KM atual", type: "number" },
   { name: "km_proxima_revisao", label: "KM próxima revisão", type: "number" },
+  { name: "consumo_km_l", label: "Consumo (km por litro)", type: "number" },
   { name: "ativo", label: "Ativo", type: "switch" },
 ];
 
@@ -66,11 +67,22 @@ export default async function VeiculosPage() {
   const { data } = await supabase.from("vehicles").select("*").order("placa");
   const veiculos = (data as Veiculo[] | null) ?? [];
 
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const vencTone = (date: string | null) => {
+    if (!date) return "";
+    const dias = Math.floor((new Date(`${date}T00:00:00`).getTime() - hoje.getTime()) / 86_400_000);
+    if (dias < 0) return "font-medium text-destructive";
+    if (dias <= 30) return "font-medium text-warning";
+    return "";
+  };
+
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="Veículos"
         description="Frota, documentos e rastreadores."
+        count={veiculos.length}
         action={
           <ResourceDialog
             trigger={<Button><Plus className="size-4" /> Novo veículo</Button>}
@@ -99,13 +111,15 @@ export default async function VeiculosPage() {
               </TableHeader>
               <TableBody>
                 {veiculos.map((v) => (
-                  <TableRow key={v.id}>
+                  <TableRow key={v.id} className={v.ativo ? undefined : "opacity-55"}>
                     <TableCell className="font-mono font-medium uppercase">
                       {v.placa}
                     </TableCell>
                     <TableCell>{v.modelo ?? "—"}</TableCell>
                     <TableCell className="capitalize">{v.tipo}</TableCell>
-                    <TableCell>{formatDate(v.vencimento_seguro)}</TableCell>
+                    <TableCell className={vencTone(v.vencimento_seguro)}>
+                      {v.vencimento_seguro ? formatDate(v.vencimento_seguro) : "—"}
+                    </TableCell>
                     <TableCell>
                       {!v.ativo && <Badge variant="outline">inativo</Badge>}
                     </TableCell>

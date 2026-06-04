@@ -56,10 +56,11 @@ export default async function PlanoDeContasPage() {
   const contas = (data as Conta[] | null) ?? [];
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-8">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="Plano de contas"
         description="Classificação de receitas e despesas."
+        count={contas.length}
         action={
           <ResourceDialog
             trigger={<Button><Plus className="size-4" /> Nova conta</Button>}
@@ -87,7 +88,7 @@ export default async function PlanoDeContasPage() {
               </TableHeader>
               <TableBody>
                 {contas.map((c) => (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className={c.ativo ? undefined : "opacity-55"}>
                     <TableCell className="font-mono text-sm">{c.codigo ?? "—"}</TableCell>
                     <TableCell className="font-medium">{c.nome}</TableCell>
                     <TableCell>

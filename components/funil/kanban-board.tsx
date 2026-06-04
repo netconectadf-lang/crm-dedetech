@@ -82,7 +82,7 @@ function Column({
       ref={setNodeRef}
       className={cn(
         "flex w-72 shrink-0 flex-col rounded-xl border bg-muted/30 transition-colors",
-        isOver && "ring-2 ring-teal-500",
+        isOver && "ring-2 ring-primary",
       )}
     >
       <div className="flex items-center justify-between gap-2 border-b p-3">

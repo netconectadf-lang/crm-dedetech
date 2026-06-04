@@ -6,21 +6,41 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatCpfCnpj, formatDate } from "@/lib/format";
 import { METHOD_LABEL, type ApplicationMethod } from "@/lib/os";
+import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/print-button";
+import { SignaturePad } from "@/components/os/signature-pad";
+import { ValidadeButtons } from "@/components/os/validade-buttons";
+import { BaixarCertificado } from "@/components/os/baixar-certificado";
 
 export const metadata = { title: "Certificado" };
+
+/** O certificado é um documento — renderiza SEMPRE claro (tela e PDF).
+ *  CSS custom properties locais sobrescrevem os tokens do tema dentro do doc. */
+const CERT_LIGHT = {
+  "--background": "#ffffff",
+  "--foreground": "#0f172a",
+  "--card": "#ffffff",
+  "--muted": "#eef2f6",
+  "--muted-foreground": "#475569",
+  "--border": "#e2e8f0",
+  background: "#ffffff",
+  color: "#0f172a",
+  colorScheme: "light",
+} as unknown as CSSProperties;
 
 type OS = {
   numero: number;
   status: string;
   executada_em: string | null;
   pragas: string[];
+  estruturas: string[];
   metodo: ApplicationMethod | null;
   garantia_meses: number;
   periodo_reentrada_horas: number | null;
   proxima_revisao_em: string | null;
   recomendacoes: string | null;
+  assinatura_cliente_url: string | null;
   clients: {
     razao_social: string;
     documento: string | null;
@@ -43,7 +63,7 @@ export default async function CertificadoPage({
 
   const { data: osData } = await supabase
     .from("service_orders")
-    .select("numero, status, executada_em, pragas, metodo, garantia_meses, periodo_reentrada_horas, proxima_revisao_em, recomendacoes, clients(razao_social, documento, logradouro, numero, bairro, cidade, uf)")
+    .select("numero, status, executada_em, pragas, estruturas, metodo, garantia_meses, periodo_reentrada_horas, proxima_revisao_em, recomendacoes, assinatura_cliente_url, clients(razao_social, documento, logradouro, numero, bairro, cidade, uf)")
     .eq("id", id)
     .maybeSingle();
   if (!osData) notFound();
@@ -78,14 +98,17 @@ export default async function CertificadoPage({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-8 print:py-0">
-      <div className="mb-4 flex items-center justify-between print:hidden">
+      <div className="mb-4 flex items-center justify-between gap-2 print:hidden">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href={`/os/${id}`}><ArrowLeft className="size-4" /> Voltar à OS</Link>
         </Button>
-        <PrintButton />
+        <div className="flex gap-2">
+          <BaixarCertificado numero={os.numero} />
+          <PrintButton />
+        </div>
       </div>
 
-      <div className="rounded-2xl border p-8 print:border-0 print:p-0">
+      <div id="certificado" style={CERT_LIGHT} className="rounded-2xl border p-8 print:border-0 print:p-0">
         <header className="flex items-center justify-between border-b pb-4" style={{ borderColor: cor }}>
           <div>
             <h1 className="text-xl font-bold" style={{ color: cor }}>{empresa}</h1>
@@ -105,6 +128,7 @@ export default async function CertificadoPage({
           <p><strong>Cliente:</strong> {cli?.razao_social ?? "—"} {cli?.documento ? `· ${formatCpfCnpj(cli.documento)}` : ""}</p>
           <p><strong>Local do serviço:</strong> {endereco}</p>
           <p><strong>Pragas-alvo controladas:</strong> {os.pragas?.length ? os.pragas.join(", ") : "—"}</p>
+          <p><strong>Áreas/estruturas tratadas:</strong> {os.estruturas?.length ? os.estruturas.join(", ") : "—"}</p>
           <p><strong>Método de aplicação:</strong> {os.metodo ? METHOD_LABEL[os.metodo] : "—"}</p>
           {os.periodo_reentrada_horas != null && (
             <p><strong>Período de reentrada:</strong> {os.periodo_reentrada_horas} horas</p>
@@ -157,24 +181,49 @@ export default async function CertificadoPage({
           </section>
         )}
 
-        <footer className="mt-10 border-t pt-6 text-center text-sm">
-          <div className="mx-auto w-64 border-t pt-1">
-            {rt ? (
-              <>
-                <p className="font-medium">{rt.nome}</p>
-                <p className="text-xs text-muted-foreground">
-                  Responsável Técnico{rt.registro_conselho ? ` · ${rt.registro_conselho}` : ""}
-                </p>
-              </>
-            ) : (
-              <p className="text-xs text-muted-foreground">Responsável Técnico</p>
+        <footer className="mt-10 grid grid-cols-2 gap-8 border-t pt-8 text-center text-sm">
+          <div className="flex flex-col items-center justify-end">
+            {os.assinatura_cliente_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={os.assinatura_cliente_url}
+                alt="Assinatura do cliente"
+                crossOrigin="anonymous"
+                className="mb-1 h-16 object-contain"
+              />
             )}
+            <div className="w-full border-t pt-1">
+              <p className="font-medium">{cli?.razao_social ?? "Cliente"}</p>
+              <p className="text-xs text-muted-foreground">Assinatura do cliente</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-end">
+            <div className="w-full border-t pt-1">
+              {rt ? (
+                <>
+                  <p className="font-medium">{rt.nome}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Responsável Técnico{rt.registro_conselho ? ` · ${rt.registro_conselho}` : ""}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">Responsável Técnico</p>
+              )}
+            </div>
           </div>
         </footer>
       </div>
 
+      <div className="mt-6 grid gap-6 rounded-xl border border-border/60 bg-card/60 p-5 print:hidden sm:grid-cols-2">
+        <SignaturePad osId={id} jaAssinado={!!os.assinatura_cliente_url} />
+        <ValidadeButtons
+          osId={id}
+          atualLabel={os.proxima_revisao_em ? formatDate(os.proxima_revisao_em) : null}
+        />
+      </div>
+
       <p className="mt-4 text-center text-xs text-muted-foreground print:hidden">
-        ⚠️ Valide o modelo do certificado com o RT/advogado antes de usar em produção.
+        Valide o modelo do certificado com o RT/advogado antes de usar em produção.
       </p>
     </main>
   );

@@ -78,7 +78,8 @@ export async function connectInstance(): Promise<ConnectResult> {
 
     const raw = d?.base64;
     const qr = raw ? (raw.startsWith("data:") ? raw : `data:image/png;base64,${raw}`) : undefined;
-    return { state: "connecting", qr, pairingCode: d?.pairingCode ?? d?.code };
+    // `code` é o conteúdo do QR (não um código digitável) — só expõe pairingCode real.
+    return { state: "connecting", qr, pairingCode: d?.pairingCode ?? undefined };
   } catch (e) {
     return { state: "unknown", error: String(e) };
   }

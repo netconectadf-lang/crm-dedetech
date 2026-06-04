@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, Loader2, QrCode, RefreshCw, Smartphone } from "lucide-react";
@@ -80,7 +79,8 @@ export function WhatsappConnect({ initialState }: { initialState: WaState }) {
       {qr ? (
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
           <div className="rounded-xl bg-white p-3 shadow-sm">
-            <Image src={qr} alt="QR Code do WhatsApp" width={240} height={240} unoptimized />
+            {/* eslint-disable-next-line @next/next/no-img-element -- QR é um data URL base64, não um asset */}
+            <img src={qr} alt="QR Code do WhatsApp" width={240} height={240} />
           </div>
           <div className="space-y-3 text-sm">
             <p className="flex items-center gap-2 font-medium">

@@ -6,6 +6,8 @@ import {
   Settings,
   Building2,
   SprayCan,
+  Bug,
+  DoorOpen,
   Package,
   Truck,
   IdCard,
@@ -13,7 +15,9 @@ import {
   Wrench,
   KanbanSquare,
   FileSignature,
+  FileText,
   Boxes,
+  ShoppingCart,
   ClipboardList,
   Wallet,
   ArrowDownCircle,
@@ -22,6 +26,7 @@ import {
   Radar,
   UsersRound,
   LifeBuoy,
+  Plug,
   type LucideIcon,
 } from "lucide-react";
 
@@ -55,6 +60,12 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ["owner", "comercial"],
       },
       {
+        href: "/orcamentos",
+        label: "Orçamentos",
+        icon: FileText,
+        roles: ["owner", "comercial"],
+      },
+      {
         href: "/contratos",
         label: "Contratos",
         icon: FileSignature,
@@ -82,6 +93,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Estoque",
         icon: Boxes,
         roles: ["owner", "operacional"],
+      },
+      {
+        href: "/compras",
+        label: "Compras / Pedidos",
+        icon: ShoppingCart,
+        roles: ["owner", "operacional", "financeiro"],
       },
       {
         href: "/mip",
@@ -118,6 +135,12 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: ArrowUpCircle,
         roles: ["owner", "financeiro"],
       },
+      {
+        href: "/notas",
+        label: "Notas fiscais",
+        icon: ScrollText,
+        roles: ["owner", "financeiro"],
+      },
     ],
   },
   {
@@ -139,6 +162,18 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/produtos",
         label: "Produtos",
         icon: SprayCan,
+        roles: ["owner", "operacional"],
+      },
+      {
+        href: "/pragas",
+        label: "Pragas",
+        icon: Bug,
+        roles: ["owner", "operacional"],
+      },
+      {
+        href: "/estruturas",
+        label: "Estruturas",
+        icon: DoorOpen,
         roles: ["owner", "operacional"],
       },
       {
@@ -182,6 +217,7 @@ export const NAV_SECTIONS: NavSection[] = [
     titulo: "Empresa",
     itens: [
       { href: "/equipe", label: "Equipe", icon: Users, roles: ["owner"] },
+      { href: "/integracoes", label: "Integrações", icon: Plug, roles: ["owner"] },
       {
         href: "/auditoria",
         label: "Atividade",

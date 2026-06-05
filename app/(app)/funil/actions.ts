@@ -23,7 +23,7 @@ export async function criarLead(
   const supabase = await createClient();
   const { error } = await supabase
     .from("deals")
-    .insert({ ...parsed.data, tenant_id: ctx.tenantId, owner_id: ctx.userId });
+    .insert({ ...parsed.data, tenant_id: ctx.tenantId, owner_id: ctx.userId } as never);
   if (error) return { error: "Não foi possível criar o lead." };
   revalidatePath("/funil");
   return { message: "Lead criado." };
@@ -42,7 +42,7 @@ export async function atualizarDeal(
   const supabase = await createClient();
   const { error } = await supabase
     .from("deals")
-    .update(parsed.data)
+    .update(parsed.data as never)
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
   if (error) return { error: "Não foi possível salvar." };

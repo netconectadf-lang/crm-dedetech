@@ -39,9 +39,9 @@ export async function inviteMember(
     .insert({
       tenant_id: ctx.tenantId,
       email: parsed.data.email,
-      role: parsed.data.role,
+      role: parsed.data.role as AppRole,
       invited_by: ctx.userId,
-    })
+    } as never)
     .select("token")
     .single();
 

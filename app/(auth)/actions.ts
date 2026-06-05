@@ -77,7 +77,7 @@ export async function signupAction(
   if (data.session) {
     const { error: rpcErr } = await supabase.rpc("provision_tenant", {
       p_razao_social: empresa,
-      p_cnpj: cnpj ?? null,
+      p_cnpj: cnpj ?? undefined,
     });
     if (rpcErr) return { error: "Conta criada, mas falhou ao criar a empresa." };
     await supabase.auth.refreshSession();

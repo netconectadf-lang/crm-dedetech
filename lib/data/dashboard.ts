@@ -67,7 +67,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     supabase
       .from("service_orders")
       .select("id, numero, status, scheduled_at, clients(razao_social, nome_fantasia, cidade)")
-      .in("status", OS_PENDENTE as unknown as string[])
+      .in("status", OS_PENDENTE)
       .order("scheduled_at", { ascending: true, nullsFirst: false })
       .limit(6),
   ]);

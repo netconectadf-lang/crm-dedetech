@@ -105,7 +105,7 @@ export default async function OsPage({
     .from("service_orders")
     .select("id, numero, status, scheduled_at, contract_id, quote_id, observacoes, clients(razao_social, nome_fantasia, cidade, uf), employees(nome)")
     .order("scheduled_at", { ascending: true, nullsFirst: false });
-  if (status) query = query.eq("status", status);
+  if (status) query = query.eq("status", status as never);
 
   const [{ data: osData }, { data: allOs }, { data: clientsData }, { data: tecData }, { data: vehData }] =
     await Promise.all([

@@ -37,7 +37,7 @@ export async function registrarEntrada(
       tenant_id: ctx.tenantId,
       qtd_entrada,
       qtd_atual: 0,
-    })
+    } as never)
     .select("id")
     .single();
   if (error || !created) return { error: "Não foi possível criar o lote." };
@@ -104,7 +104,7 @@ export async function registrarSaida(
     });
     restante -= tirar;
   }
-  await supabase.from("stock_movements").insert(movimentos);
+  await supabase.from("stock_movements").insert(movimentos as never);
 
   revalidatePath("/estoque");
   return { message: "Saída registrada (FEFO)." };
@@ -160,7 +160,7 @@ export async function ajustarInventario(
     quantidade: delta,
     motivo: parsed.data.motivo ?? "Inventário",
     created_by: ctx.userId,
-  });
+  } as never);
   revalidatePath("/estoque");
   return { message: "Inventário ajustado." };
 }
@@ -179,7 +179,7 @@ export async function editarLote(
   const supabase = await createClient();
   const { error } = await supabase
     .from("stock_batches")
-    .update(parsed.data)
+    .update(parsed.data as never)
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
   if (error) return { error: "Não foi possível salvar o lote." };

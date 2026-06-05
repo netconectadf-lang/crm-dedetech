@@ -2,10 +2,16 @@ import "server-only";
 
 import { revalidatePath } from "next/cache";
 import type { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import type { AppRole } from "@/lib/types";
+
+/** Client sem tipo de tabela — este helper é genérico por nome de tabela. */
+async function untypedClient(): Promise<SupabaseClient> {
+  return (await createClient()) as unknown as SupabaseClient;
+}
 
 export type SaveState = { error?: string; message?: string } | null;
 
@@ -46,7 +52,7 @@ export async function saveRecord({
   };
   if (transform) payload = transform(payload);
 
-  const supabase = await createClient();
+  const supabase = await untypedClient();
 
   if (id) {
     const { error } = await supabase
@@ -74,7 +80,7 @@ export async function deleteRecord(
   path: string,
 ): Promise<void> {
   const ctx = await requireRole(roles);
-  const supabase = await createClient();
+  const supabase = await untypedClient();
   await supabase
     .from(table)
     .delete()

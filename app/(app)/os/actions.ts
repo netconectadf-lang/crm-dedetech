@@ -26,7 +26,7 @@ export async function criarOS(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("service_orders")
-    .insert({ ...parsed.data, tenant_id: ctx.tenantId })
+    .insert({ ...parsed.data, tenant_id: ctx.tenantId } as never)
     .select("id")
     .single();
   if (error || !data) return { error: "Não foi possível criar a OS." };
@@ -102,7 +102,7 @@ export async function atualizarOS(
   const supabase = await createClient();
   const { error } = await supabase
     .from("service_orders")
-    .update(parsed.data)
+    .update(parsed.data as never)
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
   if (error) return { error: "Não foi possível salvar." };
@@ -117,7 +117,7 @@ export async function mudarStatusOS(id: string, status: OsStatus) {
   if (status === "em_execucao") patch.chegada_em = new Date().toISOString();
   await supabase
     .from("service_orders")
-    .update(patch)
+    .update(patch as never)
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
   revalidatePath(`/os/${id}`);
@@ -143,7 +143,7 @@ export async function salvarFicha(
   const supabase = await createClient();
   const { error } = await supabase
     .from("service_orders")
-    .update(parsed.data)
+    .update(parsed.data as never)
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
   if (error) return { error: "Não foi possível salvar a ficha." };
@@ -164,7 +164,7 @@ export async function adicionarProdutoOS(
   const supabase = await createClient();
   const { error } = await supabase
     .from("service_order_products")
-    .insert({ ...parsed.data, tenant_id: ctx.tenantId, os_id: osId });
+    .insert({ ...parsed.data, tenant_id: ctx.tenantId, os_id: osId } as never);
   if (error) return { error: "Não foi possível adicionar o produto." };
   revalidatePath(`/os/${osId}`);
   return { message: "Produto adicionado." };

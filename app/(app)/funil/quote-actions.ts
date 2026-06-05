@@ -42,7 +42,7 @@ export async function salvarDadosOrcamento(
   const supabase = await createClient();
   const { error } = await supabase
     .from("quotes")
-    .update(parsed.data)
+    .update(parsed.data as never)
     .eq("id", quoteId)
     .eq("tenant_id", ctx.tenantId);
   if (error) return { error: "Não foi possível salvar." };
@@ -120,7 +120,7 @@ export async function criarTarefa(
     ...parsed.data,
     tenant_id: ctx.tenantId,
     deal_id: dealId,
-  });
+  } as never);
   if (error) return { error: "Não foi possível criar a tarefa." };
   revalidatePath(`/funil/${dealId}`);
   return { message: "Tarefa criada." };

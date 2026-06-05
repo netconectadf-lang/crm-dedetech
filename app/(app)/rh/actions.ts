@@ -45,7 +45,7 @@ export async function solicitarAusencia(
   const supabase = await createClient();
   const { error } = await supabase
     .from("absences")
-    .insert({ ...parsed.data, tenant_id: ctx.tenantId, employee_id: employeeId });
+    .insert({ ...parsed.data, tenant_id: ctx.tenantId, employee_id: employeeId } as never);
   if (error) return { error: "Não foi possível registrar a ausência." };
   revalidatePath(`/rh/${employeeId}`);
   return { message: "Ausência registrada." };
@@ -80,7 +80,7 @@ export async function salvarEPI(
   const supabase = await createClient();
   const { error } = await supabase
     .from("epi_deliveries")
-    .insert({ ...parsed.data, tenant_id: ctx.tenantId, employee_id: employeeId });
+    .insert({ ...parsed.data, tenant_id: ctx.tenantId, employee_id: employeeId } as never);
   if (error) return { error: "Não foi possível registrar o EPI." };
   revalidatePath(`/rh/${employeeId}`);
   return { message: "EPI registrado." };
@@ -99,7 +99,7 @@ export async function salvarASO(
   const supabase = await createClient();
   const { error } = await supabase
     .from("occupational_exams")
-    .insert({ ...parsed.data, tenant_id: ctx.tenantId, employee_id: employeeId });
+    .insert({ ...parsed.data, tenant_id: ctx.tenantId, employee_id: employeeId } as never);
   if (error) return { error: "Não foi possível registrar o exame." };
   revalidatePath(`/rh/${employeeId}`);
   return { message: "Exame (ASO) registrado." };

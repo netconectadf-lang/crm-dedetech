@@ -67,7 +67,7 @@ export async function registrarLeitura(
     tenant_id: ctx.tenantId,
     device_id: deviceId,
     created_by: ctx.userId,
-  });
+  } as never);
   if (error) return { error: "Não foi possível registrar a leitura." };
   revalidatePath(`/mip/${deviceId}`);
   return { message: "Leitura registrada." };

@@ -45,3 +45,6 @@ next-env.d.ts
 *.p12
 docs/nfse-gov/test-cert.pem
 docs/nfse-gov/test-key.pem
+
+# Supabase CLI (local)
+supabase/.temp/

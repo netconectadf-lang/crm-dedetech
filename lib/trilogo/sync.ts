@@ -75,7 +75,7 @@ export async function syncTrilogo(
           if (target === "executada") patch.executada_em = new Date().toISOString();
           const { error } = await supabase
             .from("service_orders")
-            .update(patch)
+            .update(patch as never)
             .eq("id", existente.id);
           if (error) result.erros += 1;
           else result.atualizados += 1;

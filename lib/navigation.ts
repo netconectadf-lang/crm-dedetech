@@ -35,6 +35,7 @@ import {
   MessageCircle,
   CircleDollarSign,
   Database,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 
@@ -117,6 +118,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "MIP / Monitoramento",
         icon: Radar,
         roles: ["owner", "operacional", "tecnico"],
+      },
+      {
+        href: "/mapa",
+        label: "Mapa da operação",
+        icon: MapPin,
+        roles: ["owner", "operacional", "comercial"],
       },
       {
         href: "/comunicacao",

@@ -7,6 +7,7 @@ import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clie
 import type { Field } from "@/components/app/resource-form";
 import type { DealCard } from "@/components/funil/kanban-board";
 import { KanbanBoard } from "@/components/funil/kanban-board";
+import { AjudaFunil } from "@/components/funil/ajuda-funil";
 import { criarLead } from "./actions";
 import { PageHeader } from "@/components/app/page-header";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -79,12 +80,15 @@ export default async function FunilPage() {
         title="Funil comercial"
         description="Arraste os cartões entre os estágios."
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Novo lead</Button>}
-            title="Novo lead"
-            fields={leadFields}
-            action={criarLead}
-          />
+          <div className="flex gap-2">
+            <AjudaFunil />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Novo lead</Button>}
+              title="Novo lead"
+              fields={leadFields}
+              action={criarLead}
+            />
+          </div>
         }
       />
 

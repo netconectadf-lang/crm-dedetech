@@ -41,6 +41,7 @@ import {
   Clock,
   Handshake,
   ScanSearch,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 
@@ -66,7 +67,10 @@ export type NavSection = {
 export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: null,
-    itens: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+    itens: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/ajuda", label: "Guia do sistema", icon: BookOpen },
+    ],
   },
   {
     titulo: "Comercial",

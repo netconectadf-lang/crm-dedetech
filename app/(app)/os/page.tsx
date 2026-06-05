@@ -93,7 +93,7 @@ export default async function OsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  await requireRole(["owner", "operacional", "tecnico"]);
+  await requireRole(["owner", "operacional", "tecnico", "financeiro"]);
   const { status } = await searchParams;
   const supabase = await createClient();
 

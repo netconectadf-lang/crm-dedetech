@@ -31,7 +31,7 @@ type Campanha = {
 };
 
 export default async function CampanhasPage() {
-  await requireRole(["owner", "comercial"]);
+  await requireRole(["owner", "comercial", "financeiro"]);
   const supabase = await createClient();
 
   const [{ data: campData }, { data: scriptData }] = await Promise.all([

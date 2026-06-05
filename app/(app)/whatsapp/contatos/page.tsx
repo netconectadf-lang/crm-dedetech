@@ -36,7 +36,7 @@ type Contato = {
 };
 
 export default async function ContatosPage() {
-  await requireRole(["owner", "comercial"]);
+  await requireRole(["owner", "comercial", "financeiro"]);
   const supabase = await createClient();
 
   const [{ data, count }, { count: clientesComTel }] = await Promise.all([

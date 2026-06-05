@@ -36,7 +36,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
 };
 
 export default async function ComunicacaoPage() {
-  await requireRole(["owner", "comercial", "operacional"]);
+  await requireRole(["owner", "comercial", "operacional", "financeiro"]);
   const supabase = await createClient();
 
   const [{ data: npsData }, { data: msgData }] = await Promise.all([

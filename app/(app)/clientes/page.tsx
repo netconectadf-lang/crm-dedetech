@@ -45,7 +45,7 @@ export default async function ClientesPage({
 }: {
   searchParams: Promise<{ q?: string; uf?: string; rede?: string }>;
 }) {
-  await requireRole(["owner", "comercial", "operacional"]);
+  await requireRole(["owner", "comercial", "operacional", "financeiro"]);
   const { q, uf, rede } = await searchParams;
   const supabase = await createClient();
 

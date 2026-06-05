@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 export const metadata = { title: "Funil" };
 
 export default async function FunilPage() {
-  await requireRole(["owner", "comercial"]);
+  await requireRole(["owner", "comercial", "financeiro"]);
   const supabase = await createClient();
 
   const [{ data: dealsData }, { data: clientsData }] = await Promise.all([

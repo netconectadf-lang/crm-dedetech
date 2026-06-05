@@ -46,7 +46,7 @@ type Batch = {
 };
 
 export default async function EstoquePage() {
-  await requireRole(["owner", "operacional"]);
+  await requireRole(["owner", "operacional", "financeiro"]);
   const supabase = await createClient();
 
   const [{ data: batchesData }, { data: prodData }] = await Promise.all([

@@ -52,7 +52,7 @@ const STATUS_VARIANT: Record<ContractStatus, "default" | "secondary" | "outline"
 };
 
 export default async function ContratosPage() {
-  await requireRole(["owner", "comercial"]);
+  await requireRole(["owner", "comercial", "financeiro"]);
   const supabase = await createClient();
 
   const [{ data: contractsData }, { data: clientsData }] = await Promise.all([

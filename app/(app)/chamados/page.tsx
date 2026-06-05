@@ -59,7 +59,7 @@ export default async function ChamadosPage({
 }: {
   searchParams: Promise<{ f?: string }>;
 }) {
-  await requireRole(["owner", "comercial", "operacional"]);
+  await requireRole(["owner", "comercial", "operacional", "financeiro"]);
   const { f } = await searchParams;
   const supabase = await createClient();
   const { data } = await supabase

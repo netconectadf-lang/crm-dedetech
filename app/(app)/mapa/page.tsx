@@ -14,7 +14,7 @@ function fmtData(d: string | null): string {
 }
 
 export default async function MapaPage() {
-  await requireRole(["owner", "operacional", "comercial"]);
+  await requireRole(["owner", "operacional", "comercial", "financeiro", "tecnico"]);
   const supabase = await createClient();
 
   const [{ data: osData }, { data: pontoData }, { data: cliData }] = await Promise.all([

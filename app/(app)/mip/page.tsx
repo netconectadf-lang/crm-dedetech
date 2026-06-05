@@ -42,7 +42,7 @@ type Device = {
 };
 
 export default async function MipPage() {
-  await requireRole(["owner", "operacional", "tecnico"]);
+  await requireRole(["owner", "operacional", "tecnico", "financeiro"]);
   const supabase = await createClient();
 
   const [{ data: devData }, { data: readData }, { data: unitData }] =

@@ -39,7 +39,7 @@ type Quote = {
 };
 
 export default async function OrcamentosPage() {
-  await requireRole(["owner", "comercial"]);
+  await requireRole(["owner", "comercial", "financeiro"]);
   const supabase = await createClient();
 
   const [{ data: qData }, { data: clientsData }] = await Promise.all([

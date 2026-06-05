@@ -16,7 +16,7 @@ export const metadata = { title: "Scripts · WhatsApp" };
 type Script = { id: string; nome: string; corpo: string; ativo: boolean };
 
 export default async function ScriptsPage() {
-  await requireRole(["owner", "comercial"]);
+  await requireRole(["owner", "comercial", "financeiro"]);
   const supabase = await createClient();
   const { data } = await supabase
     .from("wa_scripts")

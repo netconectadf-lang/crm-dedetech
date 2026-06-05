@@ -23,6 +23,7 @@ import {
 import type { Field } from "@/components/app/resource-form";
 import { ResourceForm } from "@/components/app/resource-form";
 import { PontoButton } from "@/components/rh/ponto-button";
+import { CriarAcessoColaborador } from "@/components/rh/criar-acesso-colaborador";
 import { solicitarAusencia, decidirAusencia, salvarEPI, salvarASO, salvarTreinamento, excluirTreinamento } from "../actions";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -50,11 +51,11 @@ export default async function RhEmployeePage({
 
   const { data: empData } = await supabase
     .from("employees")
-    .select("id, nome, cargo, responsavel_tecnico, registro_conselho, data_admissao, salario")
+    .select("id, nome, cargo, responsavel_tecnico, registro_conselho, data_admissao, salario, user_id")
     .eq("id", id)
     .maybeSingle();
   if (!empData) notFound();
-  const emp = empData as { id: string; nome: string; cargo: string | null; responsavel_tecnico: boolean; registro_conselho: string | null; data_admissao: string | null; salario: number | null };
+  const emp = empData as { id: string; nome: string; cargo: string | null; responsavel_tecnico: boolean; registro_conselho: string | null; data_admissao: string | null; salario: number | null; user_id: string | null };
 
   const mesInicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
@@ -303,6 +304,13 @@ export default async function RhEmployeePage({
               })}
             </ul>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Acesso do colaborador (portal)</CardTitle></CardHeader>
+        <CardContent>
+          <CriarAcessoColaborador employeeId={emp.id} jaTemAcesso={!!emp.user_id} />
         </CardContent>
       </Card>
     </main>

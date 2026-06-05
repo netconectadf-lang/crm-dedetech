@@ -67,6 +67,9 @@ export async function requireTenant(): Promise<
     // Pode ser um usuário do Portal do Cliente (sem membership de empresa).
     const { hasPortalAccess } = await import("@/lib/portal");
     if (await hasPortalAccess(ctx.userId)) redirect("/portal");
+    // ...ou um colaborador (funcionário com login, sem membership).
+    const { hasColaboradorAccess } = await import("@/lib/colaborador");
+    if (await hasColaboradorAccess(ctx.userId)) redirect("/colaborador");
     redirect("/signup");
   }
   return ctx as AuthContext & { tenantId: string; role: AppRole };

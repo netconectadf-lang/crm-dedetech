@@ -1,8 +1,10 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth";
 import { deleteRecord, type SaveState } from "@/lib/crud-helpers";
 import { absenceSchema, epiSchema, examSchema, trainingSchema } from "@/lib/validators/rh";
@@ -130,4 +132,47 @@ export async function excluirTreinamento(id: string, employeeId: string) {
 
 export async function excluirAusencia(id: string) {
   await deleteRecord("absences", id, ROLES, "/rh");
+}
+
+/** Cria o login do colaborador (Portal do Colaborador) e vincula ao funcionário. */
+export async function criarAcessoColaborador(
+  employeeId: string,
+  _prev: SaveState,
+  _formData: FormData,
+): Promise<SaveState> {
+  const ctx = await requireRole(ROLES);
+  const supabase = await createClient();
+  const { data: emp } = await supabase
+    .from("employees")
+    .select("nome, email, user_id")
+    .eq("id", employeeId)
+    .maybeSingle();
+  const e = emp as { nome: string; email: string | null; user_id: string | null } | null;
+  if (!e) return { error: "Funcionário não encontrado." };
+  if (e.user_id) return { error: "Este funcionário já tem acesso ao portal." };
+  if (!e.email) return { error: "Cadastre um e-mail no funcionário antes de criar o acesso." };
+
+  const admin = createAdminClient();
+  const senha = "Dt" + randomBytes(12).toString("base64url");
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+    email: e.email,
+    password: senha,
+    email_confirm: true,
+    user_metadata: { full_name: e.nome },
+  });
+  if (createErr || !created?.user) {
+    return { error: "Não foi possível criar o acesso (e-mail já em uso?)." };
+  }
+
+  const { error: linkErr } = await admin
+    .from("employees")
+    .update({ user_id: created.user.id })
+    .eq("id", employeeId)
+    .eq("tenant_id", ctx.tenantId);
+  if (linkErr) return { error: "Acesso criado, mas falhou ao vincular ao funcionário." };
+
+  revalidatePath(`/rh/${employeeId}`);
+  return {
+    message: `Acesso criado — e-mail: ${e.email} · senha: ${senha} (repasse ao colaborador).`,
+  };
 }

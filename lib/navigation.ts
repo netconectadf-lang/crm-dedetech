@@ -40,6 +40,7 @@ import {
   Cog,
   Clock,
   Handshake,
+  ScanSearch,
   type LucideIcon,
 } from "lucide-react";
 
@@ -146,6 +147,12 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: MessageCircle,
     accent: "emerald",
     itens: [
+      {
+        href: "/whatsapp/leads",
+        label: "Leads do WhatsApp",
+        icon: ScanSearch,
+        roles: ["owner", "comercial"],
+      },
       {
         href: "/whatsapp/campanhas",
         label: "Campanhas",

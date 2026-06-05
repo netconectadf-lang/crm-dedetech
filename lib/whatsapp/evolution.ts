@@ -165,6 +165,68 @@ export async function findContacts(): Promise<ContatoWa[]> {
   }
 }
 
+export type MensagemWa = {
+  telefone: string;
+  pushName: string;
+  texto: string;
+  fromMe: boolean;
+  timestamp: number;
+};
+
+/**
+ * Puxa um lote de mensagens recentes numa única chamada (offset = tamanho do
+ * lote). Já filtra conversas INDIVIDUAIS e extrai o texto da mensagem.
+ */
+export async function findMessages(limite = 5000): Promise<MensagemWa[]> {
+  if (!evolutionConfigured()) return [];
+  try {
+    const res = await fetch(`${URL}/chat/findMessages/${INSTANCE}`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ where: {}, offset: limite }),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = (await res.json().catch(() => ({}))) as {
+      messages?: { records?: unknown[] } | unknown[];
+    };
+    const raw = Array.isArray(data.messages)
+      ? data.messages
+      : ((data.messages as { records?: unknown[] } | undefined)?.records ?? []);
+
+    const out: MensagemWa[] = [];
+    for (const r of raw as Array<{
+      key?: { remoteJid?: string; fromMe?: boolean };
+      pushName?: string;
+      message?: Record<string, unknown>;
+      messageTimestamp?: number;
+    }>) {
+      const jid = r.key?.remoteJid ?? "";
+      if (!jid.endsWith("@s.whatsapp.net")) continue; // só individuais
+      const tel = numeroDeJid(jid);
+      if (tel.length < 12 || tel.length > 13) continue;
+      const m = r.message ?? {};
+      const texto =
+        (m.conversation as string) ||
+        (m.extendedTextMessage as { text?: string } | undefined)?.text ||
+        (m.imageMessage as { caption?: string } | undefined)?.caption ||
+        (m.videoMessage as { caption?: string } | undefined)?.caption ||
+        "";
+      if (!texto) continue;
+      out.push({
+        telefone: tel,
+        pushName: r.pushName ?? "",
+        texto,
+        fromMe: Boolean(r.key?.fromMe),
+        timestamp: Number(r.messageTimestamp ?? 0),
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 export type GrupoWa = { jid: string; nome: string; participantes: number };
 
 /** Lista os grupos do WhatsApp conectado. */

@@ -4,7 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { dispatch } from "@/lib/notify/dispatch";
 import { nomeExibicao } from "@/lib/clientes";
 import { onlyDigits } from "@/lib/format";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** Quantos dias antes avisar. */
 const DIAS_REVISAO = 3;
@@ -157,7 +156,7 @@ export async function enviarLembretes(
   const hojeMMDD = hoje.slice(5, 10);
   const anoAtual = hoje.slice(0, 4);
   try {
-    const { data: cliData } = await (db as unknown as SupabaseClient)
+    const { data: cliData } = await db
       .from("clients")
       .select("id, razao_social, nome_fantasia, telefone, data_nascimento")
       .eq("tenant_id", tenantId)

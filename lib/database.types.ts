@@ -642,6 +642,7 @@ export type Database = {
           complemento: string | null
           contato_responsavel: string | null
           created_at: string
+          data_nascimento: string | null
           documento: string | null
           email: string | null
           id: string
@@ -671,6 +672,7 @@ export type Database = {
           complemento?: string | null
           contato_responsavel?: string | null
           created_at?: string
+          data_nascimento?: string | null
           documento?: string | null
           email?: string | null
           id?: string
@@ -700,6 +702,7 @@ export type Database = {
           complemento?: string | null
           contato_responsavel?: string | null
           created_at?: string
+          data_nascimento?: string | null
           documento?: string | null
           email?: string | null
           id?: string

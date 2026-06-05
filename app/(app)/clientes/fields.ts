@@ -36,6 +36,7 @@ export const clienteFields: Field[] = [
   { name: "cidade", label: "Cidade" },
   { name: "uf", label: "UF" },
   { name: "contato_responsavel", label: "Contato responsável" },
+  { name: "data_nascimento", label: "Data de nascimento (p/ aniversário)", type: "date" },
   { name: "inscricao_estadual", label: "Inscrição estadual" },
   { name: "inscricao_municipal", label: "Inscrição municipal" },
   { name: "observacoes", label: "Observações", type: "textarea" },

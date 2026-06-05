@@ -4,19 +4,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { dispatch } from "@/lib/notify/dispatch";
 import { nomeExibicao } from "@/lib/clientes";
 import { onlyDigits } from "@/lib/format";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** Quantos dias antes avisar. */
 const DIAS_REVISAO = 3;
 const DIAS_RENOVACAO = 7;
 
 type Cli = { razao_social: string; nome_fantasia: string | null; telefone: string | null };
-type ItemEnviado = { tipo: "revisao" | "renovacao"; cliente: string; destino: string; status: string };
+type ItemEnviado = { tipo: "revisao" | "renovacao" | "aniversario"; cliente: string; destino: string; status: string };
 
 export type LembretesResultado = {
   ok: boolean;
   dryRun: boolean;
   revisoesEncontradas: number;
   renovacoesEncontradas: number;
+  aniversariantesEncontrados: number;
   enviados: ItemEnviado[];
   pulados: number; // já avisados antes ou sem telefone
 };
@@ -95,7 +97,7 @@ export async function enviarLembretes(
   }
 
   async function processar(
-    kind: "lembrete_revisao" | "lembrete_renovacao",
+    kind: "lembrete_revisao" | "lembrete_renovacao" | "lembrete_aniversario",
     id: string,
     cli: Cli | null,
     corpo: string,
@@ -110,7 +112,8 @@ export async function enviarLembretes(
       pulados++;
       return;
     }
-    const tipo = kind === "lembrete_revisao" ? "revisao" : "renovacao";
+    const tipo =
+      kind === "lembrete_revisao" ? "revisao" : kind === "lembrete_renovacao" ? "renovacao" : "aniversario";
     if (dryRun) {
       enviados.push({ tipo, cliente: nome, destino: cli!.telefone!, status: "simulado" });
       return;
@@ -148,11 +151,43 @@ export async function enviarLembretes(
     await processar("lembrete_renovacao", c.id, cli, corpo);
   }
 
+  // Aniversariantes do dia (clientes ativos com data_nascimento = hoje, mês+dia).
+  // Query separada e tolerante: a coluna pode não existir até a migration rodar.
+  let aniversariantes = 0;
+  const hojeMMDD = hoje.slice(5, 10);
+  const anoAtual = hoje.slice(0, 4);
+  try {
+    const { data: cliData } = await (db as unknown as SupabaseClient)
+      .from("clients")
+      .select("id, razao_social, nome_fantasia, telefone, data_nascimento")
+      .eq("tenant_id", tenantId)
+      .eq("ativo", true)
+      .not("data_nascimento", "is", null)
+      .not("telefone", "is", null);
+    const aniversariantesHoje = (
+      (cliData as { id: string; razao_social: string; nome_fantasia: string | null; telefone: string | null; data_nascimento: string | null }[] | null) ?? []
+    ).filter((c) => (c.data_nascimento ?? "").slice(5, 10) === hojeMMDD);
+    aniversariantes = aniversariantesHoje.length;
+    for (const c of aniversariantesHoje) {
+      const cli: Cli = { razao_social: c.razao_social, nome_fantasia: c.nome_fantasia, telefone: c.telefone };
+      const nome = nomeExibicao(cli);
+      const corpo =
+        `🎉 Feliz aniversário, ${nome}! 🎂\n\n` +
+        `A ${empresa} deseja a você um dia maravilhoso! Conte sempre com a gente para manter ` +
+        `seu ambiente protegido e saudável. Um abraço! 🐜🛡️`;
+      // related_id por ano: não repete no mesmo ano, mas envia de novo no próximo aniversário.
+      await processar("lembrete_aniversario", `${c.id}:${anoAtual}`, cli, corpo);
+    }
+  } catch {
+    // coluna data_nascimento ainda não existe — ignora até a migration rodar
+  }
+
   return {
     ok: true,
     dryRun,
     revisoesEncontradas: revisoes.length,
     renovacoesEncontradas: contratos.length,
+    aniversariantesEncontrados: aniversariantes,
     enviados,
     pulados,
   };

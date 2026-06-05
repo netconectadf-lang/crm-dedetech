@@ -51,6 +51,7 @@ export const clientSchema = z.object({
   telefone: digits,
   email: opt(z.string().email("E-mail inválido")),
   contato_responsavel: opt(z.string()),
+  data_nascimento: opt(z.string()),
   segmento: opt(z.string()),
   origem: opt(z.string()),
   observacoes: opt(z.string()),

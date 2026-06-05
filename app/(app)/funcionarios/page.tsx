@@ -1,10 +1,11 @@
-import { Plus, Pencil, MessageCircle, Banknote } from "lucide-react";
+import { Plus, Pencil, MessageCircle, Banknote, HandCoins } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatCpfCnpj, formatPhone, waLink } from "@/lib/format";
 import type { Field } from "@/components/app/resource-form";
-import { salvarFuncionario, excluirFuncionario, lancarSalario } from "./actions";
+import { salvarFuncionario, excluirFuncionario, lancarSalario, lancarFolha } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -67,6 +68,20 @@ const salarioFields: Field[] = [
   { name: "observacoes", label: "Observações", type: "textarea" },
 ];
 
+const folhaFields: Field[] = [
+  { name: "vencimento", label: "Vencimento das contas", type: "date", required: true },
+  {
+    name: "recorrencia",
+    label: "Recorrência",
+    type: "select",
+    options: [
+      { value: "mensal", label: "Mensal" },
+      { value: "unica", label: "Única" },
+      { value: "anual", label: "Anual" },
+    ],
+  },
+];
+
 type Funcionario = {
   id: string;
   nome: string;
@@ -89,6 +104,9 @@ export default async function FuncionariosPage() {
   const vencSalario = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 5)
     .toISOString()
     .slice(0, 10);
+  const comSalario = funcionarios.filter(
+    (f) => f.ativo && f.salario != null && Number(f.salario) > 0,
+  ).length;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
@@ -97,14 +115,72 @@ export default async function FuncionariosPage() {
         description="Equipe, cargos e responsável técnico."
         count={funcionarios.length}
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Novo funcionário</Button>}
-            title="Novo funcionário"
-            description="Envie a CNH/RG e o sistema lê e preenche os dados (menos o salário)."
-            fields={fields}
-            action={salvarFuncionario.bind(null, null)}
-            docOcr
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona a tela de Funcionários"
+              descricao="Cadastre sua equipe, leia documentos por foto e lance os salários no financeiro."
+              topicos={[
+                {
+                  titulo: "Cadastrar (com leitura de documento)",
+                  itens: [
+                    "Clique em 'Novo funcionário'.",
+                    "No topo do formulário, use 'Ler documento (CNH/RG)' e envie uma foto ou PDF — o sistema preenche nome, CPF, RG e nascimento automaticamente.",
+                    "O salário NÃO é preenchido pela leitura: digite à mão.",
+                    "Confira tudo e salve.",
+                  ],
+                },
+                {
+                  titulo: "Lançar salário no financeiro",
+                  itens: [
+                    "Na linha do funcionário, clique no ícone azul de cédula (💵).",
+                    "O valor já vem do salário cadastrado; confira o vencimento e a recorrência (Mensal por padrão).",
+                    "Clique em 'Lançar no financeiro' — vira uma conta a pagar em Financeiro → A pagar.",
+                  ],
+                },
+                {
+                  titulo: "Lançar a folha do mês inteira",
+                  itens: [
+                    "Clique em 'Lançar folha do mês' aqui no topo.",
+                    "Escolha o vencimento e a recorrência e confirme.",
+                    "O sistema cria uma conta a pagar para CADA funcionário ativo com salário.",
+                    "Proteção: se a folha daquele mês já foi lançada, ele não duplica.",
+                  ],
+                },
+                {
+                  titulo: "Outros atalhos",
+                  itens: [
+                    "Ícone verde de WhatsApp: abre conversa direta com o funcionário (se tiver telefone).",
+                    "Lápis: editar. Lixeira: excluir.",
+                    "RT = responsável técnico.",
+                  ],
+                },
+              ]}
+              dica="Cadastre o salário no funcionário para liberar o lançamento no financeiro (individual ou folha inteira)."
+            />
+            {comSalario > 0 && (
+              <ResourceDialog
+                trigger={
+                  <Button variant="outline">
+                    <HandCoins className="size-4" /> Lançar folha do mês
+                  </Button>
+                }
+                title="Lançar folha do mês"
+                description={`Cria uma conta a pagar para os ${comSalario} funcionário(s) ativo(s) com salário. Não duplica se já lançou neste mês.`}
+                fields={folhaFields}
+                defaultValues={{ vencimento: vencSalario, recorrencia: "mensal" }}
+                action={lancarFolha}
+                submitLabel="Lançar folha"
+              />
+            )}
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Novo funcionário</Button>}
+              title="Novo funcionário"
+              description="Envie a CNH/RG e o sistema lê e preenche os dados (menos o salário)."
+              fields={fields}
+              action={salvarFuncionario.bind(null, null)}
+              docOcr
+            />
+          </div>
         }
       />
 

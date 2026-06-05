@@ -116,3 +116,56 @@ export function feriasInfo(
   const vencidas = periodos >= 2 && diasGozados < (periodos - 1) * 30;
   return { periodos, diasDireito, diasGozados, saldo, vencidas };
 }
+
+/** Jornada padrão considerada no espelho de ponto (8h/dia). */
+export const JORNADA_MS = 8 * 3_600_000;
+
+export type DiaPonto = { dia: string; entrada: string | null; saida: string | null; ms: number; saldoMs: number };
+
+/**
+ * Espelho de ponto: agrupa os registros por dia (pares entrada→saída),
+ * soma as horas e compara com a jornada para gerar saldo (banco de horas).
+ */
+export function espelhoPonto(
+  entries: { tipo: string; registrado_em: string }[],
+): { dias: DiaPonto[]; totalMs: number; jornadaMs: number; saldoMs: number } {
+  const porDia = new Map<string, { tipo: string; ts: number }[]>();
+  for (const e of entries) {
+    const dia = e.registrado_em.slice(0, 10);
+    const arr = porDia.get(dia) ?? [];
+    arr.push({ tipo: e.tipo, ts: new Date(e.registrado_em).getTime() });
+    porDia.set(dia, arr);
+  }
+  const hhmm = (ts: number | null) =>
+    ts != null ? new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : null;
+
+  const dias: DiaPonto[] = [];
+  let totalMs = 0;
+  for (const [dia, arr] of [...porDia.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1))) {
+    arr.sort((a, b) => a.ts - b.ts);
+    let aberto: number | null = null;
+    let ms = 0;
+    let primeira: number | null = null;
+    let ultima: number | null = null;
+    for (const e of arr) {
+      if (e.tipo === "entrada") {
+        aberto = e.ts;
+        if (primeira == null) primeira = e.ts;
+      } else if (e.tipo === "saida" && aberto != null) {
+        ms += e.ts - aberto;
+        ultima = e.ts;
+        aberto = null;
+      }
+    }
+    totalMs += ms;
+    dias.push({ dia, entrada: hhmm(primeira), saida: hhmm(ultima), ms, saldoMs: ms - JORNADA_MS });
+  }
+  const jornadaMs = dias.length * JORNADA_MS;
+  return { dias, totalMs, jornadaMs, saldoMs: totalMs - jornadaMs };
+}
+
+/** Saldo de banco de horas como "+2h 30m" / "-1h". */
+export function formatSaldo(ms: number): string {
+  const sinal = ms < 0 ? "-" : "+";
+  return `${sinal}${formatDuracao(Math.abs(ms))}`;
+}

@@ -11,6 +11,9 @@ import {
   EXAM_TYPE_LABEL,
   feriasInfo,
   formatTempoCasa,
+  formatDuracao,
+  formatSaldo,
+  espelhoPonto,
   diasEntre,
   type AbsenceType,
   type AbsenceStatus,
@@ -24,6 +27,14 @@ import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const metadata = { title: "Funcionário" };
 
@@ -44,13 +55,18 @@ export default async function RhEmployeePage({
   if (!empData) notFound();
   const emp = empData as { id: string; nome: string; cargo: string | null; responsavel_tecnico: boolean; registro_conselho: string | null; data_admissao: string | null; salario: number | null };
 
-  const [{ data: pontos }, { data: ausencias }, { data: epis }, { data: asos }] =
+  const mesInicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
+  const [{ data: pontos }, { data: ausencias }, { data: epis }, { data: asos }, { data: pontoMesData }] =
     await Promise.all([
       supabase.from("time_entries").select("id, tipo, registrado_em").eq("employee_id", id).order("registrado_em", { ascending: false }).limit(10),
       supabase.from("absences").select("id, tipo, inicio, fim, status, motivo").eq("employee_id", id).order("inicio", { ascending: false }),
       supabase.from("epi_deliveries").select("id, descricao, entregue_em, validade, assinado").eq("employee_id", id).order("entregue_em", { ascending: false }),
       supabase.from("occupational_exams").select("id, tipo, data, validade, resultado").eq("employee_id", id).order("data", { ascending: false }),
+      supabase.from("time_entries").select("tipo, registrado_em").eq("employee_id", id).gte("registrado_em", mesInicio),
     ]);
+
+  const espelho = espelhoPonto((pontoMesData as { tipo: string; registrado_em: string }[] | null) ?? []);
 
   const ponto = (pontos as { id: string; tipo: string; registrado_em: string }[] | null) ?? [];
   const ausList = (ausencias as { id: string; tipo: AbsenceType; inicio: string; fim: string; status: AbsenceStatus; motivo: string | null }[] | null) ?? [];
@@ -123,6 +139,52 @@ export default async function RhEmployeePage({
                 </li>
               ))}
             </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle className="text-base">Espelho de ponto — mês atual</CardTitle>
+            <span className="text-sm text-muted-foreground">
+              Banco de horas:{" "}
+              <strong className={espelho.saldoMs >= 0 ? "text-emerald-300" : "text-destructive"}>
+                {formatSaldo(espelho.saldoMs)}
+              </strong>
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {espelho.dias.length === 0 ? (
+            <p className="py-2 text-sm text-muted-foreground">Sem registros de ponto neste mês.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Dia</TableHead>
+                    <TableHead>Entrada</TableHead>
+                    <TableHead>Saída</TableHead>
+                    <TableHead className="text-right">Trabalhado</TableHead>
+                    <TableHead className="text-right">Saldo (8h)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {espelho.dias.map((d) => (
+                    <TableRow key={d.dia}>
+                      <TableCell className="tabular-nums">{formatDate(d.dia)}</TableCell>
+                      <TableCell className="tabular-nums text-muted-foreground">{d.entrada ?? "—"}</TableCell>
+                      <TableCell className="tabular-nums text-muted-foreground">{d.saida ?? "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">{formatDuracao(d.ms)}</TableCell>
+                      <TableCell className={`text-right tabular-nums ${d.saldoMs >= 0 ? "text-emerald-300" : "text-destructive"}`}>
+                        {formatSaldo(d.saldoMs)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

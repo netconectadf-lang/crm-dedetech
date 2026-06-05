@@ -1,19 +1,21 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { signIn, listOpenTickets } from "./client";
-import { observacoesDoChamado } from "./match";
-import type { SyncResult } from "./types";
+import { signIn, listTickets } from "./client";
+import { observacoesDoChamado, trilogoStatusToOs, deveAtualizarStatus } from "./match";
+import { TRILOGO_STATUS, type SyncResult } from "./types";
+import type { OsStatus } from "@/lib/os";
 
 const PANEL_BASE = "https://bluefit.trilogo.app";
 
 /**
- * Sincroniza os chamados ABERTOS do Trílogo para a empresa informada.
- * Cada chamado novo vira uma OS "agendada" (a equipe atribui técnico/data).
- * Idempotente: usa (tenant, source='trilogo', external_ref=id) para dedup.
+ * Sincroniza os chamados do Trílogo para a empresa informada.
+ *  - Chamado ABERTO ainda não importado  -> cria OS "agendada" (dedup por id).
+ *  - Chamado já importado                 -> ESPELHA o status (quando dão baixa
+ *    lá, a OS aqui vira executada/cancelada; só avança, nunca toca em faturada).
  *
- * Roda com o admin client (service role) — pensado para o cron e para o
- * botão "Sincronizar agora", ambos fora de um contexto com sessão.
+ * A operação fica no Trílogo; o CRM reflete o andamento. Roda com o admin
+ * client (service role) — pensado para o cron e para o "Sincronizar agora".
  */
 export async function syncTrilogo(
   tenantId: string,
@@ -25,6 +27,7 @@ export async function syncTrilogo(
   const result: SyncResult = {
     ok: false,
     criados: 0,
+    atualizados: 0,
     pulados: 0,
     semMapeamento: 0,
     erros: 0,
@@ -33,7 +36,7 @@ export async function syncTrilogo(
 
   try {
     const { accessToken } = await signIn();
-    const abertos = await listOpenTickets(accessToken);
+    const todos = await listTickets(accessToken, { limit: 1000 });
 
     // De-para: id da unidade Trílogo -> cliente do CRM.
     const { data: clientesData } = await supabase
@@ -46,32 +49,50 @@ export async function syncTrilogo(
       clientePorCompany.set(c.trilogo_company_id, c.id);
     }
 
-    // OS já importadas (dedup).
-    const { data: existentesData } = await supabase
+    // OS já importadas: external_ref -> { id, status }.
+    const { data: osData } = await supabase
       .from("service_orders")
-      .select("external_ref")
+      .select("id, external_ref, status")
       .eq("tenant_id", tenantId)
       .eq("source", "trilogo")
       .not("external_ref", "is", null);
-    const jaImportados = new Set(
-      ((existentesData ?? []) as { external_ref: string }[]).map((r) => r.external_ref),
-    );
+    const osPorRef = new Map<string, { id: string; status: OsStatus }>();
+    for (const o of (osData ?? []) as { id: string; external_ref: string; status: OsStatus }[]) {
+      osPorRef.set(o.external_ref, { id: o.id, status: o.status });
+    }
 
     const naoMapeadas = new Map<number, string>();
 
-    for (const t of abertos) {
+    for (const t of todos) {
       const ref = String(t.id);
-      if (jaImportados.has(ref)) {
-        result.pulados += 1;
+      const existente = osPorRef.get(ref);
+
+      // Já importado -> espelha o status do chamado.
+      if (existente) {
+        const target = trilogoStatusToOs(t.status);
+        if (target && deveAtualizarStatus(existente.status, target)) {
+          const patch: Record<string, unknown> = { status: target };
+          if (target === "executada") patch.executada_em = new Date().toISOString();
+          const { error } = await supabase
+            .from("service_orders")
+            .update(patch)
+            .eq("id", existente.id);
+          if (error) result.erros += 1;
+          else result.atualizados += 1;
+        } else {
+          result.pulados += 1;
+        }
         continue;
       }
+
+      // Não importado -> só cria se estiver ABERTO.
+      if (t.status !== TRILOGO_STATUS.Open) continue;
+
       const companyId = t.company?.id;
       const clientId = companyId != null ? clientePorCompany.get(companyId) : undefined;
       if (!clientId) {
         result.semMapeamento += 1;
-        if (companyId != null) {
-          naoMapeadas.set(companyId, t.companyName ?? `Unidade ${companyId}`);
-        }
+        if (companyId != null) naoMapeadas.set(companyId, t.companyName ?? `Unidade ${companyId}`);
         continue;
       }
 
@@ -85,12 +106,8 @@ export async function syncTrilogo(
         observacoes: observacoesDoChamado(t),
       });
       if (error) {
-        // Conflito de unique (corrida) = já existe; demais = erro real.
-        if (error.code === "23505") {
-          result.pulados += 1;
-        } else {
-          result.erros += 1;
-        }
+        if (error.code === "23505") result.pulados += 1;
+        else result.erros += 1;
         continue;
       }
       result.criados += 1;
@@ -101,14 +118,14 @@ export async function syncTrilogo(
       nome,
     }));
     result.ok = result.erros === 0;
-    result.mensagem = `${result.criados} criada(s), ${result.pulados} já existia(m), ${result.semMapeamento} sem unidade casada.`;
+    result.mensagem = `${result.criados} criada(s), ${result.atualizados} atualizada(s), ${result.semMapeamento} sem unidade casada.`;
   } catch (e) {
     result.ok = false;
     result.erros += 1;
     result.mensagem = e instanceof Error ? e.message : "Erro desconhecido no sync.";
   }
 
-  // Registra a execução (best-effort).
+  // Registra a execução (best-effort). `atualizados` vai no detalhe (sem coluna própria).
   await supabase.from("trilogo_sync_runs").insert({
     tenant_id: tenantId,
     started_at: startedAt,
@@ -120,7 +137,10 @@ export async function syncTrilogo(
     sem_mapeamento: result.semMapeamento,
     erros: result.erros,
     mensagem: result.mensagem,
-    detalhe: result.naoMapeadas.length ? { naoMapeadas: result.naoMapeadas } : null,
+    detalhe: {
+      atualizados: result.atualizados,
+      ...(result.naoMapeadas.length ? { naoMapeadas: result.naoMapeadas } : {}),
+    },
   });
 
   return result;

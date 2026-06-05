@@ -1,4 +1,41 @@
+import { OS_FLOW, type OsStatus } from "@/lib/os";
 import type { TrilogoTicket } from "./types";
+
+/**
+ * Status do chamado no Trílogo -> status correspondente da OS no CRM.
+ * (Open/Sended = a fazer; InExecution = em execução; Executed/Inspected/Archived
+ * = baixa/concluído; Canceled = cancelado.)
+ */
+export function trilogoStatusToOs(status: number): OsStatus | null {
+  switch (status) {
+    case 1:
+    case 2:
+      return "agendada";
+    case 7:
+      return "em_execucao";
+    case 5:
+    case 6:
+    case 3:
+      return "executada";
+    case 4:
+      return "cancelada";
+    default:
+      return null;
+  }
+}
+
+/**
+ * Decide se o status da OS deve ser atualizado pelo espelhamento do Trílogo.
+ * Regras: nunca mexe em 'faturada' (faturamento é local); 'cancelada' sempre
+ * reflete; não "ressuscita" OS cancelada; fora isso só AVANÇA no fluxo (nunca volta).
+ */
+export function deveAtualizarStatus(current: OsStatus, target: OsStatus): boolean {
+  if (current === target) return false;
+  if (current === "faturada") return false;
+  if (target === "cancelada") return true;
+  if (current === "cancelada") return false;
+  return OS_FLOW.indexOf(target) > OS_FLOW.indexOf(current);
+}
 
 /**
  * Extrai o código da unidade Bluefit do nome.

@@ -63,6 +63,7 @@ export type TrilogoSession = {
 export type SyncResult = {
   ok: boolean;
   criados: number;
+  atualizados: number;
   pulados: number;
   semMapeamento: number;
   erros: number;

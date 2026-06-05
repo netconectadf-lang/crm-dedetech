@@ -33,6 +33,7 @@ type SyncRun = {
   sem_mapeamento: number;
   erros: number;
   mensagem: string | null;
+  detalhe: { atualizados?: number } | null;
 };
 
 function clienteLabel(c: ClienteParaMapa): string {
@@ -53,7 +54,7 @@ export default async function TrilogoPage() {
       .order("razao_social"),
     supabase
       .from("trilogo_sync_runs")
-      .select("started_at, ok, origem, criados, pulados, sem_mapeamento, erros, mensagem")
+      .select("started_at, ok, origem, criados, pulados, sem_mapeamento, erros, mensagem, detalhe")
       .eq("tenant_id", ctx.tenantId)
       .order("started_at", { ascending: false })
       .limit(5),
@@ -97,7 +98,7 @@ export default async function TrilogoPage() {
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
         title="Trílogo — Bluefit"
-        description="Importa os chamados abertos da Bluefit como ordens de serviço, 2× por dia."
+        description="Importa os chamados abertos da Bluefit como OS e espelha o status quando eles dão baixa no Trílogo (1× por dia)."
       />
 
       {/* Painel de status */}
@@ -135,7 +136,8 @@ export default async function TrilogoPage() {
                 Último sync: <strong className="text-foreground">{formatDate(ultimo.started_at)}</strong> ({ultimo.origem})
               </span>
               <span>✅ {ultimo.criados} criadas</span>
-              <span>↩️ {ultimo.pulados} já existiam</span>
+              <span>🔄 {ultimo.detalhe?.atualizados ?? 0} atualizadas</span>
+              <span>↩️ {ultimo.pulados} sem mudança</span>
               <span>⚠️ {ultimo.sem_mapeamento} sem unidade</span>
               {ultimo.erros > 0 && <span className="text-rose-300">❌ {ultimo.erros} erros</span>}
             </div>

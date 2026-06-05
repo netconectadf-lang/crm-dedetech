@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimit } from "@/lib/rate-limit";
 
 /**
  * Ações públicas (sem sessão) — usam o admin client e são gated pelo token
  * inadivinhável da proposta. Nunca recebem tenant_id do cliente.
  */
 export async function aceitarProposta(token: string) {
+  if (!(await rateLimit("proposta", { limit: 20, windowSeconds: 60 }))) return;
   const supabase = createAdminClient();
   const { data: quote } = await supabase
     .from("quotes")
@@ -32,6 +34,7 @@ export async function aceitarProposta(token: string) {
 }
 
 export async function recusarProposta(token: string) {
+  if (!(await rateLimit("proposta", { limit: 20, windowSeconds: 60 }))) return;
   const supabase = createAdminClient();
   const { data: quote } = await supabase
     .from("quotes")

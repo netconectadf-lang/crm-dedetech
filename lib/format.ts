@@ -26,6 +26,28 @@ export function formatPhone(v: string | null | undefined): string {
   return v;
 }
 
+/**
+ * Monta o link wa.me a partir de um telefone BR (garante o 55).
+ * Retorna null se não houver número válido (aí o botão não aparece).
+ * `msg` opcional pré-preenche a mensagem.
+ */
+export function waLink(
+  telefone: string | null | undefined,
+  msg?: string,
+): string | null {
+  if (!telefone) return null;
+  const n = onlyDigits(telefone).replace(/^0+/, "");
+  const num =
+    n.startsWith("55") && (n.length === 12 || n.length === 13)
+      ? n
+      : n.length === 10 || n.length === 11
+        ? `55${n}`
+        : n;
+  if (num.length < 12) return null;
+  const base = `https://wa.me/${num}`;
+  return msg ? `${base}?text=${encodeURIComponent(msg)}` : base;
+}
+
 export function formatBRL(v: number | null | undefined): string {
   return (v ?? 0).toLocaleString("pt-BR", {
     style: "currency",

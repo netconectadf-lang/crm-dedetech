@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Plus, Pencil, MapPin } from "lucide-react";
+import { Plus, Pencil, MapPin, MessageCircle } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { formatCpfCnpj, formatPhone } from "@/lib/format";
+import { formatCpfCnpj, formatPhone, waLink } from "@/lib/format";
 import { descobrirRedes } from "@/lib/clientes";
 import { clienteFields } from "./fields";
 import { salvarCliente, excluirCliente } from "./actions";
@@ -141,6 +141,23 @@ export default async function ClientesPage({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {waLink(c.telefone) && (
+                          <Button
+                            asChild
+                            variant="ghost"
+                            size="icon"
+                            title={`WhatsApp ${formatPhone(c.telefone)}`}
+                            className="text-emerald-400 hover:text-emerald-300"
+                          >
+                            <a
+                              href={waLink(c.telefone)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <MessageCircle className="size-4" />
+                            </a>
+                          </Button>
+                        )}
                         <Button asChild variant="ghost" size="icon" title="Unidades">
                           <Link href={`/clientes/${c.id}`}>
                             <MapPin className="size-4" />

@@ -92,6 +92,17 @@ export function nomeCurto(razao: string | null | undefined): string {
 }
 
 /**
+ * Nome de exibição do cliente: usa o nome de fantasia (que p/ Bluefit é igual
+ * ao Trílogo) e cai no nome curto da razão social quando não houver fantasia.
+ */
+export function nomeExibicao(
+  c: { nome_fantasia?: string | null; razao_social?: string | null } | null | undefined,
+): string {
+  if (!c) return "—";
+  return c.nome_fantasia?.trim() || nomeCurto(c.razao_social);
+}
+
+/**
  * Descobre as redes (marcas que se repetem ≥ minOcorr e não são genéricas)
  * a partir de uma lista de clientes. Retorna o conjunto de marcas-rede e a
  * função para rotular cada cliente.

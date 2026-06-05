@@ -6,6 +6,7 @@ import { effectiveStatus, type FinanceStatus } from "@/lib/financeiro";
 import { isCritical, type MipReadingStatus } from "@/lib/mip";
 import { STAGES, type DealStage } from "@/lib/funil";
 import { OS_PENDENTE } from "@/lib/os";
+import { nomeExibicao } from "@/lib/clientes";
 
 export type DashboardMetrics = {
   mrr: number;
@@ -65,7 +66,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     supabase.from("clients").select("id", { count: "exact", head: true }).eq("ativo", true),
     supabase
       .from("service_orders")
-      .select("id, numero, status, scheduled_at, clients(razao_social, cidade)")
+      .select("id, numero, status, scheduled_at, clients(razao_social, nome_fantasia, cidade)")
       .in("status", OS_PENDENTE as unknown as string[])
       .order("scheduled_at", { ascending: true, nullsFirst: false })
       .limit(6),
@@ -131,12 +132,13 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   for (const o of oss) osPorStatus[o.status] = (osPorStatus[o.status] ?? 0) + 1;
   const osHoje = oss.filter((o) => o.scheduled_at?.slice(0, 10) === hoje).length;
 
+  type ProxCliente = { razao_social: string | null; nome_fantasia: string | null; cidade: string | null };
   type ProxRaw = {
     id: string;
     numero: number;
     status: string;
     scheduled_at: string | null;
-    clients: { razao_social: string | null; cidade: string | null } | { razao_social: string | null; cidade: string | null }[] | null;
+    clients: ProxCliente | ProxCliente[] | null;
   };
   const proximasOs = ((proximasOsData as ProxRaw[] | null) ?? []).map((o) => {
     const c = Array.isArray(o.clients) ? o.clients[0] : o.clients;
@@ -145,7 +147,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       numero: o.numero,
       status: o.status,
       scheduled_at: o.scheduled_at,
-      cliente: c?.razao_social ?? null,
+      cliente: nomeExibicao(c),
       cidade: c?.cidade ?? null,
     };
   });

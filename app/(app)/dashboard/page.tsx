@@ -19,7 +19,6 @@ import { formatBRL } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/types";
 import { STAGE_LABEL } from "@/lib/funil";
 import { OS_STATUS_LABEL, type OsStatus } from "@/lib/os";
-import { nomeCurto } from "@/lib/clientes";
 import { cn } from "@/lib/utils";
 import { KpiCard, Panel } from "@/components/dashboard/kpi-card";
 import { CashflowChart } from "@/components/dashboard/cashflow-chart";
@@ -327,7 +326,7 @@ export default async function DashboardPage() {
               >
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="text-xs tabular-nums text-muted-foreground">#{o.numero}</span>
-                  <span className="truncate font-medium group-hover:text-primary">{nomeCurto(o.cliente)}</span>
+                  <span className="truncate font-medium group-hover:text-primary">{o.cliente}</span>
                   {o.cidade && <span className="shrink-0 text-xs text-muted-foreground">· {o.cidade}</span>}
                 </span>
                 <span className="flex shrink-0 items-center gap-2">

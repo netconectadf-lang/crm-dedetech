@@ -8,7 +8,7 @@ import { enviarNPS } from "../nps-actions";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatDate, formatPhone, formatBRL, onlyDigits } from "@/lib/format";
-import { rotuloCliente, nomeCurto } from "@/lib/clientes";
+import { rotuloCliente, nomeExibicao } from "@/lib/clientes";
 import { OS_STATUS_LABEL, OS_STATUS_TONE, type OsStatus, type ApplicationMethod } from "@/lib/os";
 import { StatusStepper } from "@/components/os/status-stepper";
 import { Panel } from "@/components/dashboard/kpi-card";
@@ -73,6 +73,7 @@ type OS = {
   custo_total: number | null;
   clients: {
     razao_social: string;
+    nome_fantasia: string | null;
     telefone: string | null;
     email: string | null;
     logradouro: string | null;
@@ -97,7 +98,7 @@ export default async function OsDetailPage({
   const { data: osData } = await supabase
     .from("service_orders")
     .select(
-      "*, clients(razao_social, telefone, email, logradouro, numero, bairro, cidade, uf, contato_responsavel), employees(nome)",
+      "*, clients(razao_social, nome_fantasia, telefone, email, logradouro, numero, bairro, cidade, uf, contato_responsavel), employees(nome)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -168,7 +169,7 @@ export default async function OsDetailPage({
 
       <PageHeader
         title={`OS #${os.numero}`}
-        description={nomeCurto(os.clients?.razao_social)}
+        description={nomeExibicao(os.clients)}
         action={
           <div className="flex gap-2">
             {finalizada && (
@@ -222,7 +223,7 @@ export default async function OsDetailPage({
         <Card>
           <CardHeader><CardTitle className="text-base">Contato do cliente</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <p className="font-medium">{nomeCurto(cli?.razao_social)}</p>
+            <p className="font-medium">{nomeExibicao(cli)}</p>
             {cli?.contato_responsavel && (
               <p className="text-muted-foreground">Resp.: {cli.contato_responsavel}</p>
             )}

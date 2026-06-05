@@ -10,7 +10,7 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { rotuloCliente, nomeCurto } from "@/lib/clientes";
+import { rotuloCliente, nomeExibicao } from "@/lib/clientes";
 import {
   OS_STATUS_LABEL,
   OS_STATUS_TONE,
@@ -292,9 +292,7 @@ export default async function OsPage({
                   return (
                     <TableRow key={o.id}>
                       <TableCell className="font-medium tabular-nums">#{o.numero}</TableCell>
-                      <TableCell className="font-medium">
-                        {o.clients?.nome_fantasia?.trim() || nomeCurto(o.clients?.razao_social)}
-                      </TableCell>
+                      <TableCell className="font-medium">{nomeExibicao(o.clients)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{o.clients?.cidade ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{o.clients?.uf ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">

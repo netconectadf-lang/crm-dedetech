@@ -63,7 +63,10 @@ type OS = {
 /** Extrai "Tipo de serviço: X" das observações (OS importadas do Trílogo). */
 function tipoServicoDasObs(obs: string | null): string | null {
   const m = obs?.match(/Tipo de servi[çc]o:\s*(.+)/i);
-  return m ? m[1].trim() : null;
+  if (!m) return null;
+  // Se vier como caminho (ex: "Facilities › Dedetização › ..."), fica só a última parte.
+  const partes = m[1].split(/\s*[›»>→]\s*/).filter(Boolean);
+  return (partes[partes.length - 1] ?? m[1]).trim() || null;
 }
 
 export default async function OsPage({
@@ -274,7 +277,11 @@ export default async function OsPage({
                       <TableCell className="font-medium">{nomeCurto(o.clients?.razao_social)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{o.clients?.cidade ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{o.clients?.uf ?? "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{tipoServico(o)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        <span className="block max-w-[14rem] truncate" title={tipoServico(o)}>
+                          {tipoServico(o)}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-sm">
                         {o.scheduled_at ? (
                           <span

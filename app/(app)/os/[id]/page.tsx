@@ -215,6 +215,15 @@ export default async function OsDetailPage({
         }
       />
 
+      {os.observacoes && (
+        <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Relato / observações
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-foreground">{os.observacoes}</p>
+        </div>
+      )}
+
       <div className="grid items-start gap-5 lg:grid-cols-3">
         {/* Coluna principal */}
         <div className="space-y-5 lg:col-span-2">

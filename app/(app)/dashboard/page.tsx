@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   ChevronsUpDown,
   AlertTriangle,
+  CalendarClock,
+  RefreshCw,
   type LucideIcon,
 } from "lucide-react";
 
@@ -399,6 +401,66 @@ export default async function DashboardPage() {
                 </span>
               </Link>
             ))}
+          </div>
+        </Panel>
+      )}
+
+      {/* Oportunidades de receita: contratos a vencer + revisões a recontatar */}
+      {(showFin || showCom) && (m.contratosVencendo.length > 0 || m.revisoesProximas.length > 0) && (
+        <Panel style={next()} title="Oportunidades de receita" accent="emerald">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <CalendarClock className="size-3.5" /> Contratos a vencer (30 dias)
+              </h4>
+              {m.contratosVencendo.length === 0 ? (
+                <p className="py-2 text-sm text-muted-foreground">Nenhum nos próximos 30 dias.</p>
+              ) : (
+                <div className="divide-y divide-border/60">
+                  {m.contratosVencendo.map((c) => (
+                    <Link
+                      key={c.id}
+                      href={`/contratos/${c.id}`}
+                      className="group flex items-center justify-between gap-2 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    >
+                      <span className="min-w-0 truncate">
+                        <span className="font-medium group-hover:text-primary">{c.cliente}</span>
+                        {c.titulo && <span className="text-xs text-muted-foreground"> · {c.titulo}</span>}
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {new Date(c.vigencia_fim).toLocaleDateString("pt-BR")}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <RefreshCw className="size-3.5" /> Revisões a recontatar
+              </h4>
+              {m.revisoesProximas.length === 0 ? (
+                <p className="py-2 text-sm text-muted-foreground">Nenhuma revisão próxima.</p>
+              ) : (
+                <div className="divide-y divide-border/60">
+                  {m.revisoesProximas.map((r) => (
+                    <Link
+                      key={r.id}
+                      href={`/os/${r.id}`}
+                      className="group flex items-center justify-between gap-2 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    >
+                      <span className="min-w-0 truncate">
+                        <span className="font-medium group-hover:text-primary">{r.cliente}</span>
+                        {r.cidade && <span className="text-xs text-muted-foreground"> · {r.cidade}</span>}
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {new Date(r.proxima_revisao_em).toLocaleDateString("pt-BR")}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </Panel>
       )}

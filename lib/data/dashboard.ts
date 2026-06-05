@@ -36,6 +36,8 @@ export type DashboardMetrics = {
   estoqueCritico: number;
   mipCritico: number;
   clientesAtivos: number;
+  contratosVencendo: { id: string; titulo: string | null; valor: number; vigencia_fim: string; cliente: string | null }[];
+  revisoesProximas: { id: string; numero: number; proxima_revisao_em: string; cliente: string | null; cidade: string | null }[];
 };
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
@@ -44,6 +46,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const mesInicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
     .toISOString()
     .slice(0, 10);
+  const em30dias = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
 
   const [
     { data: contractsData },
@@ -57,6 +60,8 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     { count: clientesAtivos },
     { data: proximasOsData },
     { data: clientesCreatedData },
+    { data: contratosVencData },
+    { data: revisoesData },
   ] = await Promise.all([
     supabase.from("contracts").select("valor, periodicidade, status").eq("status", "ativo"),
     supabase.from("accounts_receivable").select("valor, valor_pago, status, vencimento, pago_em"),
@@ -74,6 +79,22 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       .order("scheduled_at", { ascending: true, nullsFirst: false })
       .limit(6),
     supabase.from("clients").select("created_at").eq("ativo", true),
+    supabase
+      .from("contracts")
+      .select("id, titulo, valor, vigencia_fim, clients(razao_social, nome_fantasia)")
+      .eq("status", "ativo")
+      .not("vigencia_fim", "is", null)
+      .gte("vigencia_fim", hoje)
+      .lte("vigencia_fim", em30dias)
+      .order("vigencia_fim", { ascending: true })
+      .limit(6),
+    supabase
+      .from("service_orders")
+      .select("id, numero, proxima_revisao_em, clients(razao_social, nome_fantasia, cidade)")
+      .not("proxima_revisao_em", "is", null)
+      .lte("proxima_revisao_em", em30dias)
+      .order("proxima_revisao_em", { ascending: true })
+      .limit(6),
   ]);
 
   // MRR
@@ -184,6 +205,21 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   let mipCritico = 0;
   for (const st of lastByDevice.values()) if (isCritical(st)) mipCritico++;
 
+  // Oportunidades: contratos a vencer (30d) + revisões a recontatar
+  type CliMini = { razao_social: string | null; nome_fantasia: string | null; cidade?: string | null };
+  const contratosVencendo = (
+    (contratosVencData as { id: string; titulo: string | null; valor: number; vigencia_fim: string; clients: CliMini | CliMini[] | null }[] | null) ?? []
+  ).map((c) => {
+    const cli = Array.isArray(c.clients) ? c.clients[0] : c.clients;
+    return { id: c.id, titulo: c.titulo, valor: Number(c.valor), vigencia_fim: c.vigencia_fim, cliente: nomeExibicao(cli) };
+  });
+  const revisoesProximas = (
+    (revisoesData as { id: string; numero: number; proxima_revisao_em: string; clients: CliMini | CliMini[] | null }[] | null) ?? []
+  ).map((o) => {
+    const cli = Array.isArray(o.clients) ? o.clients[0] : o.clients;
+    return { id: o.id, numero: o.numero, proxima_revisao_em: o.proxima_revisao_em, cliente: nomeExibicao(cli), cidade: cli?.cidade ?? null };
+  });
+
   return {
     mrr,
     contratosAtivos: contracts.length,
@@ -205,5 +241,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     estoqueCritico,
     mipCritico,
     clientesAtivos: clientesAtivos ?? 0,
+    contratosVencendo,
+    revisoesProximas,
   };
 }

@@ -135,6 +135,10 @@ export const employeeSchema = z.object({
   cargo: opt(z.string()),
   departamento: opt(z.string()),
   salario: numero,
+  jornada_horas: z.preprocess(
+    (v) => (v === "" || v == null ? 8 : Number(v)),
+    z.number().min(1, "Mínimo 1h").max(24, "Máximo 24h"),
+  ),
   data_admissao: opt(z.string()),
   tipo_contrato: z.enum(["clt", "pj", "estagio", "temporario"]),
   responsavel_tecnico: z.coerce.boolean().default(false),

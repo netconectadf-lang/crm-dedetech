@@ -58,7 +58,7 @@ export default async function RhEmployeePage({
 
   const mesInicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
-  const [{ data: pontos }, { data: ausencias }, { data: epis }, { data: asos }, { data: pontoMesData }, { data: trainData }] =
+  const [{ data: pontos }, { data: ausencias }, { data: epis }, { data: asos }, { data: pontoMesData }, { data: trainData }, { data: jorData }] =
     await Promise.all([
       supabase.from("time_entries").select("id, tipo, registrado_em").eq("employee_id", id).order("registrado_em", { ascending: false }).limit(10),
       supabase.from("absences").select("id, tipo, inicio, fim, status, motivo").eq("employee_id", id).order("inicio", { ascending: false }),
@@ -66,9 +66,11 @@ export default async function RhEmployeePage({
       supabase.from("occupational_exams").select("id, tipo, data, validade, resultado").eq("employee_id", id).order("data", { ascending: false }),
       supabase.from("time_entries").select("tipo, registrado_em").eq("employee_id", id).gte("registrado_em", mesInicio),
       supabase.from("trainings").select("id, nome, categoria, instituicao, concluido_em, validade").eq("employee_id", id).order("validade", { ascending: true, nullsFirst: false }),
+      supabase.from("employees").select("jornada_horas").eq("id", id).maybeSingle(),
     ]);
 
-  const espelho = espelhoPonto((pontoMesData as { tipo: string; registrado_em: string }[] | null) ?? []);
+  const jornadaHoras = Number((jorData as { jornada_horas: number } | null)?.jornada_horas ?? 8);
+  const espelho = espelhoPonto((pontoMesData as { tipo: string; registrado_em: string }[] | null) ?? [], jornadaHoras * 3_600_000);
   const trainList = (trainData as { id: string; nome: string; categoria: string | null; instituicao: string | null; concluido_em: string | null; validade: string | null }[] | null) ?? [];
 
   const trainingFields: Field[] = [
@@ -170,7 +172,7 @@ export default async function RhEmployeePage({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="text-base">Espelho de ponto — mês atual</CardTitle>
             <span className="text-sm text-muted-foreground">
-              Banco de horas:{" "}
+              Jornada {jornadaHoras}h/dia · Banco de horas:{" "}
               <strong className={espelho.saldoMs >= 0 ? "text-emerald-300" : "text-destructive"}>
                 {formatSaldo(espelho.saldoMs)}
               </strong>
@@ -189,7 +191,7 @@ export default async function RhEmployeePage({
                     <TableHead>Entrada</TableHead>
                     <TableHead>Saída</TableHead>
                     <TableHead className="text-right">Trabalhado</TableHead>
-                    <TableHead className="text-right">Saldo (8h)</TableHead>
+                    <TableHead className="text-right">Saldo ({jornadaHoras}h)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

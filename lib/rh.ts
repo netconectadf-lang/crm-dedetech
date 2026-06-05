@@ -128,6 +128,7 @@ export type DiaPonto = { dia: string; entrada: string | null; saida: string | nu
  */
 export function espelhoPonto(
   entries: { tipo: string; registrado_em: string }[],
+  jornadaMsPorDia: number = JORNADA_MS,
 ): { dias: DiaPonto[]; totalMs: number; jornadaMs: number; saldoMs: number } {
   const porDia = new Map<string, { tipo: string; ts: number }[]>();
   for (const e of entries) {
@@ -158,9 +159,9 @@ export function espelhoPonto(
       }
     }
     totalMs += ms;
-    dias.push({ dia, entrada: hhmm(primeira), saida: hhmm(ultima), ms, saldoMs: ms - JORNADA_MS });
+    dias.push({ dia, entrada: hhmm(primeira), saida: hhmm(ultima), ms, saldoMs: ms - jornadaMsPorDia });
   }
-  const jornadaMs = dias.length * JORNADA_MS;
+  const jornadaMs = dias.length * jornadaMsPorDia;
   return { dias, totalMs, jornadaMs, saldoMs: totalMs - jornadaMs };
 }
 

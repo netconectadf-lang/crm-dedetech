@@ -34,6 +34,7 @@ const fields: Field[] = [
   { name: "cargo", label: "Cargo" },
   { name: "departamento", label: "Departamento" },
   { name: "salario", label: "Salário (R$)", type: "number" },
+  { name: "jornada_horas", label: "Jornada diária (h)", type: "number" },
   { name: "data_admissao", label: "Admissão", type: "date" },
   {
     name: "tipo_contrato",

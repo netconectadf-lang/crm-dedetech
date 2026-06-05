@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Menu } from "lucide-react";
 
 import {
@@ -34,9 +35,13 @@ export function MobileNav({ role }: { role: AppRole | null }) {
         className="w-64 gap-0 bg-card p-0"
       >
         <div className="flex h-14 items-center gap-2.5 border-b border-border/60 px-5">
-          <span className="grid size-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground shadow-[0_0_18px_-2px_var(--color-primary)]">
-            D
-          </span>
+          <Image
+            src="/logo/dedetech-simbolo-cor.png"
+            alt="Dedetech"
+            width={32}
+            height={32}
+            className="size-8 shrink-0"
+          />
           <SheetTitle className="font-semibold tracking-tight">
             Dedetech
             <span className="ml-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireTenant } from "@/lib/auth";
@@ -48,9 +49,14 @@ export default async function AppLayout({
           href="/dashboard"
           className="group flex h-14 items-center gap-2.5 border-b border-border/60 px-5"
         >
-          <span className="grid size-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground shadow-[0_0_18px_-2px_var(--color-primary)] transition-transform group-hover:scale-105">
-            D
-          </span>
+          <Image
+            src="/logo/dedetech-simbolo-cor.png"
+            alt="Dedetech"
+            width={32}
+            height={32}
+            priority
+            className="size-8 shrink-0 transition-transform group-hover:scale-105"
+          />
           <span className="font-semibold tracking-tight">
             Dedetech
             <span className="ml-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">

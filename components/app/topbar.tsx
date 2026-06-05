@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, ChevronsUpDown, LogOut, Building2 } from "lucide-react";
+import Link from "next/link";
+import { Check, ChevronsUpDown, LogOut, Building2, Users, Settings, Plug } from "lucide-react";
 
 import { switchTenant, logoutAction } from "@/app/(app)/actions";
 import { ROLE_LABELS, type AppRole } from "@/lib/types";
@@ -99,6 +100,26 @@ export function Topbar({
             )}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {role === "owner" && (
+            <>
+              <DropdownMenuItem asChild>
+                <Link href="/equipe">
+                  <Users className="size-4" /> Usuários e equipe
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/integracoes">
+                  <Plug className="size-4" /> Integrações
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/configuracoes">
+                  <Settings className="size-4" /> Configurações
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <form action={logoutAction}>
             <button type="submit" className="w-full">
               <DropdownMenuItem asChild>

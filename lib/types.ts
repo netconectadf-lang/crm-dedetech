@@ -9,7 +9,7 @@ export type AppRole =
   | "cliente";
 
 export const ROLE_LABELS: Record<AppRole, string> = {
-  owner: "Dono / Admin",
+  owner: "Master",
   financeiro: "Financeiro",
   comercial: "Comercial",
   operacional: "Operacional",

@@ -58,6 +58,7 @@ type OS = {
   scheduled_at: string | null;
   tecnico_id: string | null;
   vehicle_id: string | null;
+  prestador_id: string | null;
   pragas: string[];
   estruturas: string[];
   metodo: ApplicationMethod | null;
@@ -111,9 +112,9 @@ export default async function OsDetailPage({
     .eq("id", id)
     .maybeSingle();
   if (!osData) notFound();
-  const os = osData as OS;
+  const os = osData as unknown as OS;
 
-  const [{ data: prodLines }, { data: prodList }, { data: unitList }, { data: clientList }, { data: tecList }, { data: vehList }, { data: arData }, { data: pragaData }, { data: estruturaData }] =
+  const [{ data: prodLines }, { data: prodList }, { data: unitList }, { data: clientList }, { data: tecList }, { data: vehList }, { data: arData }, { data: pragaData }, { data: estruturaData }, { data: prestList }] =
     await Promise.all([
       supabase.from("service_order_products").select("id, quantidade, diluicao, products(nome_comercial)").eq("os_id", id),
       supabase.from("products").select("id, nome_comercial").eq("ativo", true).order("nome_comercial"),
@@ -124,6 +125,7 @@ export default async function OsDetailPage({
       supabase.from("accounts_receivable").select("valor").eq("os_id", id).neq("status", "cancelado"),
       supabase.from("pragas").select("nome").eq("ativo", true).order("nome"),
       supabase.from("estruturas").select("nome").eq("ativo", true).order("nome"),
+      supabase.from("service_providers").select("id, nome").eq("ativo", true).order("nome"),
     ]);
 
   const linhas = (prodLines as { id: string; quantidade: number; diluicao: string | null; products: { nome_comercial: string } | null }[] | null) ?? [];
@@ -132,6 +134,8 @@ export default async function OsDetailPage({
   const clients = (clientList as ClienteOpcao[] | null) ?? [];
   const tecnicos = (tecList as { id: string; nome: string }[] | null) ?? [];
   const veiculos = (vehList as { id: string; placa: string }[] | null) ?? [];
+  const prestadores = (prestList as { id: string; nome: string }[] | null) ?? [];
+  const prestadorOS = prestadores.find((p) => p.id === os.prestador_id) ?? null;
   const pragaOptions = ((pragaData as { nome: string }[] | null) ?? []).map((p) => p.nome);
   const estruturaOptions = ((estruturaData as { nome: string }[] | null) ?? []).map((e) => e.nome);
 
@@ -150,6 +154,7 @@ export default async function OsDetailPage({
     { name: "scheduled_at", label: "Agendamento", type: "date" },
     { name: "tecnico_id", label: "Técnico", type: "select", options: [{ value: "none", label: "—" }, ...tecnicos.map((t) => ({ value: t.id, label: t.nome }))] },
     { name: "vehicle_id", label: "Veículo", type: "select", options: [{ value: "none", label: "—" }, ...veiculos.map((v) => ({ value: v.id, label: v.placa }))] },
+    { name: "prestador_id", label: "Prestador (terceirizado)", type: "select", options: [{ value: "none", label: "—" }, ...prestadores.map((p) => ({ value: p.id, label: p.nome }))] },
   ];
 
   const cli = os.clients;
@@ -235,6 +240,11 @@ export default async function OsDetailPage({
                   {OS_STATUS_LABEL[os.status]}
                 </span>
                 {os.employees && <Badge variant="outline">Téc.: {os.employees.nome}</Badge>}
+                {prestadorOS && (
+                  <Badge variant="outline" className="border-amber-500/30 text-amber-300">
+                    Terceirizado: {prestadorOS.nome}
+                  </Badge>
+                )}
                 {os.proxima_revisao_em && (
                   <Badge variant="outline">Revisão: {formatDate(os.proxima_revisao_em)}</Badge>
                 )}

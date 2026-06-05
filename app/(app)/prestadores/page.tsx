@@ -1,10 +1,10 @@
-import { Plus, Pencil, MessageCircle } from "lucide-react";
+import { Plus, Pencil, MessageCircle, Banknote } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatCpfCnpj, formatPhone, formatBRL, waLink } from "@/lib/format";
 import type { Field } from "@/components/app/resource-form";
-import { salvarPrestador, excluirPrestador } from "./actions";
+import { salvarPrestador, excluirPrestador, lancarPagamentoPrestador } from "./actions";
 import { PageHeader } from "@/components/app/page-header";
 import { AjudaTela } from "@/components/app/ajuda-tela";
 import { EmptyState } from "@/components/app/empty-state";
@@ -37,6 +37,22 @@ const fields: Field[] = [
   { name: "ativo", label: "Ativo", type: "switch" },
 ];
 
+const pagamentoFields: Field[] = [
+  { name: "valor", label: "Valor do pagamento (R$)", type: "number", required: true },
+  { name: "vencimento", label: "Vencimento", type: "date", required: true },
+  {
+    name: "recorrencia",
+    label: "Recorrência",
+    type: "select",
+    options: [
+      { value: "mensal", label: "Mensal (recorrente)" },
+      { value: "unica", label: "Única" },
+      { value: "anual", label: "Anual" },
+    ],
+  },
+  { name: "observacoes", label: "Observações", type: "textarea" },
+];
+
 type Prestador = {
   id: string;
   nome: string;
@@ -58,6 +74,10 @@ export default async function PrestadoresPage() {
     .select("*")
     .order("nome");
   const prestadores = (data as Prestador[] | null) ?? [];
+
+  // vencimento padrão do pagamento = dia 5 do próximo mês
+  const hoje = new Date();
+  const vencPag = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 5).toISOString().slice(0, 10);
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
@@ -153,6 +173,28 @@ export default async function PrestadoresPage() {
                             </a>
                           </Button>
                         )}
+                        <ResourceDialog
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Lançar pagamento no financeiro"
+                              className="text-sky-400 hover:text-sky-300"
+                            >
+                              <Banknote className="size-4" />
+                            </Button>
+                          }
+                          title={`Lançar pagamento — ${p.nome}`}
+                          description="Cria uma conta a pagar no financeiro (pode ser recorrente mensal)."
+                          fields={pagamentoFields}
+                          defaultValues={{
+                            valor: p.valor_padrao ?? undefined,
+                            vencimento: vencPag,
+                            recorrencia: "mensal",
+                          }}
+                          action={lancarPagamentoPrestador.bind(null, p.id)}
+                          submitLabel="Lançar no financeiro"
+                        />
                         <ResourceDialog
                           trigger={<Button variant="ghost" size="icon"><Pencil className="size-4" /></Button>}
                           title="Editar prestador"

@@ -13,6 +13,7 @@ export const osSchema = z.object({
   unit_id: uuidOpt,
   tecnico_id: uuidOpt,
   vehicle_id: uuidOpt,
+  prestador_id: uuidOpt,
   scheduled_at: opt(z.string()),
 });
 

@@ -1,5 +1,7 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
+
 import { saveRecord, deleteRecord, type SaveState } from "@/lib/crud-helpers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -39,7 +41,8 @@ export async function convidarPortal(
     .maybeSingle();
   if (existing) return { error: "Este cliente já tem acesso ao portal." };
 
-  const senha = "Dt" + Math.random().toString(36).slice(2, 10);
+  // senha forte via CSPRNG (substitui Math.random)
+  const senha = "Dt" + randomBytes(12).toString("base64url");
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
     email: cliente.email,
     password: senha,

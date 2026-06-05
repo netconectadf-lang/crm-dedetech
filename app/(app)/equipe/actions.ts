@@ -72,12 +72,13 @@ export async function inviteMember(
 }
 
 export async function revokeInvitation(invitationId: string) {
-  await requireRole(["owner"]);
+  const ctx = await requireRole(["owner"]);
   const supabase = await createClient();
   await supabase
     .from("invitations")
     .update({ status: "revoked" })
-    .eq("id", invitationId);
+    .eq("id", invitationId)
+    .eq("tenant_id", ctx.tenantId);
   revalidatePath("/equipe");
 }
 
@@ -89,10 +90,11 @@ export async function changeMemberRole(membershipId: string, role: AppRole) {
     .from("memberships")
     .select("user_id")
     .eq("id", membershipId)
+    .eq("tenant_id", ctx.tenantId)
     .single();
   if ((m as { user_id: string } | null)?.user_id === ctx.userId) return;
 
-  await supabase.from("memberships").update({ role }).eq("id", membershipId);
+  await supabase.from("memberships").update({ role }).eq("id", membershipId).eq("tenant_id", ctx.tenantId);
   revalidatePath("/equipe");
 }
 
@@ -103,9 +105,10 @@ export async function removeMember(membershipId: string) {
     .from("memberships")
     .select("user_id")
     .eq("id", membershipId)
+    .eq("tenant_id", ctx.tenantId)
     .single();
   if ((m as { user_id: string } | null)?.user_id === ctx.userId) return;
 
-  await supabase.from("memberships").delete().eq("id", membershipId);
+  await supabase.from("memberships").delete().eq("id", membershipId).eq("tenant_id", ctx.tenantId);
   revalidatePath("/equipe");
 }

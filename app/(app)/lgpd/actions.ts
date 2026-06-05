@@ -35,11 +35,12 @@ export async function createLgpdRequest(
 }
 
 export async function resolveLgpdRequest(id: string, done: boolean) {
-  await requireRole(["owner", "financeiro"]);
+  const ctx = await requireRole(["owner", "financeiro"]);
   const supabase = await createClient();
   await supabase
     .from("lgpd_requests")
     .update({ status: done ? "done" : "in_progress" })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("tenant_id", ctx.tenantId);
   revalidatePath("/lgpd");
 }

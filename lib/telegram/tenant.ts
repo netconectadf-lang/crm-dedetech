@@ -20,7 +20,8 @@ export async function resolverIntegracao(secret: string | null): Promise<TgCtx |
   const envToken = process.env.TELEGRAM_BOT_TOKEN;
   const envTenant = process.env.TELEGRAM_TENANT_ID;
   const envSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (envToken && envTenant && (!envSecret || envSecret === secret)) {
+  // fail-closed: o modo legado exige o segredo configurado E correspondente
+  if (envToken && envTenant && envSecret && envSecret === secret) {
     return { tenantId: envTenant, botToken: envToken };
   }
   return null;

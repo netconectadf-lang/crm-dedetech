@@ -18,7 +18,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+        "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         active
           ? "bg-primary/12 text-foreground ring-1 ring-primary/25"
@@ -30,7 +30,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       )}
       <Icon
         className={cn(
-          "size-4 shrink-0 transition-colors",
+          "size-[18px] shrink-0 transition-colors",
           active ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground",
         )}
       />
@@ -89,18 +89,24 @@ export function Sidebar({ role }: { role: AppRole | null }) {
         }
 
         const open = aberto[section.titulo] ?? temAtivo(section.itens);
+        const SectionIcon = section.icon;
         return (
           <div key={section.titulo} className="flex flex-col gap-0.5">
             <button
               type="button"
               onClick={() => alternar(section.titulo!, open)}
               aria-expanded={open}
-              className="flex items-center justify-between rounded-lg px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground/75 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
-              {section.titulo}
+              <span className="flex items-center gap-2">
+                {SectionIcon && (
+                  <SectionIcon className="size-4 shrink-0 text-muted-foreground/60" />
+                )}
+                {section.titulo}
+              </span>
               <ChevronDown
                 className={cn(
-                  "size-3.5 transition-transform duration-200",
+                  "size-3.5 shrink-0 transition-transform duration-200",
                   open ? "rotate-0" : "-rotate-90",
                 )}
               />

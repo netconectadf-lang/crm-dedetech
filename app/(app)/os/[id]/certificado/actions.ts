@@ -31,13 +31,11 @@ export async function salvarAssinatura(
     .upload(path, bytes, { contentType: "image/png", upsert: true });
   if (upErr) return { error: "Falha ao salvar a assinatura." };
 
-  const { data: pub } = admin.storage.from("assinaturas").getPublicUrl(path);
-  const url = `${pub.publicUrl}?v=${Date.now()}`;
-
+  // bucket é privado: guardamos o PATH; a URL assinada é gerada na exibição
   const sb = await createClient();
   const { error } = await sb
     .from("service_orders")
-    .update({ assinatura_cliente_url: url })
+    .update({ assinatura_cliente_url: path })
     .eq("id", osId)
     .eq("tenant_id", ctx.tenantId);
   if (error) return { error: "Falha ao vincular a assinatura à OS." };

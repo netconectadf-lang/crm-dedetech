@@ -8,8 +8,9 @@ import { consultarNFSe } from "@/lib/nfse";
  * reconsulta a nota no provedor pela referência e atualiza o registro.
  */
 export async function POST(req: NextRequest) {
+  // fail-closed: sem o segredo configurado, recusa
   const expected = process.env.NFSE_WEBHOOK_TOKEN;
-  if (expected && new URL(req.url).searchParams.get("token") !== expected) {
+  if (!expected || new URL(req.url).searchParams.get("token") !== expected) {
     return NextResponse.json({ erro: "não autorizado" }, { status: 401 });
   }
 

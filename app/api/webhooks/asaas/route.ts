@@ -7,8 +7,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * confirmado, marca a cobrança como paga e quita a Conta a Receber vinculada.
  */
 export async function POST(req: NextRequest) {
+  // fail-closed: sem o segredo configurado, recusa (evita webhook aberto em produção)
   const expected = process.env.ASAAS_WEBHOOK_TOKEN;
-  if (expected && req.headers.get("asaas-access-token") !== expected) {
+  if (!expected || req.headers.get("asaas-access-token") !== expected) {
     return NextResponse.json({ erro: "não autorizado" }, { status: 401 });
   }
 

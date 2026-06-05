@@ -30,6 +30,11 @@ import {
   Megaphone,
   Send,
   Contact,
+  Briefcase,
+  HardHat,
+  MessageCircle,
+  CircleDollarSign,
+  Database,
   type LucideIcon,
 } from "lucide-react";
 
@@ -45,6 +50,8 @@ export type NavItem = {
 
 export type NavSection = {
   titulo: string | null;
+  /** Ícone do cabeçalho da seção (seções com título). */
+  icon?: LucideIcon;
   itens: NavItem[];
 };
 
@@ -55,6 +62,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     titulo: "Comercial",
+    icon: Briefcase,
     itens: [
       {
         href: "/funil",
@@ -84,6 +92,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     titulo: "Operação",
+    icon: HardHat,
     itens: [
       {
         href: "/os",
@@ -119,6 +128,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     titulo: "WhatsApp",
+    icon: MessageCircle,
     itens: [
       {
         href: "/whatsapp/campanhas",
@@ -142,6 +152,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     titulo: "Financeiro",
+    icon: CircleDollarSign,
     itens: [
       {
         href: "/financeiro",
@@ -171,6 +182,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     titulo: "Cadastros",
+    icon: Database,
     itens: [
       {
         href: "/clientes",
@@ -230,6 +242,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     titulo: "Pessoas",
+    icon: UsersRound,
     itens: [
       {
         href: "/rh",
@@ -241,6 +254,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     titulo: "Empresa",
+    icon: Building2,
     itens: [
       { href: "/equipe", label: "Equipe", icon: Users, roles: ["owner"] },
       { href: "/integracoes", label: "Integrações", icon: Plug, roles: ["owner"] },

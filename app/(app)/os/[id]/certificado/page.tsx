@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth";
 import { formatCpfCnpj, formatDate } from "@/lib/format";
 import { METHOD_LABEL, type ApplicationMethod } from "@/lib/os";
@@ -68,6 +69,20 @@ export default async function CertificadoPage({
     .maybeSingle();
   if (!osData) notFound();
   const os = osData as unknown as OS;
+
+  // bucket de assinaturas é privado: gera URL assinada (TTL 1h) a partir do path.
+  // (retrocompat: registros antigos guardavam a URL pública completa)
+  let assinaturaUrl: string | null = null;
+  if (os.assinatura_cliente_url) {
+    const raw = os.assinatura_cliente_url;
+    const path = raw.startsWith("http") ? (raw.split("/assinaturas/")[1]?.split("?")[0] ?? "") : raw;
+    if (path) {
+      const { data: signed } = await createAdminClient()
+        .storage.from("assinaturas")
+        .createSignedUrl(path, 3600);
+      assinaturaUrl = signed?.signedUrl ?? null;
+    }
+  }
 
   const [{ data: prodLines }, { data: tenantData }, { data: rtData }] = await Promise.all([
     supabase.from("service_order_products").select("products(nome_comercial, principio_ativo, grupo_quimico, registro_anvisa, antidoto)").eq("os_id", id),
@@ -183,12 +198,11 @@ export default async function CertificadoPage({
 
         <footer className="mt-10 grid grid-cols-2 gap-8 border-t pt-8 text-center text-sm">
           <div className="flex flex-col items-center justify-end">
-            {os.assinatura_cliente_url && (
+            {assinaturaUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={os.assinatura_cliente_url}
+                src={assinaturaUrl}
                 alt="Assinatura do cliente"
-                crossOrigin="anonymous"
                 className="mb-1 h-16 object-contain"
               />
             )}

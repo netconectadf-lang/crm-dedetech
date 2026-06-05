@@ -11,10 +11,8 @@ const ALLOWED = new Set<string>([
 ]);
 
 export function corsHeaders(origin: string | null): Record<string, string> {
-  const allow =
-    origin && (ALLOWED.has(origin) || origin.endsWith(".vercel.app"))
-      ? origin
-      : "https://dedetech.com.br";
+  // allowlist explícita (sem curinga *.vercel.app, que liberava qualquer projeto de terceiros)
+  const allow = origin && ALLOWED.has(origin) ? origin : "https://dedetech.com.br";
   return {
     "Access-Control-Allow-Origin": allow,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",

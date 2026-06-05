@@ -14,13 +14,10 @@ const A7_TENANT = "3aa56352-4ce8-4835-a85b-8ee0f0dd7c0e";
  * disparadores externos podem usar ?secret=<secret>).
  */
 export async function GET(request: NextRequest) {
+  // fail-closed: exige CRON_SECRET via header Authorization (não aceita ?secret= para não vazar em logs)
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = request.headers.get("authorization");
-    const qs = request.nextUrl.searchParams.get("secret");
-    if (auth !== `Bearer ${secret}` && qs !== secret) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const tenantId = process.env.TRILOGO_TENANT_ID ?? A7_TENANT;

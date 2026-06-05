@@ -100,8 +100,9 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   /* Glow esmeralda sutil no topo — dá profundidade ao painel */
   background-image:
-    radial-gradient(60rem 40rem at 15% -10%, oklch(0.74 0.148 164 / 0.07), transparent 60%),
-    radial-gradient(50rem 36rem at 110% 0%, oklch(0.7 0.12 195 / 0.05), transparent 55%);
+    radial-gradient(60rem 40rem at 12% -12%, oklch(0.74 0.148 164 / 0.08), transparent 58%),
+    radial-gradient(52rem 38rem at 112% 4%, oklch(0.68 0.13 230 / 0.06), transparent 55%),
+    radial-gradient(46rem 34rem at 50% 122%, oklch(0.62 0.15 292 / 0.05), transparent 55%);
   background-attachment: fixed;
 }
 

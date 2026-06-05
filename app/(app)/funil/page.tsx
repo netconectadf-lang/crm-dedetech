@@ -89,9 +89,9 @@ export default async function FunilPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Wallet} label="Em aberto" value={formatBRL(emAberto)} hint="negócios no funil" tone="ok" />
-        <KpiCard icon={KanbanSquare} label="Conversão" value={`${conversao}%`} hint={`${ganhos.length} ganhos · ${perdidos.length} perdidos`} />
-        <KpiCard icon={Landmark} label="Ticket médio" value={formatBRL(ticket)} hint="por negócio ganho" />
+        <KpiCard icon={Wallet} label="Em aberto" value={formatBRL(emAberto)} hint="negócios no funil" tone="violet" />
+        <KpiCard icon={KanbanSquare} label="Conversão" value={`${conversao}%`} hint={`${ganhos.length} ganhos · ${perdidos.length} perdidos`} tone="sky" />
+        <KpiCard icon={Landmark} label="Ticket médio" value={formatBRL(ticket)} hint="por negócio ganho" tone="amber" />
         <KpiCard icon={Check} label="Ganhos" value={String(ganhos.length)} tone={ganhos.length > 0 ? "ok" : "default"} />
       </div>
 

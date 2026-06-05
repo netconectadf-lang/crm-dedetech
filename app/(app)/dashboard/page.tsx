@@ -11,6 +11,8 @@ import {
   Radar,
   ShieldCheck,
   ChevronsUpDown,
+  AlertTriangle,
+  type LucideIcon,
 } from "lucide-react";
 
 import { requireTenant, hasRole } from "@/lib/auth";
@@ -26,13 +28,13 @@ import { CashflowChart } from "@/components/dashboard/cashflow-chart";
 export const metadata = { title: "Dashboard" };
 
 const stageBar: Record<string, string> = {
-  lead: "from-muted-foreground/30 to-muted-foreground/50",
-  contato: "from-primary/25 to-primary/45",
-  diagnostico: "from-primary/35 to-primary/55",
-  orcamento: "from-primary/45 to-primary/70",
-  negociacao: "from-primary/60 to-primary/85",
-  ganho: "from-primary/80 to-primary",
-  perdido: "from-destructive/50 to-destructive",
+  lead: "from-slate-500/50 to-slate-400/70",
+  contato: "from-sky-500/55 to-sky-400/75",
+  diagnostico: "from-cyan-500/55 to-cyan-400/75",
+  orcamento: "from-violet-500/55 to-violet-400/80",
+  negociacao: "from-amber-500/60 to-amber-400/85",
+  ganho: "from-emerald-500/75 to-emerald-400",
+  perdido: "from-rose-500/60 to-rose-400/85",
 };
 
 const osDot: Record<OsStatus, string> = {
@@ -43,6 +45,36 @@ const osDot: Record<OsStatus, string> = {
   faturada: "bg-chart-1",
   cancelada: "bg-destructive",
 };
+
+const CHIP_TONE: Record<string, string> = {
+  emerald: "bg-emerald-500/12 text-emerald-300 ring-emerald-500/25",
+  sky: "bg-sky-500/12 text-sky-300 ring-sky-500/25",
+  amber: "bg-amber-500/12 text-amber-300 ring-amber-500/25",
+  rose: "bg-rose-500/12 text-rose-300 ring-rose-500/25",
+  violet: "bg-violet-500/12 text-violet-300 ring-violet-500/25",
+};
+
+function Chip({
+  tone,
+  icon: Icon,
+  children,
+}: {
+  tone: keyof typeof CHIP_TONE;
+  icon: LucideIcon;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium tabular-nums ring-1 ring-inset",
+        CHIP_TONE[tone],
+      )}
+    >
+      <Icon className="size-3.5" />
+      {children}
+    </span>
+  );
+}
 
 export default async function DashboardPage() {
   const ctx = await requireTenant();
@@ -95,7 +127,7 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Olá, {primeiroNome}
@@ -103,6 +135,28 @@ export default async function DashboardPage() {
           <p className="mt-1 text-sm capitalize text-muted-foreground">
             {hojeLabel}
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {showOp && (
+              <Chip tone="amber" icon={ClipboardList}>
+                {m.osHoje} OS hoje
+              </Chip>
+            )}
+            {showFin && m.aReceber > 0 && (
+              <Chip tone="sky" icon={ArrowDownCircle}>
+                {formatBRL(m.aReceber)} a receber
+              </Chip>
+            )}
+            {showFin && m.vencidoReceber > 0 && (
+              <Chip tone="rose" icon={AlertTriangle}>
+                {formatBRL(m.vencidoReceber)} vencido
+              </Chip>
+            )}
+            {showFin && m.mrr > 0 && (
+              <Chip tone="emerald" icon={Wallet}>
+                {formatBRL(m.mrr)}/mês
+              </Chip>
+            )}
+          </div>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
           <span className="size-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" />

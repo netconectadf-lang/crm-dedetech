@@ -139,10 +139,10 @@ export default async function FinanceiroPage() {
       <PageHeader title="Financeiro" description="Caixa real, fluxo, inadimplência e resultado do mês." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={ArrowDownCircle} label="A receber" value={formatBRL(aReceber)} hint={inadimplencia > 0 ? `${formatBRL(inadimplencia)} vencido` : "em dia"} href="/financeiro/receber" tone={inadimplencia > 0 ? "danger" : "default"} />
-        <KpiCard icon={ArrowUpCircle} label="A pagar" value={formatBRL(aPagar)} href="/financeiro/pagar" />
-        <KpiCard icon={Wallet} label="Saldo em contas" value={formatBRL(saldoReal)} hint={`Inicial ${formatBRL(saldoInicial)}`} tone={saldoReal < 0 ? "danger" : "ok"} />
-        <KpiCard icon={Landmark} label="Resultado do mês" value={formatBRL(resultadoMes)} hint={`Receb. ${formatBRL(recebidoMes)} · Pago ${formatBRL(pagoMes)}`} tone={resultadoMes < 0 ? "danger" : "ok"} />
+        <KpiCard icon={ArrowDownCircle} label="A receber" value={formatBRL(aReceber)} hint={inadimplencia > 0 ? `${formatBRL(inadimplencia)} vencido` : "em dia"} href="/financeiro/receber" tone={inadimplencia > 0 ? "danger" : "sky"} />
+        <KpiCard icon={ArrowUpCircle} label="A pagar" value={formatBRL(aPagar)} href="/financeiro/pagar" tone="amber" />
+        <KpiCard icon={Wallet} label="Saldo em contas" value={formatBRL(saldoReal)} hint={`Inicial ${formatBRL(saldoInicial)}`} tone={saldoReal < 0 ? "danger" : "emerald"} />
+        <KpiCard icon={Landmark} label="Resultado do mês" value={formatBRL(resultadoMes)} hint={`Receb. ${formatBRL(recebidoMes)} · Pago ${formatBRL(pagoMes)}`} tone={resultadoMes < 0 ? "danger" : "violet"} />
       </div>
 
       <Panel

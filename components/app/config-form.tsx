@@ -20,6 +20,8 @@ type Tenant = {
   nfse_item_lista_servico: string | null;
   nfse_aliquota_iss: number | null;
   nfse_iss_retido: boolean | null;
+  email_remetente_nome: string | null;
+  email_responder_para: string | null;
 };
 
 export function ConfigForm({ tenant }: { tenant: Tenant }) {
@@ -130,6 +132,33 @@ export function ConfigForm({ tenant }: { tenant: Tenant }) {
         <input type="checkbox" name="nfse_iss_retido" defaultChecked={!!tenant.nfse_iss_retido} className="size-4 accent-[var(--color-primary)]" />
         ISS retido pelo tomador
       </label>
+
+      <div className="mt-2 border-t pt-4">
+        <p className="text-sm font-medium">Comunicação (e-mail)</p>
+        <p className="text-xs text-muted-foreground">
+          Nome que aparece como remetente e e-mail para onde as respostas dos clientes vão.
+          Os envios saem do domínio do sistema com a sua marca.
+        </p>
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="email_remetente_nome">Nome do remetente</Label>
+        <Input
+          id="email_remetente_nome"
+          name="email_remetente_nome"
+          placeholder="ex.: A7 Dedetizadora"
+          defaultValue={tenant.email_remetente_nome ?? ""}
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="email_responder_para">E-mail de resposta</Label>
+        <Input
+          id="email_responder_para"
+          name="email_responder_para"
+          type="email"
+          placeholder="contato@suaempresa.com.br"
+          defaultValue={tenant.email_responder_para ?? ""}
+        />
+      </div>
 
       <div>
         <Button type="submit" disabled={pending}>

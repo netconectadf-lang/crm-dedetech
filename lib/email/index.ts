@@ -1,20 +1,35 @@
 import "server-only";
 
 const RESEND_API = "https://api.resend.com/emails";
+const DEFAULT_FROM = "Dedetech <onboarding@resend.dev>";
 
 type SendArgs = {
   to: string;
   subject: string;
   html: string;
+  /** Remetente completo "Nome <addr@dominio>"; default = RESEND_FROM do sistema. */
+  from?: string;
+  /** Responder-para (e-mail da empresa do tenant). */
+  replyTo?: string;
 };
 
 /**
- * Envia e-mail via Resend. Sem RESEND_API_KEY, apenas loga (modo dev) e
- * resolve — não quebra o fluxo de convite.
+ * Endereço técnico do sistema (o que precisa de domínio verificado no Resend).
+ * Extrai só o "addr@dominio" do RESEND_FROM para recombinar com o nome do tenant.
  */
-export async function sendEmail({ to, subject, html }: SendArgs) {
+export function systemFromAddress(): string {
+  const raw = process.env.RESEND_FROM ?? DEFAULT_FROM;
+  const m = raw.match(/<([^>]+)>/);
+  return (m ? m[1] : raw).trim();
+}
+
+/**
+ * Envia e-mail via Resend. Sem RESEND_API_KEY, apenas loga (modo dev) e
+ * resolve — não quebra o fluxo. `from`/`replyTo` permitem remetente por empresa.
+ */
+export async function sendEmail({ to, subject, html, from, replyTo }: SendArgs) {
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM ?? "Dedetech <onboarding@resend.dev>";
+  const fromFinal = from ?? process.env.RESEND_FROM ?? DEFAULT_FROM;
 
   if (!key) {
     console.info(`[email:dev] para=${to} assunto="${subject}" (Resend off)`);
@@ -27,7 +42,13 @@ export async function sendEmail({ to, subject, html }: SendArgs) {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify({
+      from: fromFinal,
+      to,
+      subject,
+      html,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    }),
   });
 
   if (!res.ok) {

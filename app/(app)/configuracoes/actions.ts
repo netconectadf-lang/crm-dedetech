@@ -33,6 +33,12 @@ const schema = z.object({
     z.number().min(0).max(100).optional(),
   ),
   nfse_iss_retido: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
+  email_remetente_nome: z.string().optional(),
+  email_responder_para: z
+    .string()
+    .email("E-mail de resposta inválido")
+    .optional()
+    .or(z.literal("")),
 });
 
 export async function updateTenant(
@@ -54,6 +60,8 @@ export async function updateTenant(
     nfse_item_lista_servico: formData.get("nfse_item_lista_servico") || undefined,
     nfse_aliquota_iss: formData.get("nfse_aliquota_iss") || undefined,
     nfse_iss_retido: formData.get("nfse_iss_retido") ?? false,
+    email_remetente_nome: formData.get("email_remetente_nome") || undefined,
+    email_responder_para: formData.get("email_responder_para") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
@@ -75,7 +83,9 @@ export async function updateTenant(
       nfse_item_lista_servico: parsed.data.nfse_item_lista_servico ?? null,
       nfse_aliquota_iss: parsed.data.nfse_aliquota_iss ?? null,
       nfse_iss_retido: parsed.data.nfse_iss_retido,
-    })
+      email_remetente_nome: parsed.data.email_remetente_nome ?? null,
+      email_responder_para: parsed.data.email_responder_para || null,
+    } as never)
     .eq("id", ctx.tenantId);
   if (error) return { error: "Não foi possível salvar." };
 

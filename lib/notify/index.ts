@@ -10,6 +10,18 @@ export type SendResult = {
 };
 
 /**
+ * Normaliza um telefone BR para o formato do WhatsApp (E.164 sem '+').
+ * Garante o código do país 55 — clientes importados vêm só com DDD+número
+ * (ex.: "61991421131"), e sem o 55 o Evolution entrega no país errado.
+ */
+export function normalizarNumeroBR(raw: string): string {
+  const n = raw.replace(/\D/g, "").replace(/^0+/, "");
+  if (n.startsWith("55") && (n.length === 12 || n.length === 13)) return n;
+  if (n.length === 10 || n.length === 11) return `55${n}`;
+  return n;
+}
+
+/**
  * Envia texto por WhatsApp via Evolution API. Inerte (skipped) sem credencial
  * — assim o fluxo de notificação nunca quebra antes do provider ser ligado.
  * Ver docs/whatsapp-arquitetura.md p/ o desenho multi-tenant definitivo.
@@ -21,7 +33,7 @@ export async function sendWhatsApp(
   const url = process.env.EVOLUTION_URL;
   const key = process.env.EVOLUTION_KEY;
   const instance = process.env.EVOLUTION_INSTANCE;
-  const numero = to.replace(/\D/g, "");
+  const numero = normalizarNumeroBR(to);
   if (!url || !key || !instance || !numero) {
     console.info(`[wa:dev] ${to}: ${text.slice(0, 50)} (Evolution off)`);
     return { ok: true, skipped: true };
@@ -45,7 +57,8 @@ export async function sendMail(
   to: string,
   subject: string,
   html: string,
+  opts?: { from?: string; replyTo?: string },
 ): Promise<SendResult> {
-  const r = await sendEmail({ to, subject, html });
+  const r = await sendEmail({ to, subject, html, from: opts?.from, replyTo: opts?.replyTo });
   return { ok: r.ok, skipped: "skipped" in r ? r.skipped : undefined };
 }

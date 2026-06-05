@@ -11,6 +11,8 @@ import { formatDate, formatPhone, formatBRL, onlyDigits } from "@/lib/format";
 import { rotuloCliente, nomeExibicao } from "@/lib/clientes";
 import { OS_STATUS_LABEL, OS_STATUS_TONE, type OsStatus, type ApplicationMethod } from "@/lib/os";
 import { StatusStepper } from "@/components/os/status-stepper";
+import { OsTimeline } from "@/components/os/os-timeline";
+import { OsMapaLoader } from "@/components/os/os-mapa-loader";
 import { Panel } from "@/components/dashboard/kpi-card";
 import type { Field } from "@/components/app/resource-form";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -65,6 +67,12 @@ type OS = {
   observacoes: string | null;
   recomendacoes: string | null;
   proxima_revisao_em: string | null;
+  created_at: string;
+  chegada_em: string | null;
+  saida_em: string | null;
+  executada_em: string | null;
+  lat: number | string | null;
+  lng: number | string | null;
   km_rodado: number | null;
   tempo_execucao_min: number | null;
   custo_produtos: number | null;
@@ -161,6 +169,10 @@ export default async function OsDetailPage({
         .join(" · ")
     : "";
 
+  const latNum = Number(os.lat);
+  const lngNum = Number(os.lng);
+  const temMapa = Number.isFinite(latNum) && Number.isFinite(lngNum) && (latNum !== 0 || lngNum !== 0);
+
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit">
@@ -203,50 +215,24 @@ export default async function OsDetailPage({
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardContent className="space-y-5 pt-6">
-            <StatusStepper status={os.status} />
-            <div className="flex flex-wrap items-center gap-3 border-t pt-4">
-              <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${OS_STATUS_TONE[os.status]}`}>
-                {OS_STATUS_LABEL[os.status]}
-              </span>
-              {os.employees && <Badge variant="outline">Téc.: {os.employees.nome}</Badge>}
-              {os.proxima_revisao_em && (
-                <Badge variant="outline">Revisão: {formatDate(os.proxima_revisao_em)}</Badge>
-              )}
-              <OsStatusButtons id={os.id} status={os.status} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base">Contato do cliente</CardTitle></CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <p className="font-medium">{nomeExibicao(cli)}</p>
-            {cli?.contato_responsavel && (
-              <p className="text-muted-foreground">Resp.: {cli.contato_responsavel}</p>
-            )}
-            {cli?.telefone && (
-              <p className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="size-4 shrink-0 text-primary" /> {formatPhone(cli.telefone)}
-              </p>
-            )}
-            {endereco && (
-              <p className="flex items-start gap-2 text-muted-foreground">
-                <MapPin className="mt-0.5 size-4 shrink-0 text-primary" /> {endereco}
-              </p>
-            )}
-            {waLink && (
-              <Button asChild variant="outline" size="sm" className="w-full">
-                <a href={waLink} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="size-4" /> Chamar no WhatsApp
-                </a>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <div className="grid items-start gap-5 lg:grid-cols-3">
+        {/* Coluna principal */}
+        <div className="space-y-5 lg:col-span-2">
+          <Card>
+            <CardContent className="space-y-5 pt-6">
+              <StatusStepper status={os.status} />
+              <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+                <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${OS_STATUS_TONE[os.status]}`}>
+                  {OS_STATUS_LABEL[os.status]}
+                </span>
+                {os.employees && <Badge variant="outline">Téc.: {os.employees.nome}</Badge>}
+                {os.proxima_revisao_em && (
+                  <Badge variant="outline">Revisão: {formatDate(os.proxima_revisao_em)}</Badge>
+                )}
+                <OsStatusButtons id={os.id} status={os.status} />
+              </div>
+            </CardContent>
+          </Card>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Ficha de visita</CardTitle></CardHeader>
@@ -381,6 +367,61 @@ export default async function OsDetailPage({
           </Panel>
         </div>
       )}
+        </div>
+
+        {/* Sidebar: contato, linha do tempo e localização */}
+        <div className="space-y-5">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Contato do cliente</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <p className="font-medium">{nomeExibicao(cli)}</p>
+              {cli?.contato_responsavel && (
+                <p className="text-muted-foreground">Resp.: {cli.contato_responsavel}</p>
+              )}
+              {cli?.telefone && (
+                <p className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="size-4 shrink-0 text-primary" /> {formatPhone(cli.telefone)}
+                </p>
+              )}
+              {endereco && (
+                <p className="flex items-start gap-2 text-muted-foreground">
+                  <MapPin className="mt-0.5 size-4 shrink-0 text-primary" /> {endereco}
+                </p>
+              )}
+              {waLink && (
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  <a href={waLink} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="size-4" /> Chamar no WhatsApp
+                  </a>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-base">Linha do tempo</CardTitle></CardHeader>
+            <CardContent>
+              <OsTimeline
+                createdAt={os.created_at}
+                scheduledAt={os.scheduled_at}
+                chegadaEm={os.chegada_em}
+                saidaEm={os.saida_em}
+                executadaEm={os.executada_em}
+                proximaRevisaoEm={os.proxima_revisao_em}
+              />
+            </CardContent>
+          </Card>
+
+          {temMapa && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Localização</CardTitle></CardHeader>
+              <CardContent>
+                <OsMapaLoader lat={latNum} lng={lngNum} label={`OS #${os.numero}`} />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
     </main>
   );
 }

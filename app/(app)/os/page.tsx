@@ -56,7 +56,7 @@ type OS = {
   contract_id: string | null;
   quote_id: string | null;
   observacoes: string | null;
-  clients: { razao_social: string; cidade: string | null; uf: string | null } | null;
+  clients: { razao_social: string; nome_fantasia: string | null; cidade: string | null; uf: string | null } | null;
   employees: { nome: string } | null;
 };
 
@@ -103,7 +103,7 @@ export default async function OsPage({
 
   let query = supabase
     .from("service_orders")
-    .select("id, numero, status, scheduled_at, contract_id, quote_id, observacoes, clients(razao_social, cidade, uf), employees(nome)")
+    .select("id, numero, status, scheduled_at, contract_id, quote_id, observacoes, clients(razao_social, nome_fantasia, cidade, uf), employees(nome)")
     .order("scheduled_at", { ascending: true, nullsFirst: false });
   if (status) query = query.eq("status", status);
 
@@ -292,7 +292,9 @@ export default async function OsPage({
                   return (
                     <TableRow key={o.id}>
                       <TableCell className="font-medium tabular-nums">#{o.numero}</TableCell>
-                      <TableCell className="font-medium">{nomeCurto(o.clients?.razao_social)}</TableCell>
+                      <TableCell className="font-medium">
+                        {o.clients?.nome_fantasia?.trim() || nomeCurto(o.clients?.razao_social)}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{o.clients?.cidade ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{o.clients?.uf ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">

@@ -7,6 +7,7 @@ import { formatBRL, formatDate } from "@/lib/format";
 import { effectiveStatus, PAYMENT_LABEL, RECURRENCE_LABEL, type FinanceStatus, type PaymentMethod, type Recurrence } from "@/lib/financeiro";
 import type { Field } from "@/components/app/resource-form";
 import { salvarPagar, pagar, cancelarPagar, excluirPagar } from "../actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -101,12 +102,45 @@ export default async function PagarPage({
         title="Contas a pagar"
         description="Despesas, fornecedores e recorrências."
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Nova conta</Button>}
-            title="Nova conta a pagar"
-            fields={createFields}
-            action={salvarPagar.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona Contas a pagar"
+              descricao="Controle as despesas da empresa: fornecedores, recorrências e vencimentos — e registre os pagamentos."
+              topicos={[
+                {
+                  titulo: "Criar uma despesa",
+                  itens: [
+                    "Nova conta — informe descrição, valor e vencimento.",
+                    "Fornecedor e Centro de custo — opcionais, ajudam nos relatórios.",
+                    "Recorrência — única, mensal ou anual, para contas que se repetem.",
+                  ],
+                },
+                {
+                  titulo: "Pagar e cancelar",
+                  itens: [
+                    "Pagar — registra o valor pago e a conta bancária; baixa parcial deixa a conta como Parcial.",
+                    "Cancelar (proibido) — cancela a despesa em aberto.",
+                    "Lixeira — exclui a conta.",
+                  ],
+                },
+                {
+                  titulo: "Status e filtros",
+                  itens: [
+                    "A vencer / Vencidas / Parciais / Pagas — use os botões para filtrar.",
+                    "Em aberto e Vencido aparecem nos cards do topo.",
+                    "Salários e folha lançados em Funcionários caem aqui automaticamente.",
+                  ],
+                },
+              ]}
+              dica="Acompanhe o card 'Vencido' em vermelho: são as despesas atrasadas que exigem pagamento imediato."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Nova conta</Button>}
+              title="Nova conta a pagar"
+              fields={createFields}
+              action={salvarPagar.bind(null, null)}
+            />
+          </div>
         }
       />
 

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import type { Field } from "@/components/app/resource-form";
 import { salvarConta, excluirConta } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -62,12 +63,38 @@ export default async function PlanoDeContasPage() {
         description="Classificação de receitas e despesas."
         count={contas.length}
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Nova conta</Button>}
-            title="Nova conta"
-            fields={fields}
-            action={salvarConta.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona o Plano de contas"
+              descricao="A lista de categorias que classificam o seu dinheiro: o que entra (receitas) e o que sai (despesas)."
+              topicos={[
+                {
+                  titulo: "Criar uma conta",
+                  itens: [
+                    "Clique em 'Nova conta'.",
+                    "Tipo — escolha Receita (dinheiro que entra) ou Despesa (dinheiro que sai).",
+                    "Nome da conta — ex.: 'Serviços de dedetização', 'Combustível', 'Salários'.",
+                    "Código — numeração opcional para organizar o plano (ex.: 1.1, 2.3).",
+                  ],
+                },
+                {
+                  titulo: "Usar no financeiro",
+                  itens: [
+                    "Cada conta a pagar ou a receber é classificada por uma destas contas.",
+                    "Isso alimenta os relatórios por categoria (quanto gastou em cada coisa).",
+                    "Ativo — desligue contas que não usa mais sem perder o histórico (ficam 'inativo').",
+                  ],
+                },
+              ]}
+              dica="Comece com poucas contas simples e bem nomeadas; você pode detalhar mais conforme a necessidade."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Nova conta</Button>}
+              title="Nova conta"
+              fields={fields}
+              action={salvarConta.bind(null, null)}
+            />
+          </div>
         }
       />
 

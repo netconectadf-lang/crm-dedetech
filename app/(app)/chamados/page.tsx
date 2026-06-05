@@ -4,6 +4,7 @@ import { Inbox, Clock, ThumbsUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { atualizarStatusChamado } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -76,7 +77,42 @@ export default async function ChamadosPage({
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
-      <PageHeader title="Chamados" description="Solicitações abertas pelos clientes no portal." />
+      <PageHeader
+        title="Chamados"
+        description="Solicitações abertas pelos clientes no portal."
+        action={
+          <AjudaTela
+            titulo="Como funcionam os Chamados"
+            descricao="Aqui chegam as solicitações que os clientes abrem pelo portal — visitas extras, dúvidas e reclamações."
+            topicos={[
+              {
+                titulo: "De onde vêm",
+                itens: [
+                  "Os chamados são criados pelo próprio cliente no portal; aqui você não cadastra, só atende.",
+                  "Tipo — visita extra, dúvida, reclamação ou outro.",
+                  "A mensagem do cliente aparece resumida na lista.",
+                ],
+              },
+              {
+                titulo: "Atender e resolver",
+                itens: [
+                  "Atender — passa o chamado de 'Aberto' para 'Em andamento'.",
+                  "Resolver — marca o chamado como 'Resolvido' e encerra o atendimento.",
+                  "Chamados resolvidos não exibem mais botões de ação.",
+                ],
+              },
+              {
+                titulo: "Acompanhar",
+                itens: [
+                  "Os cartões do topo mostram quantos estão abertos, em andamento e resolvidos.",
+                  "Use os filtros (Todos / Abertos / Em andamento / Resolvidos) para focar no que importa.",
+                ],
+              },
+            ]}
+            dica="Priorize os chamados 'Abertos': o cartão fica em alerta enquanto houver algum aguardando atendimento."
+          />
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <KpiCard icon={Inbox} label="Abertos" value={String(abertos)} hint={abertos > 0 ? "aguardando atendimento" : "tudo atendido"} tone={abertos > 0 ? "warning" : "default"} />

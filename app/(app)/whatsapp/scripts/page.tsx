@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { excluirScript } from "./actions";
 import { ScriptEditor } from "@/components/whatsapp/script-editor";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { DeleteButton } from "@/components/app/delete-button";
@@ -31,13 +32,38 @@ export default async function ScriptsPage() {
         description="Mensagens prontas com variáveis ({{nome}}, {{empresa}}…) para usar nas campanhas."
         count={scripts.length}
         action={
-          <ScriptEditor
-            trigger={
-              <Button size="sm">
-                <Plus className="size-4" /> Novo script
-              </Button>
-            }
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funcionam os Scripts"
+              descricao="Scripts são mensagens prontas que você reaproveita nas campanhas de WhatsApp."
+              topicos={[
+                {
+                  titulo: "Criar um script",
+                  itens: [
+                    "Clique em 'Novo script', dê um nome e escreva o corpo da mensagem.",
+                    "Use variáveis como {{nome}} e {{empresa}} — elas são trocadas pelos dados de cada contato no envio.",
+                    "Salve; o script fica disponível para as campanhas.",
+                  ],
+                },
+                {
+                  titulo: "Gerenciar",
+                  itens: [
+                    "Use 'Editar' para ajustar o texto a qualquer momento.",
+                    "Scripts inativos ficam esmaecidos e não aparecem na criação de campanhas.",
+                    "A lixeira exclui o script.",
+                  ],
+                },
+              ]}
+              dica="Capriche na primeira linha: é o que o contato vê na prévia da notificação do WhatsApp."
+            />
+            <ScriptEditor
+              trigger={
+                <Button size="sm">
+                  <Plus className="size-4" /> Novo script
+                </Button>
+              }
+            />
+          </div>
         }
       />
 

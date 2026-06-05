@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth";
 import { formatCpfCnpj, formatPhone } from "@/lib/format";
 import type { Field } from "@/components/app/resource-form";
 import { salvarFornecedor, excluirFornecedor } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -72,13 +73,39 @@ export default async function FornecedoresPage() {
         description="Fornecedores de saneantes, EPI, combustível e serviços."
         count={fornecedores.length}
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Novo fornecedor</Button>}
-            title="Novo fornecedor"
-            description="Preencha o CNPJ para puxar os dados."
-            fields={fields}
-            action={salvarFornecedor.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona o cadastro de Fornecedores"
+              descricao="Quem fornece para a sua operação: saneantes, EPI, combustível e serviços."
+              topicos={[
+                {
+                  titulo: "Cadastrar fornecedor",
+                  itens: [
+                    "Clique em 'Novo fornecedor'.",
+                    "Preencha o CNPJ para puxar a razão social e os dados automaticamente.",
+                    "Categoria — classifique como Saneantes, EPI, Combustível, Serviços ou Outros.",
+                    "Telefone, e-mail e cidade/UF para contato e logística.",
+                  ],
+                },
+                {
+                  titulo: "Organizar a lista",
+                  itens: [
+                    "A tabela mostra fornecedor, CNPJ, telefone e categoria.",
+                    "Ativo — desligue para esconder fornecedores que você não usa mais (ficam marcados como 'inativo').",
+                    "Lápis: editar. Lixeira: excluir.",
+                  ],
+                },
+              ]}
+              dica="Categorizar os fornecedores ajuda a organizar as compras e a comparar preços por tipo de insumo."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Novo fornecedor</Button>}
+              title="Novo fornecedor"
+              description="Preencha o CNPJ para puxar os dados."
+              fields={fields}
+              action={salvarFornecedor.bind(null, null)}
+            />
+          </div>
         }
       />
 

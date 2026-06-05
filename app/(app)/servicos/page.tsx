@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth";
 import { formatBRL } from "@/lib/format";
 import type { Field } from "@/components/app/resource-form";
 import { salvarServico, excluirServico } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -63,12 +64,45 @@ export default async function ServicosPage() {
         description="Serviços oferecidos, com preço e garantia padrão."
         count={servicos.length}
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Novo serviço</Button>}
-            title="Novo serviço"
-            fields={fields}
-            action={salvarServico.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona o Catálogo de serviços"
+              descricao="Cadastre os serviços que sua empresa oferece, com preço base e garantia, para usá-los nos orçamentos e ordens de serviço."
+              topicos={[
+                {
+                  titulo: "Cadastrar um serviço",
+                  itens: [
+                    "Clique em 'Novo serviço' e informe o nome (obrigatório).",
+                    "Praga-alvo e método padrão — usados como sugestão ao montar a OS.",
+                    "Preço base — valor de referência cobrado pelo serviço.",
+                    "Garantia (meses) — período de cobertura padrão oferecido ao cliente.",
+                  ],
+                },
+                {
+                  titulo: "Unidade de cobrança",
+                  itens: [
+                    "Define como o serviço é precificado: por visita, por m², por ponto ou por hora.",
+                    "Escolha conforme a forma como você cobra na prática.",
+                  ],
+                },
+                {
+                  titulo: "Gerenciar a lista",
+                  itens: [
+                    "Lápis — editar nome, preço, garantia e demais dados.",
+                    "Lixeira — excluir o serviço do catálogo.",
+                    "Ativo — desative serviços que não oferece mais sem precisar apagá-los.",
+                  ],
+                },
+              ]}
+              dica="Mantenha preço base e garantia atualizados: eles entram automaticamente nos orçamentos e ordens de serviço."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Novo serviço</Button>}
+              title="Novo serviço"
+              fields={fields}
+              action={salvarServico.bind(null, null)}
+            />
+          </div>
         }
       />
 

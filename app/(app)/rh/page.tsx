@@ -20,6 +20,7 @@ import {
   ABSENCE_TYPE_LABEL,
   type AbsenceType,
 } from "@/lib/rh";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { KpiCard, Panel } from "@/components/dashboard/kpi-card";
@@ -115,9 +116,41 @@ export default async function RhPage() {
         title="Conformidade"
         description="Ausências, EPI (NR-6), exames ocupacionais (ASO) e anuidade do RT."
         action={
-          <Button asChild variant="outline">
-            <a href="/rh/folha" download><Download className="size-4" /> Exportar folha (CSV)</a>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona a Conformidade do RH"
+              descricao="Acompanhe ASO, EPI, anuidade do RT, ponto em campo e ausências da equipe num só painel."
+              topicos={[
+                {
+                  titulo: "Ler os alertas",
+                  itens: [
+                    "Os cards do topo mostram funcionários ativos, quem está em campo agora (ponto aberto), ASO a vencer e ausências pendentes.",
+                    "O bloco 'Pendências de conformidade' lista o que vence em até 30 dias: anuidade de RT, ASO e EPI.",
+                    "Clique em qualquer alerta para abrir a ficha do funcionário e resolver.",
+                  ],
+                },
+                {
+                  titulo: "Aprovar ausências",
+                  itens: [
+                    "Folgas, férias e atestados solicitados aparecem em 'Ausências aguardando aprovação'.",
+                    "Clique na ausência para abrir a ficha e aprovar ou recusar.",
+                  ],
+                },
+                {
+                  titulo: "Matriz e horas",
+                  itens: [
+                    "A matriz mostra a situação de ASO, EPI e RT de cada um, com horas trabalhadas no mês (somadas pelos pares entrada→saída do ponto).",
+                    "Use o botão de abrir (seta) para ir à ficha completa.",
+                    "Exporte tudo em 'Exportar folha (CSV)' para a contabilidade.",
+                  ],
+                },
+              ]}
+              dica="Os pontos coloridos seguem semáforo: verde = em dia, amarelo = vencendo, vermelho = vencido ou sem registro."
+            />
+            <Button asChild variant="outline">
+              <a href="/rh/folha" download><Download className="size-4" /> Exportar folha (CSV)</a>
+            </Button>
+          </div>
         }
       />
 

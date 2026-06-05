@@ -4,6 +4,7 @@ import { formatPhone } from "@/lib/format";
 import { excluirContato } from "./actions";
 import { ImportarContatos } from "@/components/whatsapp/importar-contatos";
 import { StatusContato } from "@/components/whatsapp/status-contato";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { DeleteButton } from "@/components/app/delete-button";
@@ -59,7 +60,43 @@ export default async function ContatosPage() {
         title="Contatos"
         description="Quem vai receber as campanhas de WhatsApp."
         count={count ?? contatos.length}
-        action={<ImportarContatos clientesComTelefone={clientesComTel ?? 0} />}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funcionam os Contatos"
+              descricao="É a base de quem pode receber suas campanhas de WhatsApp."
+              topicos={[
+                {
+                  titulo: "Importar contatos",
+                  itens: [
+                    "Clique em 'Importar' e escolha a origem.",
+                    "De uma lista (CSV): suba um arquivo com nome e telefone.",
+                    "Dos clientes do CRM: traz os clientes ativos que têm telefone.",
+                    "Do WhatsApp conectado: importa contatos da conta ligada.",
+                  ],
+                },
+                {
+                  titulo: "Entender a tabela",
+                  itens: [
+                    "Origem indica de onde o contato veio (Lista, Cliente, WhatsApp, Manual).",
+                    "Tags ajudam a segmentar quem recebe cada campanha.",
+                    "Telefone aparece formatado; é o número usado no disparo.",
+                  ],
+                },
+                {
+                  titulo: "Status e limpeza",
+                  itens: [
+                    "Ajuste o status de cada contato (ex.: ativo, descadastrado) no seletor da linha.",
+                    "Quem pede para sair deve ficar descadastrado e não entra nas campanhas.",
+                    "A lixeira remove o contato da base.",
+                  ],
+                },
+              ]}
+              dica="Respeite quem pediu para sair: manter a lista limpa protege seu número de bloqueios."
+            />
+            <ImportarContatos clientesComTelefone={clientesComTel ?? 0} />
+          </div>
+        }
       />
 
       {contatos.length === 0 ? (

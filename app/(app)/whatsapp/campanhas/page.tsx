@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { excluirCampanha } from "./actions";
 import { NovaCampanha } from "@/components/whatsapp/nova-campanha";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { DeleteButton } from "@/components/app/delete-button";
@@ -50,7 +51,42 @@ export default async function CampanhasPage() {
         title="Campanhas"
         description="Dispare mensagens em massa pelo WhatsApp, com intervalo entre os envios."
         count={campanhas.length}
-        action={<NovaCampanha scripts={scripts} />}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funcionam as Campanhas"
+              descricao="Dispare a mesma mensagem para vários contatos pelo WhatsApp, com intervalo entre os envios."
+              topicos={[
+                {
+                  titulo: "Antes de criar",
+                  itens: [
+                    "Tenha pelo menos um script (mensagem pronta) em WhatsApp › Scripts.",
+                    "Tenha contatos cadastrados em WhatsApp › Contatos.",
+                    "O WhatsApp precisa estar conectado para os envios saírem.",
+                  ],
+                },
+                {
+                  titulo: "Criar e disparar",
+                  itens: [
+                    "Clique em 'Nova campanha', dê um nome e escolha o script.",
+                    "Selecione os contatos que vão receber a mensagem.",
+                    "As variáveis do script (ex.: {{nome}}) são preenchidas por contato no envio.",
+                  ],
+                },
+                {
+                  titulo: "Acompanhar",
+                  itens: [
+                    "Cada card mostra o status (Rascunho, Enviando, Pausada, Concluída) e a barra de progresso.",
+                    "Abra a campanha para ver enviados, falhas e detalhes.",
+                    "A lixeira exclui a campanha.",
+                  ],
+                },
+              ]}
+              dica="Use intervalo entre os envios e listas bem segmentadas para reduzir o risco de bloqueio do número."
+            />
+            <NovaCampanha scripts={scripts} />
+          </div>
+        }
       />
 
       {scripts.length === 0 && (

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatBRL, formatDate } from "@/lib/format";
 import { UploadPedido } from "@/components/compras/upload-pedido";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { DeleteButton } from "@/components/app/delete-button";
@@ -58,6 +59,39 @@ export default async function ComprasPage() {
         title="Compras / Pedidos"
         description="Importe o PDF do pedido do fornecedor — atualiza produtos, estoque e contas a pagar."
         count={pedidos.length}
+        action={
+          <AjudaTela
+            titulo="Como funciona a tela de Compras"
+            descricao="Importe o PDF do pedido do fornecedor e o sistema dá entrada nos produtos, no estoque e nas contas a pagar."
+            topicos={[
+              {
+                titulo: "Importar o pedido",
+                itens: [
+                  "Importar pedido (PDF) — envie o PDF no modelo do fornecedor (ex.: SERDI / VELO).",
+                  "O sistema lê os itens e cria o pedido como Rascunho.",
+                  "Confira os produtos e ajuste o prazo de pagamento antes de confirmar.",
+                ],
+              },
+              {
+                titulo: "Confirmar e dar entrada",
+                itens: [
+                  "Abra o pedido no ícone de olho para revisar os itens.",
+                  "Ao confirmar, os produtos e o estoque são atualizados.",
+                  "As parcelas viram contas a pagar em Financeiro → A pagar.",
+                ],
+              },
+              {
+                titulo: "Status e exclusão",
+                itens: [
+                  "Rascunho — importado, ainda não deu entrada (pode ser excluído).",
+                  "Confirmado — já atualizou estoque e contas a pagar.",
+                  "Cancelado — pedido descartado.",
+                ],
+              },
+            ]}
+            dica="Só pedidos em Rascunho podem ser excluídos; depois de confirmar, o estoque e as contas a pagar já foram lançados."
+          />
+        }
       />
 
       <Card>

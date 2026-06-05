@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth";
 import { formatBRL } from "@/lib/format";
 import type { Field } from "@/components/app/resource-form";
 import { salvarProduto, excluirProduto } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -98,12 +99,46 @@ export default async function ProdutosPage() {
         description="Saneantes com registro ANVISA, diluição e dose por m²."
         count={produtos.length}
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Novo produto</Button>}
-            title="Novo produto"
-            fields={fields}
-            action={salvarProduto.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona a tela de Produtos / saneantes"
+              descricao="Cadastre os saneantes que sua equipe usa em campo, com registro ANVISA, diluição e controle de estoque."
+              topicos={[
+                {
+                  titulo: "Cadastrar um produto",
+                  itens: [
+                    "Clique em 'Novo produto' e informe o nome comercial e o Registro ANVISA (ambos obrigatórios).",
+                    "Princípio ativo, grupo químico e classe toxicológica — dados técnicos para os laudos.",
+                    "Categoria — inseticida, raticida, cupinicida etc.",
+                    "Fornecedor — vincule a quem você compra (cadastrado em Fornecedores).",
+                  ],
+                },
+                {
+                  titulo: "Diluição e dose",
+                  itens: [
+                    "Fator de diluição e dose por m² — usados para calcular o consumo na OS.",
+                    "Tipo — concentrado ou pronto uso; unidade de medida em L, kg etc.",
+                    "Antídoto — primeiros socorros que entram nas fichas de segurança.",
+                  ],
+                },
+                {
+                  titulo: "Estoque e preços",
+                  itens: [
+                    "Estoque mínimo — alerta de reposição quando o saldo cai.",
+                    "Preço de custo e preço de venda — base da margem e do orçamento.",
+                    "Lápis edita, lixeira exclui; desative em vez de apagar produtos fora de uso.",
+                  ],
+                },
+              ]}
+              dica="O Registro ANVISA é obrigatório e aparece nos laudos: mantenha-o sempre correto e atualizado."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Novo produto</Button>}
+              title="Novo produto"
+              fields={fields}
+              action={salvarProduto.bind(null, null)}
+            />
+          </div>
         }
       />
 

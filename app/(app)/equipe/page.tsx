@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { ROLE_LABELS, type AppRole } from "@/lib/types";
 import { InviteForm } from "@/components/app/invite-form";
 import { revokeInvitation } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,38 @@ export default async function EquipePage() {
         title="Equipe"
         description="Convide pessoas e defina o papel de cada uma na empresa."
         count={members.length}
+        action={
+          <AjudaTela
+            titulo="Como funciona a Equipe"
+            descricao="Aqui você dá acesso ao sistema para os membros da sua empresa e define o que cada um pode ver e fazer."
+            topicos={[
+              {
+                titulo: "Convidar um membro",
+                itens: [
+                  "Preencha o e-mail e escolha o papel no card 'Convidar membro'.",
+                  "A pessoa recebe um e-mail com o link de acesso e cria a própria senha.",
+                  "Enquanto não aceita, o convite fica em 'Convites pendentes'.",
+                ],
+              },
+              {
+                titulo: "Papéis e permissões",
+                itens: [
+                  "O papel define o que a pessoa acessa — ex.: comercial, financeiro, RH ou dono.",
+                  "Dono (owner) tem acesso total, inclusive a esta tela de Equipe.",
+                  "Os membros já ativos aparecem na lista 'Membros', com '(você)' ao lado do seu nome.",
+                ],
+              },
+              {
+                titulo: "Revogar acesso",
+                itens: [
+                  "Para cancelar um convite ainda não aceito, clique em 'Revogar' na linha dele.",
+                  "Revogar impede que aquele e-mail use o link enviado.",
+                ],
+              },
+            ]}
+            dica="Convide cada pessoa com o papel mais restrito que ainda permita o trabalho dela — é mais seguro."
+          />
+        }
       />
 
       <Card>

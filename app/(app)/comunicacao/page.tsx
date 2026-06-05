@@ -2,6 +2,7 @@ import { Gauge, Star, ThumbsUp, ThumbsDown } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { KpiCard, Panel } from "@/components/dashboard/kpi-card";
@@ -61,7 +62,43 @@ export default async function ComunicacaoPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
-      <PageHeader title="Comunicação & NPS" description="Satisfação dos clientes e histórico de mensagens." />
+      <PageHeader
+        title="Comunicação & NPS"
+        description="Satisfação dos clientes e histórico de mensagens."
+        action={
+          <AjudaTela
+            titulo="Como funciona Comunicação & NPS"
+            descricao="Acompanhe a satisfação dos clientes (NPS) e o histórico de mensagens enviadas (WhatsApp/e-mail)."
+            topicos={[
+              {
+                titulo: "Entender o NPS",
+                itens: [
+                  "NPS — vai de -100 a 100; acima de 50 é considerado ótimo.",
+                  "Promotores — quem deu nota 9–10 (clientes fãs).",
+                  "Detratores — quem deu nota 0–6 (risco de insatisfação).",
+                  "Neutros — nota 7–8, satisfeitos mas sem entusiasmo.",
+                ],
+              },
+              {
+                titulo: "Respostas e comentários",
+                itens: [
+                  "As notas vêm das pesquisas respondidas pelos clientes.",
+                  "A distribuição mostra a proporção de promotores, neutros e detratores.",
+                  "Os comentários trazem o retorno em texto de cada cliente.",
+                ],
+              },
+              {
+                titulo: "Mensagens enviadas",
+                itens: [
+                  "Lista as últimas mensagens por canal, destino e status.",
+                  "Status sent = enviada, queued = na fila, skipped = ignorada, failed = falhou.",
+                ],
+              },
+            ]}
+            dica="Foque nos detratores: um comentário negativo é a chance de reverter o cliente antes de perdê-lo."
+          />
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Gauge} label="NPS" value={total > 0 ? String(nps) : "—"} hint={`${total} respostas`} tone={npsTone} />

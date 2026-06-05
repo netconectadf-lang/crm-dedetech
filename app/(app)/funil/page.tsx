@@ -9,6 +9,7 @@ import type { DealCard } from "@/components/funil/kanban-board";
 import { KanbanBoard } from "@/components/funil/kanban-board";
 import { AjudaFunil } from "@/components/funil/ajuda-funil";
 import { criarLead } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { ResourceDialog } from "@/components/app/resource-dialog";
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -81,6 +82,38 @@ export default async function FunilPage() {
         description="Arraste os cartões entre os estágios."
         action={
           <div className="flex gap-2">
+            <AjudaTela
+              titulo="Como funciona o Funil comercial"
+              descricao="Acompanhe seus negócios (leads) do primeiro contato até o fechamento, arrastando os cartões entre os estágios."
+              topicos={[
+                {
+                  titulo: "Cadastrar um lead",
+                  itens: [
+                    "Clique em 'Novo lead' e informe o nome do contato (obrigatório).",
+                    "Origem — registre de onde veio (indicação, Google, site…) para medir os canais.",
+                    "Valor estimado — quanto o negócio deve render; alimenta os indicadores do topo.",
+                    "Vincular a cliente — opcional, ligue o lead a um cliente já cadastrado.",
+                  ],
+                },
+                {
+                  titulo: "Mover pelo kanban",
+                  itens: [
+                    "Arraste o cartão entre as colunas conforme o negócio avança de estágio.",
+                    "Ganho — negócio fechado; entra no ticket médio e nos ganhos.",
+                    "Perdido — negócio que não foi adiante; usado no cálculo de conversão.",
+                  ],
+                },
+                {
+                  titulo: "Indicadores do topo",
+                  itens: [
+                    "Em aberto — soma do valor dos negócios ainda em andamento.",
+                    "Conversão — % de ganhos sobre o total de negócios fechados.",
+                    "Ticket médio — valor médio por negócio ganho.",
+                  ],
+                },
+              ]}
+              dica="Mantenha os cartões sempre no estágio certo: os indicadores de conversão e ticket médio dependem disso."
+            />
             <AjudaFunil />
             <ResourceDialog
               trigger={<Button><Plus className="size-4" /> Novo lead</Button>}

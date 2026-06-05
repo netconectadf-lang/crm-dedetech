@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import type { Field } from "@/components/app/resource-form";
 import { salvarPraga, excluirPraga } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -42,12 +43,37 @@ export default async function PragasPage() {
         description="Lista de pragas selecionáveis na ficha da ordem de serviço."
         count={pragas.length}
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Nova praga</Button>}
-            title="Nova praga"
-            fields={fields}
-            action={salvarPraga.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona o catálogo de Pragas"
+              descricao="A lista de pragas que aparece para marcar na ficha da ordem de serviço."
+              topicos={[
+                {
+                  titulo: "Cadastrar pragas",
+                  itens: [
+                    "Clique em 'Nova praga' e digite o nome (ex.: Baratas, Ratos, Cupins, Escorpiões).",
+                    "Cadastre uma vez cada praga que sua empresa combate.",
+                    "Lápis: editar o nome. Lixeira: excluir.",
+                  ],
+                },
+                {
+                  titulo: "Uso na ordem de serviço",
+                  itens: [
+                    "Ao preencher a OS, o técnico marca as pragas alvo a partir desta lista.",
+                    "Manter os nomes padronizados deixa os laudos e relatórios mais consistentes.",
+                    "Ativo — desligue pragas que não usa para tirá-las da seleção (ficam 'inativo').",
+                  ],
+                },
+              ]}
+              dica="Use nomes claros e no plural (ex.: 'Baratas') para ficar fácil de selecionar na OS."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Nova praga</Button>}
+              title="Nova praga"
+              fields={fields}
+              action={salvarPraga.bind(null, null)}
+            />
+          </div>
         }
       />
 

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import type { Field } from "@/components/app/resource-form";
 import { salvarEstrutura, excluirEstrutura } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -42,12 +43,37 @@ export default async function EstruturasPage() {
         description="Áreas e estruturas tratadas, selecionáveis na ficha da OS."
         count={estruturas.length}
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Nova estrutura</Button>}
-            title="Nova estrutura"
-            fields={fields}
-            action={salvarEstrutura.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona o catálogo de Estruturas / áreas"
+              descricao="A lista de áreas e estruturas tratadas que aparece para marcar na ficha da ordem de serviço."
+              topicos={[
+                {
+                  titulo: "Cadastrar áreas",
+                  itens: [
+                    "Clique em 'Nova estrutura' e digite o nome da área (ex.: Cozinha, Depósito, Pátio, Caixa d'água).",
+                    "Cadastre os tipos de ambiente que sua equipe costuma tratar.",
+                    "Lápis: editar o nome. Lixeira: excluir.",
+                  ],
+                },
+                {
+                  titulo: "Uso na ordem de serviço",
+                  itens: [
+                    "Na OS, o técnico marca quais estruturas/áreas foram tratadas a partir desta lista.",
+                    "Nomes padronizados deixam os laudos e o histórico do cliente mais claros.",
+                    "Ativo — desligue áreas que não usa para tirá-las da seleção (ficam 'inativo').",
+                  ],
+                },
+              ]}
+              dica="Cadastre áreas genéricas que servem para vários clientes; assim a mesma lista atende toda a operação."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Nova estrutura</Button>}
+              title="Nova estrutura"
+              fields={fields}
+              action={salvarEstrutura.bind(null, null)}
+            />
+          </div>
         }
       />
 

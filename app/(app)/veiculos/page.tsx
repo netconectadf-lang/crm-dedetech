@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import type { Field } from "@/components/app/resource-form";
 import { salvarVeiculo, excluirVeiculo } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -84,12 +85,46 @@ export default async function VeiculosPage() {
         description="Frota, documentos e rastreadores."
         count={veiculos.length}
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Novo veículo</Button>}
-            title="Novo veículo"
-            fields={fields}
-            action={salvarVeiculo.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona a tela de Veículos"
+              descricao="A frota da empresa, com documentos, manutenção e rastreador."
+              topicos={[
+                {
+                  titulo: "Cadastrar veículo",
+                  itens: [
+                    "Clique em 'Novo veículo' e informe a placa (obrigatória) e o tipo (carro, moto, van, caminhão).",
+                    "Modelo, ano, cor, Renavam e chassi para identificar o veículo.",
+                    "Consumo (km por litro) — usado para estimar custo de combustível.",
+                    "ID do rastreador (Traccar) para integrar a localização em tempo real.",
+                  ],
+                },
+                {
+                  titulo: "Documentos e manutenção",
+                  itens: [
+                    "Venc. seguro, IPVA e licenciamento — a coluna de vencimento fica amarela faltando 30 dias e vermelha quando vence.",
+                    "KM atual e KM da próxima revisão para controlar a manutenção.",
+                    "Seguradora para referência rápida do contrato.",
+                  ],
+                },
+                {
+                  titulo: "Lista e atalhos",
+                  itens: [
+                    "A tabela mostra placa, modelo, tipo e vencimento do seguro.",
+                    "Ativo — desligue para tirar o veículo da frota em uso (fica 'inativo').",
+                    "Lápis: editar. Lixeira: excluir.",
+                  ],
+                },
+              ]}
+              dica="Preencha os vencimentos do seguro, IPVA e licenciamento para ser avisado antes de eles vencerem."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Novo veículo</Button>}
+              title="Novo veículo"
+              fields={fields}
+              action={salvarVeiculo.bind(null, null)}
+            />
+          </div>
         }
       />
 

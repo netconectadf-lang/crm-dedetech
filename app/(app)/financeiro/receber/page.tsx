@@ -9,6 +9,7 @@ import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clie
 import type { Field } from "@/components/app/resource-form";
 import { salvarReceber, receber, cancelarReceber, excluirReceber } from "../actions";
 import { gerarCobranca } from "../charge-actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -105,12 +106,45 @@ export default async function ReceberPage({
         title="Contas a receber"
         description="Cobranças de clientes, OS e contratos."
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Nova conta</Button>}
-            title="Nova conta a receber"
-            fields={createFields}
-            action={salvarReceber.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona Contas a receber"
+              descricao="Controle as cobranças dos clientes: o que está a vencer, vencido, parcial ou quitado — e registre os recebimentos."
+              topicos={[
+                {
+                  titulo: "Criar uma cobrança",
+                  itens: [
+                    "Nova conta — informe cliente, descrição, valor e vencimento.",
+                    "Forma de pagamento — opcional (PIX, boleto, cartão…).",
+                    "Cobranças também são geradas automaticamente a partir de OS e contratos.",
+                  ],
+                },
+                {
+                  titulo: "Receber e cobrar",
+                  itens: [
+                    "Receber — registra o valor recebido e a conta bancária; baixa parcial deixa a conta como Parcial.",
+                    "PIX / Boleto — geram a cobrança para enviar ao cliente.",
+                    "Emitir nota — gera a nota fiscal daquela conta.",
+                    "Cancelar (proibido) — cancela a cobrança em aberto.",
+                  ],
+                },
+                {
+                  titulo: "Status e filtros",
+                  itens: [
+                    "A vencer / Vencidas / Parciais / Quitadas — use os botões para filtrar.",
+                    "Em aberto e Vencido aparecem nos cards do topo.",
+                  ],
+                },
+              ]}
+              dica="Acompanhe o card 'Vencido' em vermelho: são as cobranças que passaram do prazo e precisam de ação."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Nova conta</Button>}
+              title="Nova conta a receber"
+              fields={createFields}
+              action={salvarReceber.bind(null, null)}
+            />
+          </div>
         }
       />
 

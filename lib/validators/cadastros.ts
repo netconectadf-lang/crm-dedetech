@@ -161,6 +161,20 @@ export const vehicleSchema = z.object({
   ativo: z.coerce.boolean().default(true),
 });
 
+// ─── Prestadores de serviço (terceiros) ─────────────────────────────
+export const prestadorSchema = z.object({
+  nome: z.string().trim().min(2, "Informe o nome do prestador"),
+  documento: opt(z.string()),
+  tipo_servico: opt(z.string()),
+  telefone: opt(z.string()),
+  email: opt(z.string().email("E-mail inválido")),
+  cidade: opt(z.string()),
+  uf: opt(z.string().max(2)),
+  valor_padrao: numero,
+  observacoes: opt(z.string()),
+  ativo: switchBool.default(true),
+});
+
 // ─── Plano de Contas ─────────────────────────────────────────────────
 export const accountSchema = z.object({
   nome: z.string().min(2, "Informe o nome da conta"),

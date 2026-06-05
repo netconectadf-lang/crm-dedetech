@@ -38,6 +38,8 @@ import {
   History,
   Receipt,
   Cog,
+  Clock,
+  Handshake,
   type LucideIcon,
 } from "lucide-react";
 
@@ -237,12 +239,6 @@ export const NAV_SECTIONS: NavSection[] = [
         roles: ["owner", "operacional", "financeiro"],
       },
       {
-        href: "/funcionarios",
-        label: "Funcionários",
-        icon: IdCard,
-        roles: ["owner", "rh"],
-      },
-      {
         href: "/veiculos",
         label: "Veículos",
         icon: Truck,
@@ -257,14 +253,26 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    titulo: "Pessoas",
+    titulo: "Recursos Humanos",
     icon: UsersRound,
     accent: "rose",
     itens: [
       {
-        href: "/rh",
-        label: "Recursos Humanos",
-        icon: UsersRound,
+        href: "/funcionarios",
+        label: "Funcionários",
+        icon: IdCard,
+        roles: ["owner", "rh"],
+      },
+      {
+        href: "/prestadores",
+        label: "Prestadores de serviços",
+        icon: Handshake,
+        roles: ["owner", "rh"],
+      },
+      {
+        href: "/folha-de-ponto",
+        label: "Folha de ponto",
+        icon: Clock,
         roles: ["owner", "rh"],
       },
     ],

@@ -25,6 +25,7 @@ import { STAGE_LABEL } from "@/lib/funil";
 import { OS_STATUS_LABEL, type OsStatus } from "@/lib/os";
 import { cn } from "@/lib/utils";
 import { KpiCard, Panel } from "@/components/dashboard/kpi-card";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { CashflowChart } from "@/components/dashboard/cashflow-chart";
 
 export const metadata = { title: "Dashboard" };
@@ -165,6 +166,9 @@ export default async function DashboardPage() {
           {ROLE_LABELS[ctx.role]}
         </span>
       </div>
+
+      {/* Onboarding — primeiros passos (só p/ dono, some quando completo) */}
+      {ctx.role === "owner" && <OnboardingChecklist tenantId={ctx.tenantId} />}
 
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

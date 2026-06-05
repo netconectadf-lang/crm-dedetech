@@ -4,11 +4,14 @@ import { ArrowLeft, ShieldAlert } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatBRL } from "@/lib/format";
 import {
   ABSENCE_TYPE_LABEL,
   ABSENCE_STATUS_LABEL,
   EXAM_TYPE_LABEL,
+  feriasInfo,
+  formatTempoCasa,
+  diasEntre,
   type AbsenceType,
   type AbsenceStatus,
   type ExamType,
@@ -35,11 +38,11 @@ export default async function RhEmployeePage({
 
   const { data: empData } = await supabase
     .from("employees")
-    .select("id, nome, cargo, responsavel_tecnico, registro_conselho")
+    .select("id, nome, cargo, responsavel_tecnico, registro_conselho, data_admissao, salario")
     .eq("id", id)
     .maybeSingle();
   if (!empData) notFound();
-  const emp = empData as { id: string; nome: string; cargo: string | null; responsavel_tecnico: boolean; registro_conselho: string | null };
+  const emp = empData as { id: string; nome: string; cargo: string | null; responsavel_tecnico: boolean; registro_conselho: string | null; data_admissao: string | null; salario: number | null };
 
   const [{ data: pontos }, { data: ausencias }, { data: epis }, { data: asos }] =
     await Promise.all([
@@ -53,6 +56,11 @@ export default async function RhEmployeePage({
   const ausList = (ausencias as { id: string; tipo: AbsenceType; inicio: string; fim: string; status: AbsenceStatus; motivo: string | null }[] | null) ?? [];
   const epiList = (epis as { id: string; descricao: string; entregue_em: string; validade: string | null; assinado: boolean }[] | null) ?? [];
   const asoList = (asos as { id: string; tipo: ExamType; data: string; validade: string | null; resultado: string | null }[] | null) ?? [];
+
+  const diasFeriasGozados = ausList
+    .filter((a) => a.tipo === "ferias" && a.status === "aprovada")
+    .reduce((s, a) => s + diasEntre(a.inicio, a.fim), 0);
+  const ferias = feriasInfo(emp.data_admissao, diasFeriasGozados);
 
   const ausFields: Field[] = [
     { name: "tipo", label: "Tipo", type: "select", options: (Object.keys(ABSENCE_TYPE_LABEL) as AbsenceType[]).map((k) => ({ value: k, label: ABSENCE_TYPE_LABEL[k] })) },
@@ -82,6 +90,25 @@ export default async function RhEmployeePage({
         title={emp.nome}
         description={`${emp.cargo ?? ""}${emp.responsavel_tecnico ? ` · RT ${emp.registro_conselho ?? ""}` : ""}`}
       />
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Resumo
+          label="Tempo de casa"
+          value={formatTempoCasa(emp.data_admissao)}
+          hint={emp.data_admissao ? `desde ${formatDate(emp.data_admissao)}` : "admissão não informada"}
+        />
+        <Resumo
+          label="Saldo de férias"
+          value={ferias ? `${ferias.saldo} dias` : "—"}
+          hint={ferias?.vencidas ? "⚠ vencidas — risco de dobra" : ferias ? `${ferias.diasGozados}d gozados de ${ferias.diasDireito}d` : "informe a admissão"}
+          tone={ferias?.vencidas ? "danger" : undefined}
+        />
+        <Resumo
+          label="Salário base"
+          value={emp.salario ? formatBRL(Number(emp.salario)) : "—"}
+          hint="usado no custeio de OS"
+        />
+      </div>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Ponto eletrônico</CardTitle></CardHeader>
@@ -162,5 +189,25 @@ export default async function RhEmployeePage({
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+function Resumo({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "danger";
+}) {
+  return (
+    <div className={`rounded-lg border p-3 ${tone === "danger" ? "border-destructive/30 bg-destructive/8" : "border-border/60 bg-muted/20"}`}>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`mt-0.5 text-lg font-semibold tabular-nums ${tone === "danger" ? "text-destructive" : ""}`}>{value}</p>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
   );
 }

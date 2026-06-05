@@ -7,16 +7,25 @@ import {
   MapPin,
   CalendarDays,
   ShieldCheck,
+  Wallet,
+  Clock,
+  Cake,
+  Plane,
+  type LucideIcon,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatBRL } from "@/lib/format";
 import {
   vencendo,
   daysUntil,
   conformidade,
   formatDuracao,
+  mesesDesde,
+  aniversarianteEsteMes,
+  diasEntre,
+  feriasInfo,
   ABSENCE_TYPE_LABEL,
   type AbsenceType,
 } from "@/lib/rh";
@@ -43,6 +52,9 @@ type Emp = {
   cargo: string | null;
   responsavel_tecnico: boolean;
   vencimento_anuidade: string | null;
+  salario: number | null;
+  data_admissao: string | null;
+  nascimento: string | null;
 };
 
 export default async function RhPage() {
@@ -51,13 +63,15 @@ export default async function RhPage() {
 
   const mesInicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
-  const [{ data: empData }, { data: examData }, { data: epiData }, { data: absData }, { data: pontoData }] =
+  const [{ data: empData }, { data: examData }, { data: epiData }, { data: absData }, { data: pontoData }, { data: feriasData }, { data: absMesData }] =
     await Promise.all([
-      supabase.from("employees").select("id, nome, cargo, responsavel_tecnico, vencimento_anuidade, ativo").eq("ativo", true).order("nome"),
+      supabase.from("employees").select("id, nome, cargo, responsavel_tecnico, vencimento_anuidade, salario, data_admissao, nascimento, ativo").eq("ativo", true).order("nome"),
       supabase.from("occupational_exams").select("employee_id, validade, data").order("data", { ascending: false }),
       supabase.from("epi_deliveries").select("employee_id, descricao, validade"),
       supabase.from("absences").select("id, employee_id, tipo, inicio, fim, status, employees(nome)").eq("status", "solicitada"),
       supabase.from("time_entries").select("employee_id, tipo, registrado_em").gte("registrado_em", mesInicio),
+      supabase.from("absences").select("employee_id, inicio, fim").eq("tipo", "ferias").eq("status", "aprovada"),
+      supabase.from("absences").select("inicio, fim").in("tipo", ["falta", "atestado"]).gte("inicio", mesInicio.slice(0, 10)),
     ]);
 
   const employees = (empData as Emp[] | null) ?? [];
@@ -104,11 +118,29 @@ export default async function RhPage() {
     if (arr.length && arr[arr.length - 1].tipo === "entrada") emCampo.add(emp);
   }
 
+  // Férias gozadas (dias) por funcionário → saldo CLT
+  const feriasGozadas = (feriasData as { employee_id: string; inicio: string; fim: string }[] | null) ?? [];
+  const gozadasPorEmp = new Map<string, number>();
+  for (const f of feriasGozadas)
+    gozadasPorEmp.set(f.employee_id, (gozadasPorEmp.get(f.employee_id) ?? 0) + diasEntre(f.inicio, f.fim));
+  const feriasDe = (e: Emp) => feriasInfo(e.data_admissao, gozadasPorEmp.get(e.id) ?? 0);
+
+  // Indicadores de pessoas
+  const absMes = (absMesData as { inicio: string; fim: string }[] | null) ?? [];
+  const custoFolha = employees.reduce((s, e) => s + Number(e.salario ?? 0), 0);
+  const mesesCasa = employees.map((e) => mesesDesde(e.data_admissao)).filter((m): m is number => m != null);
+  const tempoMedioMeses = mesesCasa.length ? Math.round(mesesCasa.reduce((a, b) => a + b, 0) / mesesCasa.length) : 0;
+  const tempoMedioLabel = tempoMedioMeses >= 12 ? `${Math.floor(tempoMedioMeses / 12)}a ${tempoMedioMeses % 12}m` : `${tempoMedioMeses}m`;
+  const aniversariantes = employees.filter((e) => aniversarianteEsteMes(e.nascimento));
+  const diasAusentesMes = absMes.reduce((s, a) => s + diasEntre(a.inicio, a.fim), 0);
+  const absenteismoPct = employees.length ? Math.round((diasAusentesMes / (employees.length * 22)) * 100) : 0;
+
   const alertasRT = employees.filter((e) => e.responsavel_tecnico && vencendo(e.vencimento_anuidade, 30));
   const alertasASO = employees.filter((e) => vencendo(lastExam.get(e.id) ?? null, 30));
   const alertasEPI = epis.filter((p) => vencendo(p.validade, 30));
+  const alertasFerias = employees.filter((e) => feriasDe(e)?.vencidas);
   const nomeDe = (id: string) => employees.find((e) => e.id === id)?.nome ?? "—";
-  const temAlerta = alertasRT.length || alertasASO.length || alertasEPI.length;
+  const temAlerta = alertasRT.length || alertasASO.length || alertasEPI.length || alertasFerias.length;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
@@ -161,6 +193,21 @@ export default async function RhPage() {
         <KpiCard icon={CalendarDays} label="Ausências pendentes" value={String(pendentes.length)} tone={pendentes.length ? "warning" : "emerald"} hint={pendentes.length ? "aguardando você" : "nada pendente"} />
       </div>
 
+      {/* Indicadores de pessoas */}
+      <Panel title="Indicadores de pessoas" accent="sky">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Indicador icon={Wallet} label="Custo de folha" value={formatBRL(custoFolha)} hint="salários base/mês" />
+          <Indicador icon={Clock} label="Tempo médio de casa" value={tempoMedioLabel} hint="da equipe ativa" />
+          <Indicador
+            icon={Cake}
+            label="Aniversariantes do mês"
+            value={String(aniversariantes.length)}
+            hint={aniversariantes.length ? aniversariantes.map((a) => a.nome.split(" ")[0]).join(", ") : "ninguém este mês"}
+          />
+          <Indicador icon={Plane} label="Absenteísmo" value={`${absenteismoPct}%`} hint={`${diasAusentesMes} dia(s) de falta/atestado no mês`} />
+        </div>
+      </Panel>
+
       {/* Conformidade — alertas acionáveis */}
       {temAlerta ? (
         <Panel title="Pendências de conformidade">
@@ -181,6 +228,12 @@ export default async function RhPage() {
               <Link key={`epi-${i}`} href={`/rh/${p.employee_id}`} className="flex items-center gap-2 rounded-lg border border-warning/25 bg-warning/8 px-3 py-2 text-sm transition-colors hover:bg-warning/12">
                 <AlertTriangle className="size-4 shrink-0 text-warning" />
                 <span>EPI <strong>{p.descricao}</strong> · {nomeDe(p.employee_id)}</span>
+              </Link>
+            ))}
+            {alertasFerias.map((e) => (
+              <Link key={`fer-${e.id}`} href={`/rh/${e.id}`} className="flex items-center gap-2 rounded-lg border border-destructive/25 bg-destructive/8 px-3 py-2 text-sm transition-colors hover:bg-destructive/12">
+                <Plane className="size-4 shrink-0 text-destructive" />
+                <span>Férias vencidas <strong>{e.nome}</strong> · {feriasDe(e)!.saldo}d (risco de dobra)</span>
               </Link>
             ))}
           </div>
@@ -245,6 +298,7 @@ export default async function RhPage() {
                   <TableHead>ASO</TableHead>
                   <TableHead>EPI</TableHead>
                   <TableHead>RT / Anuidade</TableHead>
+                  <TableHead>Férias</TableHead>
                   <TableHead className="text-right">Horas (mês)</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -263,6 +317,17 @@ export default async function RhPage() {
                       <TableCell><ConfDot c={aso} /></TableCell>
                       <TableCell><ConfDot c={epi} /></TableCell>
                       <TableCell>{rt ? <ConfDot c={rt} /> : <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="text-sm tabular-nums">
+                        {(() => {
+                          const f = feriasDe(e);
+                          if (!f) return <span className="text-muted-foreground">—</span>;
+                          return (
+                            <span className={f.vencidas ? "font-medium text-destructive" : f.saldo > 0 ? "text-amber-300" : "text-muted-foreground"}>
+                              {f.saldo}d{f.vencidas ? " ⚠" : ""}
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">{formatDuracao(horasMs.get(e.id) ?? 0)}</TableCell>
                       <TableCell className="text-right">
                         <Button asChild variant="ghost" size="icon">
@@ -287,5 +352,27 @@ function ConfDot({ c }: { c: { label: string; dot: string } }) {
       <span className={`size-2 shrink-0 rounded-full ${c.dot}`} />
       {c.label}
     </span>
+  );
+}
+
+function Indicador({
+  icon: Icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Icon className="size-3.5" /> {label}
+      </div>
+      <p className="mt-1 text-lg font-semibold tabular-nums">{value}</p>
+      {hint && <p className="truncate text-xs text-muted-foreground">{hint}</p>}
+    </div>
   );
 }

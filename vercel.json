@@ -1,5 +1,6 @@
 {
   "crons": [
-    { "path": "/api/cron/trilogo", "schedule": "0 10 * * *" }
+    { "path": "/api/cron/trilogo", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/lembretes", "schedule": "0 11 * * *" }
   ]
 }

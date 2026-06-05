@@ -226,7 +226,7 @@ export default async function OsPage({
           value={String(kpiHoje)}
           hint="agendadas para hoje"
           href="/os"
-          tone={kpiHoje > 0 ? "ok" : "default"}
+          tone={kpiHoje > 0 ? "sky" : "default"}
         />
         <KpiCard
           icon={AlertTriangle}
@@ -240,6 +240,7 @@ export default async function OsPage({
           label="Próximos 7 dias"
           value={String(kpiSemana)}
           hint="na agenda"
+          tone="violet"
         />
         <KpiCard
           icon={Wallet}

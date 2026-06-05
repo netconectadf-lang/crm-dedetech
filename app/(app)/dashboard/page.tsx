@@ -121,7 +121,7 @@ export default async function DashboardPage() {
               value={formatBRL(m.mrr)}
               hint={`${m.contratosAtivos} ${m.contratosAtivos === 1 ? "contrato ativo" : "contratos ativos"}`}
               href="/contratos"
-              tone="ok"
+              tone="emerald"
             />
             <KpiCard
               style={next()}
@@ -130,7 +130,7 @@ export default async function DashboardPage() {
               value={formatBRL(m.aReceber)}
               hint={m.vencidoReceber > 0 ? `${formatBRL(m.vencidoReceber)} vencido` : "em dia"}
               href="/financeiro/receber"
-              tone={m.vencidoReceber > 0 ? "danger" : "default"}
+              tone={m.vencidoReceber > 0 ? "danger" : "sky"}
             />
             <KpiCard
               style={next()}
@@ -138,6 +138,7 @@ export default async function DashboardPage() {
               label="A pagar"
               value={formatBRL(m.aPagar)}
               href="/financeiro/pagar"
+              tone="amber"
             />
             <KpiCard
               style={next()}
@@ -145,7 +146,7 @@ export default async function DashboardPage() {
               label="Resultado do mês"
               value={formatBRL(m.resultadoMes)}
               hint={`Receb. ${formatBRL(m.recebidoMes)} · Pago ${formatBRL(m.pagoMes)}`}
-              tone={m.resultadoMes < 0 ? "danger" : "ok"}
+              tone={m.resultadoMes < 0 ? "danger" : "violet"}
             />
           </>
         )}
@@ -158,6 +159,7 @@ export default async function DashboardPage() {
               value={`${m.conversao}%`}
               hint={`${m.ganhos} ${m.ganhos === 1 ? "negócio ganho" : "negócios ganhos"}`}
               href="/funil"
+              tone="violet"
             />
             <KpiCard
               style={next()}
@@ -165,6 +167,7 @@ export default async function DashboardPage() {
               label="Clientes ativos"
               value={String(m.clientesAtivos)}
               href="/clientes"
+              tone="sky"
             />
           </>
         )}
@@ -177,7 +180,7 @@ export default async function DashboardPage() {
               value={String(m.osHoje)}
               hint={m.osHoje > 0 ? "agendadas para hoje" : "nada agendado"}
               href="/os"
-              tone={m.osHoje > 0 ? "ok" : "default"}
+              tone={m.osHoje > 0 ? "amber" : "default"}
             />
             <KpiCard
               style={next()}
@@ -186,7 +189,7 @@ export default async function DashboardPage() {
               value={String(m.estoqueCritico)}
               hint={m.estoqueCritico > 0 ? "abaixo do mínimo" : "níveis ok"}
               href="/estoque"
-              tone={m.estoqueCritico > 0 ? "warning" : "default"}
+              tone={m.estoqueCritico > 0 ? "warning" : "cyan"}
             />
             <KpiCard
               style={next()}
@@ -195,7 +198,7 @@ export default async function DashboardPage() {
               value={String(m.mipCritico)}
               hint={m.mipCritico > 0 ? "exigem ação" : "sob controle"}
               href="/mip"
-              tone={m.mipCritico > 0 ? "danger" : "default"}
+              tone={m.mipCritico > 0 ? "danger" : "cyan"}
             />
           </>
         )}
@@ -205,7 +208,7 @@ export default async function DashboardPage() {
       {showFin && (
         <Panel
           style={next()}
-          title="Fluxo de caixa"
+          title="Fluxo de caixa" accent="emerald"
           action={
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">
@@ -226,7 +229,7 @@ export default async function DashboardPage() {
         {showCom && (
           <Panel
             style={next()}
-            title="Funil comercial"
+            title="Funil comercial" accent="violet"
             action={
               <Link
                 href="/funil"
@@ -268,7 +271,7 @@ export default async function DashboardPage() {
         {showOp && (
           <Panel
             style={next()}
-            title="Ordens de serviço"
+            title="Ordens de serviço" accent="amber"
             action={
               <Link
                 href="/os"
@@ -306,7 +309,7 @@ export default async function DashboardPage() {
       {showOp && m.proximasOs.length > 0 && (
         <Panel
           style={next()}
-          title="Próximas OS"
+          title="Próximas OS" accent="amber"
           action={
             <Link
               href="/os"

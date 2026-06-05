@@ -53,6 +53,8 @@ export type NavSection = {
   titulo: string | null;
   /** Ícone do cabeçalho da seção (seções com título). */
   icon?: LucideIcon;
+  /** Cor de acento da seção (violet, amber, emerald, sky, cyan, rose, indigo). */
+  accent?: string;
   itens: NavItem[];
 };
 
@@ -64,6 +66,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: "Comercial",
     icon: Briefcase,
+    accent: "violet",
     itens: [
       {
         href: "/funil",
@@ -94,6 +97,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: "Operação",
     icon: HardHat,
+    accent: "amber",
     itens: [
       {
         href: "/os",
@@ -136,6 +140,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: "WhatsApp",
     icon: MessageCircle,
+    accent: "emerald",
     itens: [
       {
         href: "/whatsapp/campanhas",
@@ -160,6 +165,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: "Financeiro",
     icon: CircleDollarSign,
+    accent: "sky",
     itens: [
       {
         href: "/financeiro",
@@ -190,6 +196,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: "Cadastros",
     icon: Database,
+    accent: "cyan",
     itens: [
       {
         href: "/clientes",
@@ -250,6 +257,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: "Pessoas",
     icon: UsersRound,
+    accent: "rose",
     itens: [
       {
         href: "/rh",
@@ -262,6 +270,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titulo: "Empresa",
     icon: Building2,
+    accent: "indigo",
     itens: [
       { href: "/equipe", label: "Equipe", icon: Users, roles: ["owner"] },
       { href: "/integracoes", label: "Integrações", icon: Plug, roles: ["owner"] },

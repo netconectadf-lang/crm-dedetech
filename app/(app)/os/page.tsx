@@ -60,13 +60,31 @@ type OS = {
   employees: { nome: string } | null;
 };
 
+// Rótulos curtos por palavra-chave (a ordem importa: a 1ª que casar vence).
+const SERVICO_REGRAS: { re: RegExp; rotulo: string }[] = [
+  { re: /bebedouro/i, rotulo: "Bebedouro" },
+  { re: /caixa.?d.?[áa]gua|caixa de [áa]gua/i, rotulo: "Caixa d'água" },
+  { re: /descupiniz|cupim/i, rotulo: "Descupinização" },
+  { re: /desratiz|roedor|\brato/i, rotulo: "Desratização" },
+  { re: /dedetiz|sanitiz|desinsetiz|praga/i, rotulo: "Dedetização" },
+  { re: /vazamento/i, rotulo: "Vazamento" },
+  { re: /entupi|desentup|\bralo/i, rotulo: "Desentupimento" },
+];
+
+/** Reduz um tipo de serviço a um rótulo curto pelo significado. */
+function rotuloServico(s: string): string {
+  for (const r of SERVICO_REGRAS) if (r.re.test(s)) return r.rotulo;
+  return s.split(/\s*\/\s*/)[0].trim() || s; // fallback: parte antes da "/"
+}
+
 /** Extrai "Tipo de serviço: X" das observações (OS importadas do Trílogo). */
 function tipoServicoDasObs(obs: string | null): string | null {
   const m = obs?.match(/Tipo de servi[çc]o:\s*(.+)/i);
   if (!m) return null;
   // Se vier como caminho (ex: "Facilities › Dedetização › ..."), fica só a última parte.
   const partes = m[1].split(/\s*[›»>→]\s*/).filter(Boolean);
-  return (partes[partes.length - 1] ?? m[1]).trim() || null;
+  const bruto = (partes[partes.length - 1] ?? m[1]).trim();
+  return bruto ? rotuloServico(bruto) : null;
 }
 
 export default async function OsPage({

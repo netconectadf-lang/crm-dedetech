@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronsUpDown, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Sparkline } from "@/components/dashboard/sparkline";
 
 export type Tone =
   | "default"
@@ -94,6 +95,7 @@ export function KpiCard({
   href,
   icon: Icon,
   tone = "default",
+  spark,
   style,
 }: {
   label: string;
@@ -102,6 +104,8 @@ export function KpiCard({
   href?: string;
   icon: LucideIcon;
   tone?: Tone;
+  /** série de tendência (mini-gráfico decorativo no rodapé) */
+  spark?: number[];
   style?: React.CSSProperties;
 }) {
   const t = TONE[tone];
@@ -123,6 +127,13 @@ export function KpiCard({
           t.bar,
         )}
       />
+      {/* tendência (decorativa, no rodapé) */}
+      {spark && spark.length > 1 && (
+        <Sparkline
+          data={spark}
+          className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-9 opacity-25", t.num)}
+        />
+      )}
       <div className="flex items-start justify-between">
         <span className={cn("grid size-10 place-items-center rounded-xl ring-1", t.chip)}>
           <Icon className="size-5" />

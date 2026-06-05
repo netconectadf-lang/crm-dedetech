@@ -122,10 +122,10 @@ export default async function RhPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={UsersRound} label="Funcionários" value={String(employees.length)} hint="ativos" />
-        <KpiCard icon={MapPin} label="Em campo agora" value={String(emCampo.size)} hint={emCampo.size > 0 ? "com ponto aberto" : "ninguém registrado"} tone={emCampo.size > 0 ? "ok" : "default"} />
-        <KpiCard icon={AlertTriangle} label="ASO a vencer" value={String(alertasASO.length)} tone={alertasASO.length ? "danger" : "default"} hint={alertasASO.length ? "exigem ação" : "em dia"} />
-        <KpiCard icon={CalendarDays} label="Ausências pendentes" value={String(pendentes.length)} tone={pendentes.length ? "warning" : "default"} hint={pendentes.length ? "aguardando você" : "nada pendente"} />
+        <KpiCard icon={UsersRound} label="Funcionários" value={String(employees.length)} hint="ativos" tone="sky" />
+        <KpiCard icon={MapPin} label="Em campo agora" value={String(emCampo.size)} hint={emCampo.size > 0 ? "com ponto aberto" : "ninguém registrado"} tone={emCampo.size > 0 ? "ok" : "emerald"} />
+        <KpiCard icon={AlertTriangle} label="ASO a vencer" value={String(alertasASO.length)} tone={alertasASO.length ? "danger" : "emerald"} hint={alertasASO.length ? "exigem ação" : "em dia"} />
+        <KpiCard icon={CalendarDays} label="Ausências pendentes" value={String(pendentes.length)} tone={pendentes.length ? "warning" : "emerald"} hint={pendentes.length ? "aguardando você" : "nada pendente"} />
       </div>
 
       {/* Conformidade — alertas acionáveis */}

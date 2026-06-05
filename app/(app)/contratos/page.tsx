@@ -130,10 +130,10 @@ export default async function ContratosPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Wallet} label="Receita recorrente (MRR)" value={formatBRL(mrr)} hint="contratos ativos" tone="ok" />
-        <KpiCard icon={FileSignature} label="Contratos ativos" value={String(ativos.length)} />
-        <KpiCard icon={CalendarClock} label="Vencendo (30d)" value={String(vencendo)} hint={vencendo > 0 ? "renovar/avisar" : "nenhum"} tone={vencendo > 0 ? "warning" : "default"} />
-        <KpiCard icon={ClipboardList} label="Total de contratos" value={String(contratos.length)} />
+        <KpiCard icon={Wallet} label="Receita recorrente (MRR)" value={formatBRL(mrr)} hint="contratos ativos" tone="emerald" />
+        <KpiCard icon={FileSignature} label="Contratos ativos" value={String(ativos.length)} tone="violet" />
+        <KpiCard icon={CalendarClock} label="Vencendo (30d)" value={String(vencendo)} hint={vencendo > 0 ? "renovar/avisar" : "nenhum"} tone={vencendo > 0 ? "warning" : "emerald"} />
+        <KpiCard icon={ClipboardList} label="Total de contratos" value={String(contratos.length)} tone="sky" />
       </div>
 
       {contratos.length === 0 ? (

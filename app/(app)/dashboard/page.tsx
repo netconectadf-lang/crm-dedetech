@@ -201,6 +201,7 @@ export default async function DashboardPage() {
               value={formatBRL(m.resultadoMes)}
               hint={`Receb. ${formatBRL(m.recebidoMes)} · Pago ${formatBRL(m.pagoMes)}`}
               tone={m.resultadoMes < 0 ? "danger" : "violet"}
+              spark={m.trend.map((p) => p.recebido - p.pago)}
             />
           </>
         )}

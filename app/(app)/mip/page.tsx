@@ -110,10 +110,10 @@ export default async function MipPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Radar} label="Dispositivos" value={String(devices.length)} hint="ativos" />
-        <KpiCard icon={AlertTriangle} label="Pontos críticos" value={String(criticos.length)} hint={criticos.length ? "infestação ativa" : "sob controle"} tone={criticos.length ? "danger" : "default"} />
-        <KpiCard icon={QrCode} label="Sem leitura" value={String(semLeitura)} hint={semLeitura ? "escanear na visita" : "todos lidos"} tone={semLeitura ? "warning" : "default"} />
-        <KpiCard icon={Building2} label="Unidades monitoradas" value={String(unidadesMonitoradas)} />
+        <KpiCard icon={Radar} label="Dispositivos" value={String(devices.length)} hint="ativos" tone="cyan" />
+        <KpiCard icon={AlertTriangle} label="Pontos críticos" value={String(criticos.length)} hint={criticos.length ? "infestação ativa" : "sob controle"} tone={criticos.length ? "danger" : "sky"} />
+        <KpiCard icon={QrCode} label="Sem leitura" value={String(semLeitura)} hint={semLeitura ? "escanear na visita" : "todos lidos"} tone={semLeitura ? "warning" : "sky"} />
+        <KpiCard icon={Building2} label="Unidades monitoradas" value={String(unidadesMonitoradas)} tone="violet" />
       </div>
 
       {criticos.length > 0 && (

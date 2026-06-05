@@ -130,10 +130,10 @@ export default async function EstoquePage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={AlertTriangle} label="Produtos críticos" value={String(criticos.length)} hint={criticos.length ? "abaixo do mínimo" : "níveis ok"} tone={criticos.length ? "danger" : "default"} />
-        <KpiCard icon={Ban} label="Lotes vencidos" value={String(vencidos.length)} hint={vencidos.length ? "descartar" : "nenhum"} tone={vencidos.length ? "danger" : "default"} />
-        <KpiCard icon={CalendarDays} label="A vencer (90d)" value={String(aVencer.length)} hint={aVencer.length ? "girar primeiro" : "tranquilo"} tone={aVencer.length ? "warning" : "default"} />
-        <KpiCard icon={Boxes} label="Lotes em estoque" value={String(comSaldo.length)} />
+        <KpiCard icon={AlertTriangle} label="Produtos críticos" value={String(criticos.length)} hint={criticos.length ? "abaixo do mínimo" : "níveis ok"} tone={criticos.length ? "danger" : "cyan"} />
+        <KpiCard icon={Ban} label="Lotes vencidos" value={String(vencidos.length)} hint={vencidos.length ? "descartar" : "nenhum"} tone={vencidos.length ? "danger" : "cyan"} />
+        <KpiCard icon={CalendarDays} label="A vencer (90d)" value={String(aVencer.length)} hint={aVencer.length ? "girar primeiro" : "tranquilo"} tone={aVencer.length ? "warning" : "cyan"} />
+        <KpiCard icon={Boxes} label="Lotes em estoque" value={String(comSaldo.length)} tone="violet" />
       </div>
 
       {criticos.length > 0 && (

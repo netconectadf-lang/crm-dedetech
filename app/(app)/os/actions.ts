@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { enviarNpsDaOS } from "@/lib/nps/enviar";
 import type { SaveState } from "@/lib/crud-helpers";
 import { osSchema, fichaSchema, osProductSchema } from "@/lib/validators/os";
 import type { AppRole } from "@/lib/types";
@@ -330,6 +331,14 @@ export async function finalizarOS(
     })
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
+
+  // Dispara a pesquisa NPS automaticamente (best-effort — não bloqueia a
+  // finalização; só envia se o cliente tem contato e ainda não foi enviada).
+  try {
+    await enviarNpsDaOS(supabase, ctx.tenantId, id, { auto: true });
+  } catch {
+    /* falha no envio não impede finalizar a OS */
+  }
 
   revalidatePath(`/os/${id}`);
   return { message: "OS finalizada — estoque baixado, custo apurado e certificado disponível." };

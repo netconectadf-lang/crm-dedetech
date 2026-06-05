@@ -3124,6 +3124,8 @@ export type Database = {
           created_at: string
           custo_hora_padrao: number | null
           dominio_proprio: string | null
+          email_remetente_nome: string | null
+          email_responder_para: string | null
           id: string
           inscricao_municipal: string | null
           logo_url: string | null
@@ -3154,6 +3156,8 @@ export type Database = {
           created_at?: string
           custo_hora_padrao?: number | null
           dominio_proprio?: string | null
+          email_remetente_nome?: string | null
+          email_responder_para?: string | null
           id?: string
           inscricao_municipal?: string | null
           logo_url?: string | null
@@ -3184,6 +3188,8 @@ export type Database = {
           created_at?: string
           custo_hora_padrao?: number | null
           dominio_proprio?: string | null
+          email_remetente_nome?: string | null
+          email_responder_para?: string | null
           id?: string
           inscricao_municipal?: string | null
           logo_url?: string | null

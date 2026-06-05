@@ -15,6 +15,7 @@ import {
 } from "@/lib/mip";
 import type { Field } from "@/components/app/resource-form";
 import { salvarDispositivo, excluirDispositivo } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -100,12 +101,45 @@ export default async function MipPage() {
         title="MIP / Monitoramento"
         description="Dispositivos com QR, leitura por visita e pontos críticos."
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Novo dispositivo</Button>}
-            title="Novo dispositivo"
-            fields={fields}
-            action={salvarDispositivo.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona o MIP / Monitoramento"
+              descricao="Manejo Integrado de Pragas: porta-iscas e armadilhas fixos no cliente, com QR e leitura a cada visita."
+              topicos={[
+                {
+                  titulo: "Os dispositivos",
+                  itens: [
+                    "Dispositivo — cada porta-isca, armadilha ou ponto de monitoramento numerado.",
+                    "QR — cada dispositivo ganha uma etiqueta para o técnico escanear no local.",
+                    "Unidade — o dispositivo fica vinculado a uma unidade/local do cliente.",
+                  ],
+                },
+                {
+                  titulo: "Leitura por visita",
+                  itens: [
+                    "Leitura — a cada visita o técnico escaneia o QR e registra o que encontrou.",
+                    "Pontos críticos — dispositivos com sinal de infestação ativa, em destaque vermelho.",
+                    "Sem leitura — dispositivos que ainda não foram escaneados; visitar/ler.",
+                  ],
+                },
+                {
+                  titulo: "Para clientes corporativos",
+                  itens: [
+                    "Unidades monitoradas — quantos locais do cliente têm dispositivos ativos.",
+                    "Histórico — o registro das leituras vira base para laudos e auditorias.",
+                    "Mapa de pontos — visão de onde há pressão de praga para agir na causa.",
+                  ],
+                },
+              ]}
+              dica="O histórico de leituras é o que gera os laudos exigidos por clientes corporativos (indústrias, food service, certificações)."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Novo dispositivo</Button>}
+              title="Novo dispositivo"
+              fields={fields}
+              action={salvarDispositivo.bind(null, null)}
+            />
+          </div>
         }
       />
 

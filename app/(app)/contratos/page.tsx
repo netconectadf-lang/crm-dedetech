@@ -15,6 +15,7 @@ import {
 import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { salvarContrato } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -120,12 +121,48 @@ export default async function ContratosPage() {
         title="Contratos recorrentes"
         description="Planos de manutenção que geram visitas e cobranças periódicas."
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Novo contrato</Button>}
-            title="Novo contrato"
-            fields={fields}
-            action={salvarContrato.bind(null, null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funcionam os Contratos recorrentes"
+              descricao="Planos de manutenção que se repetem sozinhos: o sistema gera as visitas e as cobranças no ritmo combinado."
+              topicos={[
+                {
+                  titulo: "Como o contrato roda",
+                  itens: [
+                    "Periodicidade — de quanto em quanto tempo o serviço se repete (mensal, trimestral, etc.).",
+                    "Dia de faturamento — o dia do mês em que a cobrança do ciclo é gerada.",
+                    "Vigência — período de validade do contrato (início e, opcionalmente, fim).",
+                    "Índice de reajuste — IGP-M ou IPCA para corrigir o valor ao longo do tempo.",
+                  ],
+                },
+                {
+                  titulo: "Os indicadores no topo",
+                  itens: [
+                    "Receita recorrente (MRR) — quanto os contratos ativos rendem por mês, em média.",
+                    "Contratos ativos — planos em vigor gerando visitas e cobranças.",
+                    "Vencendo (30d) — contratos prestes a encerrar; renove ou avise o cliente.",
+                    "Total de contratos — todos, incluindo encerrados e cancelados.",
+                  ],
+                },
+                {
+                  titulo: "Status do contrato",
+                  itens: [
+                    "Ativo — em vigor, gerando visitas e cobranças.",
+                    "Suspenso — pausado temporariamente, sem gerar nada.",
+                    "Encerrado — chegou ao fim da vigência.",
+                    "Cancelado — interrompido antes do prazo.",
+                  ],
+                },
+              ]}
+              dica="Cada ciclo do contrato gera uma OS para a equipe executar e a cobrança correspondente no Financeiro, sem retrabalho."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Novo contrato</Button>}
+              title="Novo contrato"
+              fields={fields}
+              action={salvarContrato.bind(null, null)}
+            />
+          </div>
         }
       />
 

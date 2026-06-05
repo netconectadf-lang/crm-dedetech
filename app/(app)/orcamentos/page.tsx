@@ -8,6 +8,7 @@ import { QUOTE_STATUS_LABEL, QUOTE_STATUS_TONE, type QuoteStatus } from "@/lib/f
 import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { criarOrcamentoAvulso } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -78,14 +79,47 @@ export default async function OrcamentosPage() {
         description="Propostas avulsas e do funil. Um aceite pode virar OS ou contrato."
         count={quotes.length}
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Novo orçamento</Button>}
-            title="Novo orçamento (avulso)"
-            description="Escolha o cliente. Você adiciona os itens na próxima tela."
-            fields={novoFields}
-            action={criarOrcamentoAvulso}
-            submitLabel="Criar orçamento"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funcionam os Orçamentos"
+              descricao="Propostas de serviço com itens e valores. Quando o cliente aceita, viram OS ou contrato."
+              topicos={[
+                {
+                  titulo: "Tipos de orçamento",
+                  itens: [
+                    "Avulso — criado direto aqui, escolhendo o cliente e os itens.",
+                    "Do funil — gerado a partir de uma oportunidade no funil comercial.",
+                    "Itens — serviços e produtos com quantidade e valor; o total considera o desconto.",
+                  ],
+                },
+                {
+                  titulo: "O status da proposta",
+                  itens: [
+                    "Rascunho — em elaboração, ainda não foi enviado.",
+                    "Enviado — já foi para o cliente; aguardando resposta.",
+                    "Aceito — cliente aprovou; pode virar OS ou contrato.",
+                  ],
+                },
+                {
+                  titulo: "Do aceite ao serviço",
+                  itens: [
+                    "Enviar ao cliente — gere o link/proposta para o cliente avaliar.",
+                    "Virar OS — aceite pontual gera uma ordem de serviço.",
+                    "Virar contrato — aceite recorrente gera um plano de manutenção.",
+                  ],
+                },
+              ]}
+              dica="Capriche na descrição dos itens: é o que o cliente lê na proposta e o que vira o tipo de serviço da OS."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Novo orçamento</Button>}
+              title="Novo orçamento (avulso)"
+              description="Escolha o cliente. Você adiciona os itens na próxima tela."
+              fields={novoFields}
+              action={criarOrcamentoAvulso}
+              submitLabel="Criar orçamento"
+            />
+          </div>
         }
       />
 

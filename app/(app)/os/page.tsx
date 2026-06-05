@@ -19,6 +19,7 @@ import {
 } from "@/lib/os";
 import type { Field } from "@/components/app/resource-form";
 import { criarOS } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -209,13 +210,49 @@ export default async function OsPage({
         title="Ordens de serviço"
         description="Agende, execute e finalize os atendimentos."
         action={
-          <ResourceDialog
-            trigger={<Button><Plus className="size-4" /> Nova OS</Button>}
-            title="Nova ordem de serviço"
-            fields={fields}
-            action={criarOS}
-            submitLabel="Criar OS"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funcionam as Ordens de Serviço"
+              descricao="A OS é a ficha de cada atendimento: quem vai, quando, e em que pé está o serviço."
+              topicos={[
+                {
+                  titulo: "O ciclo de uma OS (status)",
+                  itens: [
+                    "Agendada — marcada na agenda, com data e técnico definidos.",
+                    "A caminho — o técnico saiu para o local do cliente.",
+                    "Em execução — o serviço está sendo feito no local.",
+                    "Executada — serviço concluído; falta só gerar a cobrança.",
+                    "Faturada — já virou cobrança/nota; ciclo encerrado.",
+                  ],
+                },
+                {
+                  titulo: "Os indicadores no topo",
+                  itens: [
+                    "OS de hoje — atendimentos agendados para a data de hoje.",
+                    "Atrasadas — passaram da data e ainda não foram executadas.",
+                    "Próximos 7 dias — o que vem pela frente na semana.",
+                    "A faturar — executadas que ainda não viraram cobrança (dinheiro parado).",
+                  ],
+                },
+                {
+                  titulo: "Como usar no dia a dia",
+                  itens: [
+                    "Nova OS — escolha o cliente, a data, o técnico e o veículo.",
+                    "Filtros — clique em Agendada, A caminho, etc. para ver só aquele status.",
+                    "Abrir a OS — clique no ícone à direita para ver o detalhe e avançar o status.",
+                  ],
+                },
+              ]}
+              dica="OS originadas de contrato ou orçamento já trazem o tipo de serviço preenchido automaticamente."
+            />
+            <ResourceDialog
+              trigger={<Button><Plus className="size-4" /> Nova OS</Button>}
+              title="Nova ordem de serviço"
+              fields={fields}
+              action={criarOS}
+              submitLabel="Criar OS"
+            />
+          </div>
         }
       />
 

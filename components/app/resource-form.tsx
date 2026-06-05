@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ScanLine } from "lucide-react";
 
 import type { SaveState } from "@/lib/crud-helpers";
 import { Button } from "@/components/ui/button";
@@ -47,18 +47,22 @@ export function ResourceForm({
   defaultValues,
   submitLabel = "Salvar",
   onSuccess,
+  docOcr = false,
 }: {
   fields: Field[];
   action: (prev: SaveState, formData: FormData) => Promise<SaveState>;
   defaultValues?: Values;
   submitLabel?: string;
   onSuccess?: () => void;
+  /** Mostra o botão "ler documento (CNH/RG)" que preenche os campos via IA. */
+  docOcr?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<SaveState, FormData>(
     action,
     null,
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
 
   useEffect(() => {
     if (state?.message) {
@@ -86,6 +90,44 @@ export function ResourceForm({
     setField("codigo_ibge", d.codigo_ibge);
   }
 
+  async function handleDocumento(file: File) {
+    setOcrLoading(true);
+    try {
+      const imageBase64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(",")[1] ?? "");
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      // só campos de texto/data/e-mail (não envia salário/valor nem selects)
+      const campos = fields
+        .filter((f) => !f.type || ["text", "date", "email"].includes(f.type))
+        .map((f) => ({ name: f.name, label: f.label, type: f.type }));
+      const res = await fetch("/api/ocr/documento", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ imageBase64, mimeType: file.type, campos }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        toast.error(d.error ?? "Não consegui ler o documento.");
+        return;
+      }
+      const valores: Record<string, string> = d.valores ?? {};
+      const n = Object.keys(valores).length;
+      if (!n) {
+        toast.message("Não consegui extrair dados do documento.");
+        return;
+      }
+      for (const [name, value] of Object.entries(valores)) setField(name, value);
+      toast.success(`${n} campo(s) preenchido(s) do documento — confira antes de salvar.`);
+    } catch {
+      toast.error("Falha ao ler o documento.");
+    } finally {
+      setOcrLoading(false);
+    }
+  }
+
   async function handleCnpj(cnpj: string) {
     const res = await fetch(`/api/lookup/cnpj?cnpj=${cnpj}`);
     if (!res.ok) return;
@@ -105,6 +147,34 @@ export function ResourceForm({
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
+      {docOcr && (
+        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3 text-sm transition-colors hover:bg-primary/10">
+          {ocrLoading ? (
+            <Loader2 className="size-4 shrink-0 animate-spin text-primary" />
+          ) : (
+            <ScanLine className="size-4 shrink-0 text-primary" />
+          )}
+          <span className="flex-1">
+            {ocrLoading
+              ? "Lendo documento…"
+              : "Ler documento (CNH/RG) e preencher automaticamente"}
+            <span className="block text-xs text-muted-foreground">
+              Foto nítida ou PDF. O salário não é preenchido — confira os dados.
+            </span>
+          </span>
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            disabled={ocrLoading}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleDocumento(f);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         {fields.map((f) => (
           <FieldControl

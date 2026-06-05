@@ -15,6 +15,7 @@ import { formatBRL, formatDate } from "@/lib/format";
 import { resumoCertificado } from "@/lib/nfse-gov/store";
 import { sincronizarNota } from "./actions";
 import { CancelarNota } from "@/components/notas/cancelar-nota";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -86,6 +87,39 @@ export default async function NotasPage() {
         title="Notas fiscais (NFS-e)"
         description="Emissão de NFS-e dos serviços prestados pelo Sistema Nacional NFS-e (gov.br)."
         count={notas.length}
+        action={
+          <AjudaTela
+            titulo="Como funcionam as Notas fiscais (NFS-e)"
+            descricao="A nota fiscal de serviço dos atendimentos, emitida pelo Sistema Nacional NFS-e (gov.br)."
+            topicos={[
+              {
+                titulo: "O status de cada nota",
+                itens: [
+                  "Processando — enviada à prefeitura/gov.br, aguardando a resposta.",
+                  "Autorizada — válida e oficial; já pode ser entregue ao cliente.",
+                  "Cancelada — anulada após autorização.",
+                  "Erro — algo foi recusado; veja a mensagem e corrija para reenviar.",
+                ],
+              },
+              {
+                titulo: "Como emitir",
+                itens: [
+                  "A partir da cobrança — emita a nota direto de uma cobrança em Financeiro › A receber.",
+                  "Configuração — precisa do certificado digital A1 e dos dados fiscais (CNPJ, município, código de tributação, ISS).",
+                  "Atualizar — em Processando, clique no botão de atualizar para checar se já saiu.",
+                ],
+              },
+              {
+                titulo: "Documentos",
+                itens: [
+                  "DANFSe — o PDF da nota autorizada, para enviar ou imprimir ao cliente.",
+                  "Chave de acesso — identificador único da nota para consulta oficial.",
+                ],
+              },
+            ]}
+            dica="Se aparecer o aviso amarelo, a emissão está bloqueada até concluir a configuração em Integrações › NFS-e."
+          />
+        }
       />
 
       {!configOk && (

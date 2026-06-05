@@ -1,8 +1,8 @@
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, MessageCircle } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { formatCpfCnpj } from "@/lib/format";
+import { formatCpfCnpj, formatPhone, waLink } from "@/lib/format";
 import type { Field } from "@/components/app/resource-form";
 import { salvarFuncionario, excluirFuncionario } from "./actions";
 import { PageHeader } from "@/components/app/page-header";
@@ -55,6 +55,7 @@ type Funcionario = {
   id: string;
   nome: string;
   cpf: string | null;
+  telefone: string | null;
   cargo: string | null;
   responsavel_tecnico: boolean;
   ativo: boolean;
@@ -76,8 +77,10 @@ export default async function FuncionariosPage() {
           <ResourceDialog
             trigger={<Button><Plus className="size-4" /> Novo funcionário</Button>}
             title="Novo funcionário"
+            description="Envie a CNH/RG e o sistema lê e preenche os dados (menos o salário)."
             fields={fields}
             action={salvarFuncionario.bind(null, null)}
+            docOcr
           />
         }
       />
@@ -113,6 +116,19 @@ export default async function FuncionariosPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {waLink(f.telefone) && (
+                          <Button
+                            asChild
+                            variant="ghost"
+                            size="icon"
+                            title={`WhatsApp ${formatPhone(f.telefone)}`}
+                            className="text-emerald-400 hover:text-emerald-300"
+                          >
+                            <a href={waLink(f.telefone)!} target="_blank" rel="noopener noreferrer">
+                              <MessageCircle className="size-4" />
+                            </a>
+                          </Button>
+                        )}
                         <ResourceDialog
                           trigger={<Button variant="ghost" size="icon"><Pencil className="size-4" /></Button>}
                           title="Editar funcionário"

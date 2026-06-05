@@ -13,6 +13,7 @@ import { formatBRL } from "@/lib/format";
 import { BANK_TYPE_LABEL, type BankAccountType, type FinanceStatus } from "@/lib/financeiro";
 import type { Field } from "@/components/app/resource-form";
 import { salvarBanco, excluirBanco, salvarCentro, excluirCentro } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { ResourceDialog } from "@/components/app/resource-dialog";
 import { DeleteButton } from "@/components/app/delete-button";
@@ -136,7 +137,44 @@ export default async function FinanceiroPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
-      <PageHeader title="Financeiro" description="Caixa real, fluxo, inadimplência e resultado do mês." />
+      <PageHeader
+        title="Financeiro"
+        description="Caixa real, fluxo, inadimplência e resultado do mês."
+        action={
+          <AjudaTela
+            titulo="Como funciona o Financeiro"
+            descricao="Visão geral do dinheiro: o que entra, o que sai, quanto sobra e quem está devendo."
+            topicos={[
+              {
+                titulo: "Os números do topo",
+                itens: [
+                  "A receber — soma das cobranças em aberto que os clientes ainda vão pagar.",
+                  "A pagar — soma das contas em aberto que você ainda vai pagar.",
+                  "Saldo em contas — dinheiro real hoje (saldo inicial + recebido − pago).",
+                  "Resultado do mês — o que entrou menos o que saiu neste mês (lucro/prejuízo).",
+                ],
+              },
+              {
+                titulo: "Os gráficos",
+                itens: [
+                  "Fluxo de caixa — recebido x pago nos últimos 6 meses, lado a lado.",
+                  "Inadimplência — quanto está vencido por faixa de atraso (a vencer, 1–30, 31–60, 60+ dias).",
+                  "Despesas por centro de custo — onde o dinheiro do mês foi gasto.",
+                ],
+              },
+              {
+                titulo: "Contas e centros de custo",
+                itens: [
+                  "Contas bancárias — caixa, banco, carteira; cada cobrança paga atualiza o saldo.",
+                  "Centros de custo — categorias de despesa (combustível, salários, insumos) para o relatório.",
+                  "A receber / A pagar — clique nos cards para ver e baixar cada cobrança.",
+                ],
+              },
+            ]}
+            dica="O saldo só fica certo se você der baixa (marcar como pago/recebido) nas contas e vincular cada uma à conta bancária correta."
+          />
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={ArrowDownCircle} label="A receber" value={formatBRL(aReceber)} hint={inadimplencia > 0 ? `${formatBRL(inadimplencia)} vencido` : "em dia"} href="/financeiro/receber" tone={inadimplencia > 0 ? "danger" : "sky"} />

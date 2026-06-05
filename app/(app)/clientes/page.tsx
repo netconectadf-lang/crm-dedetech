@@ -7,6 +7,7 @@ import { formatCpfCnpj, formatPhone, waLink } from "@/lib/format";
 import { descobrirRedes } from "@/lib/clientes";
 import { clienteFields } from "./fields";
 import { salvarCliente, excluirCliente } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -90,7 +91,43 @@ export default async function ClientesPage({
         title="Clientes"
         description="Pessoas e empresas atendidas."
         count={clientes.length}
-        action={novoBtn}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona o cadastro de Clientes"
+              descricao="A base de quem você atende: pessoas físicas (PF) e empresas (PJ), com seus locais e contatos."
+              topicos={[
+                {
+                  titulo: "Tipos e dados",
+                  itens: [
+                    "PJ (empresa) — preencha o CNPJ e o sistema puxa os dados automaticamente.",
+                    "PF (pessoa física) — cadastro com CPF, nome e contato.",
+                    "Segmento — ramo do cliente (food, indústria, condomínio…) para análises.",
+                    "Rede — marca identificada pelo nome (ex.: redes de supermercado), usada nos filtros.",
+                  ],
+                },
+                {
+                  titulo: "Unidades e locais",
+                  itens: [
+                    "Unidades — clique no ícone de mapa para gerenciar os locais daquele cliente.",
+                    "Portal do cliente — o cliente pode acompanhar serviços e laudos pelo acesso dele.",
+                    "WhatsApp — quando há telefone, o atalho verde abre a conversa direto.",
+                  ],
+                },
+                {
+                  titulo: "Encontrar e filtrar",
+                  itens: [
+                    "Busca — digite parte do nome ou nome fantasia.",
+                    "Filtro por UF — mostra só clientes de um estado.",
+                    "Filtro por rede — agrupa clientes de uma mesma marca.",
+                  ],
+                },
+              ]}
+              dica="Cliente com endereço e unidades completos agiliza o agendamento de OS e o roteiro do técnico."
+            />
+            {novoBtn}
+          </div>
+        }
       />
 
       <ClientesFiltros ufs={ufs} redes={redes} />

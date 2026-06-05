@@ -21,6 +21,7 @@ export function ResourceDialog({
   action,
   defaultValues,
   submitLabel,
+  docOcr,
 }: {
   trigger: React.ReactNode;
   title: string;
@@ -29,6 +30,7 @@ export function ResourceDialog({
   action: (prev: SaveState, formData: FormData) => Promise<SaveState>;
   defaultValues?: Record<string, unknown>;
   submitLabel?: string;
+  docOcr?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -46,6 +48,7 @@ export function ResourceDialog({
           defaultValues={defaultValues}
           submitLabel={submitLabel}
           onSuccess={() => setOpen(false)}
+          docOcr={docOcr}
         />
       </DialogContent>
     </Dialog>

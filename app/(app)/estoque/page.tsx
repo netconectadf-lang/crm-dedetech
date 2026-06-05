@@ -15,6 +15,7 @@ import {
   editarLote,
   excluirLote,
 } from "./actions";
+import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -106,7 +107,40 @@ export default async function EstoquePage() {
         title="Estoque"
         description="Lotes, validade e movimentações (saída por FEFO)."
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <AjudaTela
+              titulo="Como funciona o Estoque"
+              descricao="Controle de saneantes por lote e validade, com saída automática pelo que vence primeiro (FEFO)."
+              topicos={[
+                {
+                  titulo: "Lotes e validade",
+                  itens: [
+                    "Lote — cada entrada vira um lote com fabricante, NF e data de validade.",
+                    "FEFO — na saída, o sistema consome primeiro o lote de validade mais próxima (não vencido).",
+                    "Rastreabilidade ANVISA — lote, fabricante e NF ficam registrados para auditoria.",
+                  ],
+                },
+                {
+                  titulo: "Os alertas no topo",
+                  itens: [
+                    "Produtos críticos — saldo abaixo do estoque mínimo; hora de comprar.",
+                    "Lotes vencidos — não podem ser usados; devem ser descartados.",
+                    "A vencer (90d) — gire/use esses primeiro para não perder.",
+                    "Lotes em estoque — quantos lotes com saldo você tem hoje.",
+                  ],
+                },
+                {
+                  titulo: "Movimentações",
+                  itens: [
+                    "Entrada — chegou produto: cria um lote novo com quantidade e validade.",
+                    "Saída — consumo em atendimento: baixa pelo FEFO automaticamente.",
+                    "Perda — descarte por vencimento ou avaria, com o motivo registrado.",
+                    "Inventário — ajusta o saldo do sistema ao que foi contado de verdade.",
+                  ],
+                },
+              ]}
+              dica="Sempre registre a validade na entrada — é ela que garante o FEFO e os alertas de vencimento."
+            />
             <Button asChild variant="outline">
               <Link href="/estoque/movimentacoes"><History className="size-4" /> Movimentações</Link>
             </Button>

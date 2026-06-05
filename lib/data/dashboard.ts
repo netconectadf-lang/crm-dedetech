@@ -23,6 +23,8 @@ export type DashboardMetrics = {
   trend: { mes: string; recebido: number; pago: number }[];
   osHoje: number;
   osPorStatus: Record<string, number>;
+  osTrend: number[];
+  clientesTrend: number[];
   proximasOs: {
     id: string;
     numero: number;
@@ -54,12 +56,13 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     { data: mipReadData },
     { count: clientesAtivos },
     { data: proximasOsData },
+    { data: clientesCreatedData },
   ] = await Promise.all([
     supabase.from("contracts").select("valor, periodicidade, status").eq("status", "ativo"),
     supabase.from("accounts_receivable").select("valor, valor_pago, status, vencimento, pago_em"),
     supabase.from("accounts_payable").select("valor, valor_pago, status, pago_em"),
     supabase.from("deals").select("stage, valor_estimado"),
-    supabase.from("service_orders").select("status, scheduled_at"),
+    supabase.from("service_orders").select("status, scheduled_at, created_at"),
     supabase.from("products").select("id, estoque_minimo").eq("ativo", true),
     supabase.from("stock_batches").select("product_id, qtd_atual"),
     supabase.from("mip_readings").select("device_id, status, lida_em").order("lida_em", { ascending: false }),
@@ -70,6 +73,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       .in("status", OS_PENDENTE)
       .order("scheduled_at", { ascending: true, nullsFirst: false })
       .limit(6),
+    supabase.from("clients").select("created_at").eq("ativo", true),
   ]);
 
   // MRR
@@ -127,10 +131,24 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const conversao = fechados > 0 ? Math.round((ganhos / fechados) * 100) : 0;
 
   // OS
-  const oss = (osData as { status: string; scheduled_at: string | null }[] | null) ?? [];
+  const oss = (osData as { status: string; scheduled_at: string | null; created_at: string | null }[] | null) ?? [];
   const osPorStatus: Record<string, number> = {};
   for (const o of oss) osPorStatus[o.status] = (osPorStatus[o.status] ?? 0) + 1;
   const osHoje = oss.filter((o) => o.scheduled_at?.slice(0, 10) === hoje).length;
+
+  // Séries mensais (6 meses) para sparklines, reusando os meses do fluxo de caixa.
+  const serieMensal = (datas: (string | null)[]) => {
+    const cont = new Map(months.map((m) => [m.key, 0]));
+    for (const d of datas) {
+      const k = d ? d.slice(0, 7) : "";
+      if (cont.has(k)) cont.set(k, (cont.get(k) ?? 0) + 1);
+    }
+    return months.map((m) => cont.get(m.key) ?? 0);
+  };
+  const osTrend = serieMensal(oss.map((o) => o.created_at));
+  const clientesTrend = serieMensal(
+    ((clientesCreatedData as { created_at: string | null }[] | null) ?? []).map((c) => c.created_at),
+  );
 
   type ProxCliente = { razao_social: string | null; nome_fantasia: string | null; cidade: string | null };
   type ProxRaw = {
@@ -181,6 +199,8 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     trend,
     osHoje,
     osPorStatus,
+    osTrend,
+    clientesTrend,
     proximasOs,
     estoqueCritico,
     mipCritico,

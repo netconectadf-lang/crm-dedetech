@@ -185,6 +185,7 @@ export default async function DashboardPage() {
               hint={m.vencidoReceber > 0 ? `${formatBRL(m.vencidoReceber)} vencido` : "em dia"}
               href="/financeiro/receber"
               tone={m.vencidoReceber > 0 ? "danger" : "sky"}
+              spark={m.trend.map((p) => p.recebido)}
             />
             <KpiCard
               style={next()}
@@ -193,6 +194,7 @@ export default async function DashboardPage() {
               value={formatBRL(m.aPagar)}
               href="/financeiro/pagar"
               tone="amber"
+              spark={m.trend.map((p) => p.pago)}
             />
             <KpiCard
               style={next()}
@@ -223,6 +225,7 @@ export default async function DashboardPage() {
               value={String(m.clientesAtivos)}
               href="/clientes"
               tone="sky"
+              spark={m.clientesTrend}
             />
           </>
         )}
@@ -236,6 +239,7 @@ export default async function DashboardPage() {
               hint={m.osHoje > 0 ? "agendadas para hoje" : "nada agendado"}
               href="/os"
               tone={m.osHoje > 0 ? "amber" : "default"}
+              spark={m.osTrend}
             />
             <KpiCard
               style={next()}

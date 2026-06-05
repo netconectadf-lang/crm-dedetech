@@ -113,7 +113,7 @@ export function KpiCard({
     <div
       style={style}
       className={cn(
-        "group relative flex h-full flex-col gap-4 overflow-hidden rounded-xl border border-border/60 bg-card/80 p-5",
+        "group relative flex h-full flex-col gap-4 overflow-hidden rounded-xl border border-border/60 bg-gradient-to-b from-card/90 to-card/55 backdrop-blur-sm p-5",
         "animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500",
         href && "transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_40px_-18px]",
         href && t.hover,
@@ -202,7 +202,7 @@ export function Panel({
     <section
       style={style}
       className={cn(
-        "flex flex-col gap-4 rounded-xl border border-border/60 bg-card/80 p-5",
+        "flex flex-col gap-4 rounded-xl border border-border/60 bg-gradient-to-b from-card/90 to-card/55 backdrop-blur-sm p-5",
         "animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500",
         className,
       )}

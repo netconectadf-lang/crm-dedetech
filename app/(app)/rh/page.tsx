@@ -34,7 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export const metadata = { title: "RH" };
+export const metadata = { title: "Conformidade" };
 
 type Emp = {
   id: string;
@@ -112,8 +112,8 @@ export default async function RhPage() {
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader
-        title="Recursos Humanos"
-        description="Ponto, ausências, EPI (NR-6) e exames ocupacionais (ASO)."
+        title="Conformidade"
+        description="Ausências, EPI (NR-6), exames ocupacionais (ASO) e anuidade do RT."
         action={
           <Button asChild variant="outline">
             <a href="/rh/folha" download><Download className="size-4" /> Exportar folha (CSV)</a>

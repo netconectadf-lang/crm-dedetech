@@ -275,6 +275,12 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: Clock,
         roles: ["owner", "rh"],
       },
+      {
+        href: "/rh",
+        label: "Conformidade",
+        icon: ShieldCheck,
+        roles: ["owner", "rh"],
+      },
     ],
   },
   {

@@ -23,3 +23,11 @@ export const examSchema = z.object({
   validade: opt(z.string()),
   resultado: opt(z.string()),
 });
+
+export const trainingSchema = z.object({
+  nome: z.string().min(2, "Informe o treinamento"),
+  categoria: opt(z.string()),
+  instituicao: opt(z.string()),
+  concluido_em: opt(z.string()),
+  validade: opt(z.string()),
+});

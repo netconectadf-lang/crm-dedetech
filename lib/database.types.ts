@@ -1226,6 +1226,63 @@ export type Database = {
           },
         ]
       }
+      trainings: {
+        Row: {
+          anexo_url: string | null
+          categoria: string | null
+          concluido_em: string | null
+          created_at: string
+          employee_id: string
+          id: string
+          instituicao: string | null
+          nome: string
+          tenant_id: string
+          updated_at: string
+          validade: string | null
+        }
+        Insert: {
+          anexo_url?: string | null
+          categoria?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          employee_id: string
+          id?: string
+          instituicao?: string | null
+          nome: string
+          tenant_id: string
+          updated_at?: string
+          validade?: string | null
+        }
+        Update: {
+          anexo_url?: string | null
+          categoria?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          employee_id?: string
+          id?: string
+          instituicao?: string | null
+          nome?: string
+          tenant_id?: string
+          updated_at?: string
+          validade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estruturas: {
         Row: {
           ativo: boolean

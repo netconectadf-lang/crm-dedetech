@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ShieldAlert, Trash2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
@@ -14,6 +14,7 @@ import {
   formatDuracao,
   formatSaldo,
   espelhoPonto,
+  conformidade,
   diasEntre,
   type AbsenceType,
   type AbsenceStatus,
@@ -22,7 +23,7 @@ import {
 import type { Field } from "@/components/app/resource-form";
 import { ResourceForm } from "@/components/app/resource-form";
 import { PontoButton } from "@/components/rh/ponto-button";
-import { solicitarAusencia, decidirAusencia, salvarEPI, salvarASO } from "../actions";
+import { solicitarAusencia, decidirAusencia, salvarEPI, salvarASO, salvarTreinamento, excluirTreinamento } from "../actions";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,16 +58,37 @@ export default async function RhEmployeePage({
 
   const mesInicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
-  const [{ data: pontos }, { data: ausencias }, { data: epis }, { data: asos }, { data: pontoMesData }] =
+  const [{ data: pontos }, { data: ausencias }, { data: epis }, { data: asos }, { data: pontoMesData }, { data: trainData }] =
     await Promise.all([
       supabase.from("time_entries").select("id, tipo, registrado_em").eq("employee_id", id).order("registrado_em", { ascending: false }).limit(10),
       supabase.from("absences").select("id, tipo, inicio, fim, status, motivo").eq("employee_id", id).order("inicio", { ascending: false }),
       supabase.from("epi_deliveries").select("id, descricao, entregue_em, validade, assinado").eq("employee_id", id).order("entregue_em", { ascending: false }),
       supabase.from("occupational_exams").select("id, tipo, data, validade, resultado").eq("employee_id", id).order("data", { ascending: false }),
       supabase.from("time_entries").select("tipo, registrado_em").eq("employee_id", id).gte("registrado_em", mesInicio),
+      supabase.from("trainings").select("id, nome, categoria, instituicao, concluido_em, validade").eq("employee_id", id).order("validade", { ascending: true, nullsFirst: false }),
     ]);
 
   const espelho = espelhoPonto((pontoMesData as { tipo: string; registrado_em: string }[] | null) ?? []);
+  const trainList = (trainData as { id: string; nome: string; categoria: string | null; instituicao: string | null; concluido_em: string | null; validade: string | null }[] | null) ?? [];
+
+  const trainingFields: Field[] = [
+    { name: "nome", label: "Treinamento / certificação", required: true, full: true },
+    {
+      name: "categoria",
+      label: "Categoria",
+      type: "select",
+      options: [
+        { value: "nr", label: "NR (norma regulamentadora)" },
+        { value: "aplicacao_produtos", label: "Aplicação de produtos" },
+        { value: "integracao", label: "Integração" },
+        { value: "reciclagem", label: "Reciclagem" },
+        { value: "outro", label: "Outro" },
+      ],
+    },
+    { name: "instituicao", label: "Instituição" },
+    { name: "concluido_em", label: "Concluído em", type: "date" },
+    { name: "validade", label: "Validade", type: "date" },
+  ];
 
   const ponto = (pontos as { id: string; tipo: string; registrado_em: string }[] | null) ?? [];
   const ausList = (ausencias as { id: string; tipo: AbsenceType; inicio: string; fim: string; status: AbsenceStatus; motivo: string | null }[] | null) ?? [];
@@ -248,6 +270,37 @@ export default async function RhEmployeePage({
               </li>
             ))}
           </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Treinamentos & certificações</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <ResourceForm fields={trainingFields} action={salvarTreinamento.bind(null, emp.id)} submitLabel="Registrar treinamento" />
+          {trainList.length > 0 && (
+            <ul className="divide-y text-sm">
+              {trainList.map((t) => {
+                const c = conformidade(t.validade);
+                return (
+                  <li key={t.id} className="flex items-center justify-between gap-2 py-2">
+                    <span className="flex items-center gap-2">
+                      <span className={`size-2 shrink-0 rounded-full ${c.dot}`} title={c.label} />
+                      <span>
+                        {t.nome}
+                        {t.categoria ? <span className="text-muted-foreground"> · {t.categoria}</span> : null}
+                        {t.validade ? <span className="text-muted-foreground"> · val. {formatDate(t.validade)}</span> : null}
+                      </span>
+                    </span>
+                    <form action={excluirTreinamento.bind(null, t.id, emp.id)}>
+                      <Button type="submit" variant="ghost" size="icon" className="text-destructive">
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </form>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </main>

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { deleteRecord, type SaveState } from "@/lib/crud-helpers";
-import { absenceSchema, epiSchema, examSchema } from "@/lib/validators/rh";
+import { absenceSchema, epiSchema, examSchema, trainingSchema } from "@/lib/validators/rh";
 import type { AppRole } from "@/lib/types";
 import type { AbsenceStatus } from "@/lib/rh";
 
@@ -103,6 +103,29 @@ export async function salvarASO(
   if (error) return { error: "Não foi possível registrar o exame." };
   revalidatePath(`/rh/${employeeId}`);
   return { message: "Exame (ASO) registrado." };
+}
+
+export async function salvarTreinamento(
+  employeeId: string,
+  _prev: SaveState,
+  formData: FormData,
+): Promise<SaveState> {
+  const ctx = await requireRole(ROLES);
+  const parsed = trainingSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("trainings")
+    .insert({ ...parsed.data, tenant_id: ctx.tenantId, employee_id: employeeId } as never);
+  if (error) return { error: "Não foi possível registrar o treinamento." };
+  revalidatePath(`/rh/${employeeId}`);
+  return { message: "Treinamento registrado." };
+}
+
+export async function excluirTreinamento(id: string, employeeId: string) {
+  await deleteRecord("trainings", id, ROLES, `/rh/${employeeId}`);
 }
 
 export async function excluirAusencia(id: string) {

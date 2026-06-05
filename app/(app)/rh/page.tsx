@@ -63,7 +63,7 @@ export default async function RhPage() {
 
   const mesInicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
-  const [{ data: empData }, { data: examData }, { data: epiData }, { data: absData }, { data: pontoData }, { data: feriasData }, { data: absMesData }] =
+  const [{ data: empData }, { data: examData }, { data: epiData }, { data: absData }, { data: pontoData }, { data: feriasData }, { data: absMesData }, { data: trainData }] =
     await Promise.all([
       supabase.from("employees").select("id, nome, cargo, responsavel_tecnico, vencimento_anuidade, salario, data_admissao, nascimento, ativo").eq("ativo", true).order("nome"),
       supabase.from("occupational_exams").select("employee_id, validade, data").order("data", { ascending: false }),
@@ -72,6 +72,7 @@ export default async function RhPage() {
       supabase.from("time_entries").select("employee_id, tipo, registrado_em").gte("registrado_em", mesInicio),
       supabase.from("absences").select("employee_id, inicio, fim").eq("tipo", "ferias").eq("status", "aprovada"),
       supabase.from("absences").select("inicio, fim").in("tipo", ["falta", "atestado"]).gte("inicio", mesInicio.slice(0, 10)),
+      supabase.from("trainings").select("employee_id, nome, validade"),
     ]);
 
   const employees = (empData as Emp[] | null) ?? [];
@@ -139,8 +140,10 @@ export default async function RhPage() {
   const alertasASO = employees.filter((e) => vencendo(lastExam.get(e.id) ?? null, 30));
   const alertasEPI = epis.filter((p) => vencendo(p.validade, 30));
   const alertasFerias = employees.filter((e) => feriasDe(e)?.vencidas);
+  const treinos = (trainData as { employee_id: string; nome: string; validade: string | null }[] | null) ?? [];
+  const alertasTrein = treinos.filter((t) => vencendo(t.validade, 30));
   const nomeDe = (id: string) => employees.find((e) => e.id === id)?.nome ?? "—";
-  const temAlerta = alertasRT.length || alertasASO.length || alertasEPI.length || alertasFerias.length;
+  const temAlerta = alertasRT.length || alertasASO.length || alertasEPI.length || alertasFerias.length || alertasTrein.length;
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
@@ -234,6 +237,12 @@ export default async function RhPage() {
               <Link key={`fer-${e.id}`} href={`/rh/${e.id}`} className="flex items-center gap-2 rounded-lg border border-destructive/25 bg-destructive/8 px-3 py-2 text-sm transition-colors hover:bg-destructive/12">
                 <Plane className="size-4 shrink-0 text-destructive" />
                 <span>Férias vencidas <strong>{e.nome}</strong> · {feriasDe(e)!.saldo}d (risco de dobra)</span>
+              </Link>
+            ))}
+            {alertasTrein.map((t, i) => (
+              <Link key={`tr-${i}`} href={`/rh/${t.employee_id}`} className="flex items-center gap-2 rounded-lg border border-warning/25 bg-warning/8 px-3 py-2 text-sm transition-colors hover:bg-warning/12">
+                <AlertTriangle className="size-4 shrink-0 text-warning" />
+                <span>Treinamento <strong>{t.nome}</strong> · {nomeDe(t.employee_id)} · {daysUntil(t.validade)}d</span>
               </Link>
             ))}
           </div>

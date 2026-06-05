@@ -1,10 +1,10 @@
-import { Plus, Pencil, MessageCircle } from "lucide-react";
+import { Plus, Pencil, MessageCircle, Banknote } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatCpfCnpj, formatPhone, waLink } from "@/lib/format";
 import type { Field } from "@/components/app/resource-form";
-import { salvarFuncionario, excluirFuncionario } from "./actions";
+import { salvarFuncionario, excluirFuncionario, lancarSalario } from "./actions";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -51,12 +51,29 @@ const fields: Field[] = [
   { name: "ativo", label: "Ativo", type: "switch" },
 ];
 
+const salarioFields: Field[] = [
+  { name: "valor", label: "Valor do salário (R$)", type: "number", required: true },
+  { name: "vencimento", label: "Vencimento", type: "date", required: true },
+  {
+    name: "recorrencia",
+    label: "Recorrência",
+    type: "select",
+    options: [
+      { value: "mensal", label: "Mensal" },
+      { value: "unica", label: "Única" },
+      { value: "anual", label: "Anual" },
+    ],
+  },
+  { name: "observacoes", label: "Observações", type: "textarea" },
+];
+
 type Funcionario = {
   id: string;
   nome: string;
   cpf: string | null;
   telefone: string | null;
   cargo: string | null;
+  salario: number | null;
   responsavel_tecnico: boolean;
   ativo: boolean;
 };
@@ -66,6 +83,12 @@ export default async function FuncionariosPage() {
   const supabase = await createClient();
   const { data } = await supabase.from("employees").select("*").order("nome");
   const funcionarios = (data as Funcionario[] | null) ?? [];
+
+  // vencimento padrão do salário = dia 5 do próximo mês
+  const hoje = new Date();
+  const vencSalario = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 5)
+    .toISOString()
+    .slice(0, 10);
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
@@ -128,6 +151,30 @@ export default async function FuncionariosPage() {
                               <MessageCircle className="size-4" />
                             </a>
                           </Button>
+                        )}
+                        {f.salario != null && Number(f.salario) > 0 && (
+                          <ResourceDialog
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Lançar salário no financeiro"
+                                className="text-sky-400 hover:text-sky-300"
+                              >
+                                <Banknote className="size-4" />
+                              </Button>
+                            }
+                            title={`Lançar salário — ${f.nome}`}
+                            description="Cria uma conta a pagar no financeiro com o valor do salário."
+                            fields={salarioFields}
+                            defaultValues={{
+                              valor: f.salario,
+                              vencimento: vencSalario,
+                              recorrencia: "mensal",
+                            }}
+                            action={lancarSalario.bind(null, f.id)}
+                            submitLabel="Lançar no financeiro"
+                          />
                         )}
                         <ResourceDialog
                           trigger={<Button variant="ghost" size="icon"><Pencil className="size-4" /></Button>}

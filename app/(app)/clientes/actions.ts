@@ -9,7 +9,7 @@ import { requireRole } from "@/lib/auth";
 import { clientSchema, clientUnitSchema } from "@/lib/validators/cadastros";
 import type { AppRole } from "@/lib/types";
 
-const ROLES: AppRole[] = ["owner", "comercial", "operacional"];
+const ROLES: AppRole[] = ["owner", "comercial", "operacional", "financeiro"];
 
 /**
  * Cria (ou recupera) o acesso do cliente ao Portal: gera um usuário confirmado
@@ -21,7 +21,7 @@ export async function convidarPortal(
   _prev: SaveState,
   _formData: FormData,
 ): Promise<SaveState> {
-  const ctx = await requireRole(["owner", "comercial"]);
+  const ctx = await requireRole(["owner", "comercial", "financeiro"]);
   const supabase = await createClient();
   const { data: cli } = await supabase
     .from("clients")

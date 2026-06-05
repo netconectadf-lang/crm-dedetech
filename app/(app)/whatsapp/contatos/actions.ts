@@ -11,7 +11,7 @@ import type { AppRole } from "@/lib/types";
 
 type DbClient = Awaited<ReturnType<typeof createClient>>;
 
-const ROLES: AppRole[] = ["owner", "comercial"];
+const ROLES: AppRole[] = ["owner", "comercial", "financeiro"];
 const PATH = "/whatsapp/contatos";
 
 export type ImportResult = { inseridos: number; ignorados: number; erro?: string };

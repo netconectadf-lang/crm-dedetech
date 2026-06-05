@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import type { AppRole } from "@/lib/types";
 
-const ROLES: AppRole[] = ["owner", "comercial", "operacional"];
+const ROLES: AppRole[] = ["owner", "comercial", "operacional", "financeiro"];
 
 export async function atualizarStatusChamado(
   id: string,

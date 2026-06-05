@@ -11,7 +11,7 @@ import { renderScript } from "@/lib/whatsapp/render";
 import { sendText } from "@/lib/whatsapp/evolution";
 import type { AppRole } from "@/lib/types";
 
-const ROLES: AppRole[] = ["owner", "comercial"];
+const ROLES: AppRole[] = ["owner", "comercial", "financeiro"];
 const LISTA = "/whatsapp/campanhas";
 
 /** Cria a campanha (rascunho) e leva para a tela de detalhe. */

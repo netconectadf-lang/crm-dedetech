@@ -4,7 +4,7 @@ import { saveRecord, deleteRecord, type SaveState } from "@/lib/crud-helpers";
 import { scriptSchema } from "@/lib/validators/whatsapp";
 import type { AppRole } from "@/lib/types";
 
-const ROLES: AppRole[] = ["owner", "comercial"];
+const ROLES: AppRole[] = ["owner", "comercial", "financeiro"];
 const PATH = "/whatsapp/scripts";
 
 export async function salvarScript(

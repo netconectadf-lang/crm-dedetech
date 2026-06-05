@@ -13,7 +13,7 @@ import {
 } from "@/lib/validators/contratos";
 import type { AppRole } from "@/lib/types";
 
-const ROLES: AppRole[] = ["owner", "comercial"];
+const ROLES: AppRole[] = ["owner", "comercial", "financeiro"];
 
 export async function salvarContrato(
   id: string | null,

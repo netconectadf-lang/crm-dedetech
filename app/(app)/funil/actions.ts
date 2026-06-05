@@ -9,7 +9,7 @@ import { leadSchema } from "@/lib/validators/funil";
 import type { AppRole } from "@/lib/types";
 import type { DealStage, LossReason } from "@/lib/funil";
 
-const ROLES: AppRole[] = ["owner", "comercial"];
+const ROLES: AppRole[] = ["owner", "comercial", "financeiro"];
 
 export async function criarLead(
   _prev: SaveState,

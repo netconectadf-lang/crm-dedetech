@@ -8,7 +8,7 @@ import { deleteRecord, type SaveState } from "@/lib/crud-helpers";
 import { deviceSchema, readingSchema } from "@/lib/validators/mip";
 import type { AppRole } from "@/lib/types";
 
-const ROLES: AppRole[] = ["owner", "operacional", "tecnico"];
+const ROLES: AppRole[] = ["owner", "operacional", "tecnico", "financeiro"];
 
 export async function salvarDispositivo(
   id: string | null,

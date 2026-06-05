@@ -11,7 +11,7 @@ import { osSchema, fichaSchema, osProductSchema } from "@/lib/validators/os";
 import type { AppRole } from "@/lib/types";
 import type { OsStatus } from "@/lib/os";
 
-const MANAGE: AppRole[] = ["owner", "operacional"];
+const MANAGE: AppRole[] = ["owner", "operacional", "financeiro"];
 const FIELD: AppRole[] = ["owner", "operacional", "tecnico"];
 
 export async function criarOS(

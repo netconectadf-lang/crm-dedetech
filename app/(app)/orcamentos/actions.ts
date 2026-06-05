@@ -9,7 +9,7 @@ import { requireRole } from "@/lib/auth";
 import type { SaveState } from "@/lib/crud-helpers";
 import type { AppRole } from "@/lib/types";
 
-const ROLES: AppRole[] = ["owner", "comercial"];
+const ROLES: AppRole[] = ["owner", "comercial", "financeiro"];
 
 /** Cria um orçamento AVULSO (direto para um cliente, sem passar pelo funil). */
 export async function criarOrcamentoAvulso(

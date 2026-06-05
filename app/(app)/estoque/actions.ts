@@ -14,7 +14,7 @@ import {
 } from "@/lib/validators/estoque";
 import type { AppRole } from "@/lib/types";
 
-const ROLES: AppRole[] = ["owner", "operacional"];
+const ROLES: AppRole[] = ["owner", "operacional", "financeiro"];
 
 /** Entrada: cria o lote e registra a movimentação (trigger soma o saldo). */
 export async function registrarEntrada(

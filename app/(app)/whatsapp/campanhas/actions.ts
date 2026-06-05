@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { deleteRecord, type SaveState } from "@/lib/crud-helpers";
-import { campanhaSchema } from "@/lib/validators/whatsapp";
+import { campanhaSchema, normalizarTelefone } from "@/lib/validators/whatsapp";
+import { descobrirRedes } from "@/lib/clientes";
 import { renderScript } from "@/lib/whatsapp/render";
 import { sendText } from "@/lib/whatsapp/evolution";
 import type { AppRole } from "@/lib/types";
@@ -76,6 +77,100 @@ export async function montarDestinatarios(campanhaId: string): Promise<void> {
     .eq("tenant_id", ctx.tenantId);
 
   revalidatePath(`${LISTA}/${campanhaId}`);
+}
+
+/**
+ * Adiciona CLIENTES do CRM como destinatários da campanha (com filtros), criando
+ * disparos pendentes direto — sem precisar importar como contatos antes.
+ */
+export async function adicionarClientesNaCampanha(
+  campanhaId: string,
+  _prev: SaveState,
+  formData: FormData,
+): Promise<SaveState> {
+  const ctx = await requireRole(ROLES);
+  const supabase = await createClient();
+
+  const segmento = String(formData.get("segmento") ?? "").trim();
+  const rede = String(formData.get("rede") ?? "").trim();
+  const uf = String(formData.get("uf") ?? "").trim();
+  const cidade = String(formData.get("cidade") ?? "").trim();
+  const somenteAtivos = formData.get("somente_ativos") !== "false";
+
+  let q = supabase
+    .from("clients")
+    .select("id, razao_social, nome_fantasia, telefone, segmento, uf, cidade")
+    .eq("tenant_id", ctx.tenantId)
+    .not("telefone", "is", null);
+  if (somenteAtivos) q = q.eq("ativo", true);
+  if (segmento) q = q.eq("segmento", segmento);
+  if (uf) q = q.eq("uf", uf);
+  if (cidade) q = q.ilike("cidade", `%${cidade}%`);
+
+  const { data } = await q;
+  let clientes =
+    (data as {
+      razao_social: string;
+      nome_fantasia: string | null;
+      telefone: string | null;
+    }[] | null) ?? [];
+
+  // filtro de rede (derivada do nome)
+  if (rede) {
+    const { redeDe } = descobrirRedes(clientes);
+    clientes = clientes.filter((c) => {
+      const r = redeDe(c.razao_social, c.nome_fantasia);
+      return rede === "__sem" ? r == null : r === rede;
+    });
+  }
+
+  // normaliza telefone + dedup interno
+  const porTel = new Map<string, { telefone: string; nome: string }>();
+  for (const c of clientes) {
+    const tel = normalizarTelefone(c.telefone ?? "");
+    if (tel.length < 12 || tel.length > 13) continue;
+    if (!porTel.has(tel)) {
+      porTel.set(tel, { telefone: tel, nome: c.nome_fantasia?.trim() || c.razao_social });
+    }
+  }
+
+  // dedup contra quem já está na campanha (por telefone)
+  const { data: jaData } = await supabase
+    .from("wa_disparos")
+    .select("telefone")
+    .eq("campanha_id", campanhaId);
+  const jaTel = new Set(((jaData as { telefone: string }[] | null) ?? []).map((d) => d.telefone));
+
+  const novos = [...porTel.values()]
+    .filter((c) => !jaTel.has(c.telefone))
+    .map((c) => ({
+      tenant_id: ctx.tenantId,
+      campanha_id: campanhaId,
+      contato_id: null,
+      telefone: c.telefone,
+      nome: c.nome,
+      status: "pendente",
+    }));
+
+  if (!novos.length) {
+    return { error: "Nenhum cliente novo nesse filtro (já incluídos ou sem telefone válido)." };
+  }
+
+  const { error } = await supabase.from("wa_disparos").insert(novos as never);
+  if (error) return { error: "Não foi possível adicionar os clientes." };
+
+  const { count } = await supabase
+    .from("wa_disparos")
+    .select("id", { count: "exact", head: true })
+    .eq("campanha_id", campanhaId);
+  await supabase
+    .from("wa_campanhas")
+    .update({ total_contatos: count ?? 0 })
+    .eq("id", campanhaId)
+    .eq("tenant_id", ctx.tenantId);
+
+  revalidatePath(`${LISTA}/${campanhaId}`);
+  return { message: `${novos.length} cliente(s) adicionado(s) à campanha.` };
 }
 
 /** Remove os destinatários ainda pendentes (reset antes de iniciar). */

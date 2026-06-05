@@ -5,8 +5,10 @@ import { ArrowLeft, Users, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatPhone } from "@/lib/format";
+import { descobrirRedes } from "@/lib/clientes";
 import { montarDestinatarios, limparPendentes } from "../actions";
 import { Disparador } from "@/components/whatsapp/disparador";
+import { AdicionarClientes } from "@/components/whatsapp/adicionar-clientes";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -74,6 +76,19 @@ export default async function CampanhaDetalhe({ params }: { params: Promise<{ id
   const [enviados, falhas, pendentes] = counts.map((c) => c.count ?? 0);
   const total = enviados + falhas + pendentes;
 
+  // opções de filtro para "Adicionar clientes" (só clientes ativos com telefone)
+  const { data: cliData } = await supabase
+    .from("clients")
+    .select("razao_social, nome_fantasia, segmento, uf")
+    .eq("ativo", true)
+    .not("telefone", "is", null);
+  const clientesBase =
+    (cliData as { razao_social: string; nome_fantasia: string | null; segmento: string | null; uf: string | null }[] | null) ??
+    [];
+  const segmentos = [...new Set(clientesBase.map((c) => c.segmento).filter(Boolean) as string[])].sort();
+  const ufs = [...new Set(clientesBase.map((c) => c.uf).filter(Boolean) as string[])].sort();
+  const redes = descobrirRedes(clientesBase).lista;
+
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <div>
@@ -111,9 +126,10 @@ export default async function CampanhaDetalhe({ params }: { params: Promise<{ id
           <div className="flex flex-wrap gap-2">
             <form action={montarDestinatarios.bind(null, id)}>
               <Button type="submit" variant="outline" size="sm">
-                <Users className="size-4" /> {total === 0 ? "Montar destinatários" : "Adicionar novos contatos"}
+                <Users className="size-4" /> {total === 0 ? "Montar dos contatos" : "Adicionar novos contatos"}
               </Button>
             </form>
+            <AdicionarClientes campanhaId={id} segmentos={segmentos} redes={redes} ufs={ufs} />
             {pendentes > 0 && (
               <form action={limparPendentes.bind(null, id)}>
                 <Button type="submit" variant="ghost" size="sm" className="text-destructive">

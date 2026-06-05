@@ -2711,6 +2711,65 @@ export type Database = {
           },
         ]
       }
+      service_providers: {
+        Row: {
+          ativo: boolean
+          cidade: string | null
+          created_at: string
+          documento: string | null
+          email: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          tenant_id: string
+          tipo_servico: string | null
+          uf: string | null
+          updated_at: string
+          valor_padrao: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          cidade?: string | null
+          created_at?: string
+          documento?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          tenant_id: string
+          tipo_servico?: string | null
+          uf?: string | null
+          updated_at?: string
+          valor_padrao?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string | null
+          created_at?: string
+          documento?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          tenant_id?: string
+          tipo_servico?: string | null
+          uf?: string | null
+          updated_at?: string
+          valor_padrao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_providers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           ativo: boolean

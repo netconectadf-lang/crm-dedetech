@@ -1,5 +1,4 @@
 import { Plus, Pencil, MessageCircle } from "lucide-react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
@@ -53,7 +52,7 @@ type Prestador = {
 
 export default async function PrestadoresPage() {
   await requireRole(["owner", "rh"]);
-  const supabase = (await createClient()) as unknown as SupabaseClient;
+  const supabase = await createClient();
   const { data } = await supabase
     .from("service_providers")
     .select("*")

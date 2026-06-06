@@ -4,7 +4,8 @@ import { Plus, ArrowLeft, Check, Ban, ArrowUpCircle, AlertTriangle, ClipboardLis
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatBRL, formatDate } from "@/lib/format";
-import { effectiveStatus, PAYMENT_LABEL, RECURRENCE_LABEL, type FinanceStatus, type PaymentMethod, type Recurrence } from "@/lib/financeiro";
+import { effectiveStatus, categoriaDespesa, PAYMENT_LABEL, RECURRENCE_LABEL, type FinanceStatus, type PaymentMethod, type Recurrence } from "@/lib/financeiro";
+import { nomeCurto } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { salvarPagar, pagar, cancelarPagar, excluirPagar } from "../actions";
 import { AjudaTela } from "@/components/app/ajuda-tela";
@@ -166,6 +167,7 @@ export default async function PagarPage({
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Fornecedor</TableHead>
                   <TableHead>Vencimento</TableHead>
@@ -177,11 +179,24 @@ export default async function PagarPage({
               <TableBody>
                 {filtradas.map((c) => {
                   const st = effectiveStatus(c);
+                  const cat = categoriaDespesa(c.descricao);
                   const aberto = c.status === "a_vencer" || c.status === "parcial";
                   return (
                     <TableRow key={c.id}>
-                      <TableCell className="font-medium">{c.descricao}</TableCell>
-                      <TableCell>{c.suppliers?.razao_social ?? "—"}</TableCell>
+                      <TableCell>
+                        <span className={`whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-medium ${cat.tone}`}>
+                          {cat.label}
+                        </span>
+                      </TableCell>
+                      <TableCell className="max-w-[220px] truncate font-medium" title={c.descricao}>
+                        {cat.curto}
+                      </TableCell>
+                      <TableCell
+                        className="max-w-[160px] truncate text-sm text-muted-foreground"
+                        title={c.suppliers?.razao_social ?? ""}
+                      >
+                        {c.suppliers ? nomeCurto(c.suppliers.razao_social) : "—"}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{formatDate(c.vencimento)}</TableCell>
                       <TableCell className="text-right tabular-nums">{formatBRL(c.valor)}</TableCell>
                       <TableCell>

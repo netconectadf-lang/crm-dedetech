@@ -123,7 +123,7 @@ export default async function ReceberPage({
                   titulo: "Receber e cobrar",
                   itens: [
                     "Receber — registra o valor recebido e a conta bancária; baixa parcial deixa a conta como Parcial.",
-                    "PIX / Boleto — geram a cobrança para enviar ao cliente.",
+                    "PIX / Boleto / Cartão — geram a cobrança no Asaas e enviam o link ao cliente (conecte a conta em Integrações ▸ Pagamentos).",
                     "Emitir nota — gera a nota fiscal daquela conta.",
                     "Cancelar (proibido) — cancela a cobrança em aberto.",
                   ],
@@ -205,6 +205,9 @@ export default async function ReceberPage({
                               </form>
                               <form action={gerarCobranca.bind(null, c.id, "boleto")}>
                                 <Button type="submit" variant="ghost" size="sm" title="Gerar boleto">Boleto</Button>
+                              </form>
+                              <form action={gerarCobranca.bind(null, c.id, "cartao")}>
+                                <Button type="submit" variant="ghost" size="sm" title="Gerar link de cartão">Cartão</Button>
                               </form>
                               <ResourceDialog
                                 trigger={<Button variant="ghost" size="sm" className="text-emerald-300"><Check className="size-4" /> Receber</Button>}

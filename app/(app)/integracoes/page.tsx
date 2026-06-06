@@ -6,6 +6,7 @@ import {
   FileBadge,
   Building2,
   Workflow,
+  CreditCard,
   ArrowRight,
   type LucideIcon,
 } from "lucide-react";
@@ -48,6 +49,13 @@ export default async function IntegracoesPage() {
     .maybeSingle();
   const telegramConectado = Boolean((tg as { enabled: boolean } | null)?.enabled);
 
+  const { data: pay } = await supabase
+    .from("payment_integrations")
+    .select("enabled")
+    .eq("tenant_id", ctx.tenantId)
+    .maybeSingle();
+  const pagamentosConectado = Boolean((pay as { enabled: boolean } | null)?.enabled);
+
   const certNfse = await resumoCertificado(ctx.tenantId);
 
   const whatsappConfig = evolutionConfigured();
@@ -76,6 +84,14 @@ export default async function IntegracoesPage() {
       titulo: "E-mail",
       descricao: "Envio de notas, propostas e avisos por e-mail. (ainda faremos)",
       status: "em-breve",
+    },
+    {
+      key: "pagamentos",
+      icon: CreditCard,
+      titulo: "Pagamentos (Asaas)",
+      descricao: "Cobre clientes por PIX, boleto e cartão. Baixa automática quando o cliente paga.",
+      href: "/integracoes/pagamentos",
+      status: pagamentosConectado ? "conectado" : "disponivel",
     },
     {
       key: "nfse",

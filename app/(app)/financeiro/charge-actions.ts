@@ -4,24 +4,31 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { criarCobrancaAsaas } from "@/lib/asaas";
+import {
+  getPaymentIntegration,
+  ensureAsaasCustomer,
+  criarCobrancaAsaas,
+  type ChargeTipo,
+} from "@/lib/asaas";
 import { dispatch } from "@/lib/notify/dispatch";
 import type { AppRole } from "@/lib/types";
 
 const ROLES: AppRole[] = ["owner", "financeiro"];
 
 /**
- * Gera uma cobrança (boleto/PIX) para uma Conta a Receber. Usa o Asaas quando
- * configurado; sem credencial, registra uma cobrança MANUAL. Notifica o cliente
- * com o link (inerte sem WhatsApp/e-mail).
+ * Gera uma cobrança (boleto/PIX/cartão) para uma Conta a Receber. Usa a conta
+ * Asaas da empresa quando conectada (sincronizando o cliente como customer);
+ * sem integração, registra uma cobrança MANUAL. Notifica o cliente com o link.
  */
-export async function gerarCobranca(arId: string, tipo: "boleto" | "pix") {
+export async function gerarCobranca(arId: string, tipo: ChargeTipo) {
   const ctx = await requireRole(ROLES);
   const supabase = await createClient();
 
   const { data: arData } = await supabase
     .from("accounts_receivable")
-    .select("id, descricao, valor, vencimento, client_id, clients(razao_social, telefone, email)")
+    .select(
+      "id, descricao, valor, vencimento, client_id, clients(id, razao_social, documento, telefone, email, asaas_customer_id)",
+    )
     .eq("id", arId)
     .maybeSingle();
   const ar = arData as unknown as {
@@ -30,11 +37,43 @@ export async function gerarCobranca(arId: string, tipo: "boleto" | "pix") {
     valor: number;
     vencimento: string;
     client_id: string | null;
-    clients: { razao_social: string; telefone: string | null; email: string | null } | null;
+    clients: {
+      id: string;
+      razao_social: string;
+      documento: string | null;
+      telefone: string | null;
+      email: string | null;
+      asaas_customer_id: string | null;
+    } | null;
   } | null;
   if (!ar) return;
 
-  const asaas = await criarCobrancaAsaas({
+  const config = await getPaymentIntegration(supabase, ctx.tenantId);
+
+  // Sincroniza o cliente como customer no Asaas (necessário para a cobrança real)
+  let customerId: string | undefined;
+  if (config && ar.clients) {
+    const c = ar.clients;
+    const r = await ensureAsaasCustomer(config, {
+      id: c.id,
+      nome: c.razao_social,
+      documento: c.documento,
+      email: c.email,
+      telefone: c.telefone,
+      asaasCustomerId: c.asaas_customer_id,
+    });
+    customerId = r.customerId;
+    // grava o id do customer para reaproveitar nas próximas cobranças
+    if (customerId && customerId !== c.asaas_customer_id) {
+      await supabase
+        .from("clients")
+        .update({ asaas_customer_id: customerId } as never)
+        .eq("id", c.id);
+    }
+  }
+
+  const asaas = await criarCobrancaAsaas(config, {
+    customerId,
     valor: Number(ar.valor),
     vencimento: ar.vencimento,
     descricao: ar.descricao,
@@ -54,19 +93,18 @@ export async function gerarCobranca(arId: string, tipo: "boleto" | "pix") {
       provider_charge_id: asaas.id ?? null,
       invoice_url: asaas.invoiceUrl ?? null,
       pix_payload: asaas.pixPayload ?? null,
-    })
+    } as never)
     .select("id, invoice_url")
     .single();
   const charge = chargeData as { id: string; invoice_url: string | null } | null;
 
-  // notifica o cliente (inerte sem provider)
-  if (ar.clients?.telefone) {
-    const link = charge?.invoice_url ?? "(em processamento)";
+  // notifica o cliente com o link (inerte sem WhatsApp/e-mail configurado)
+  if (ar.clients?.telefone && asaas.invoiceUrl) {
     await dispatch({
       tenantId: ctx.tenantId,
       canal: "whatsapp",
       destino: ar.clients.telefone,
-      corpo: `Olá! Sua cobrança "${ar.descricao}" está disponível: ${link}`,
+      corpo: `Olá! Sua cobrança "${ar.descricao}" está disponível: ${asaas.invoiceUrl}`,
       related_kind: "cobranca",
       related_id: charge?.id,
     });

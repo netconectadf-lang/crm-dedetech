@@ -634,6 +634,7 @@ export type Database = {
       }
       clients: {
         Row: {
+          asaas_customer_id: string | null
           ativo: boolean
           bairro: string | null
           cep: string | null
@@ -664,6 +665,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          asaas_customer_id?: string | null
           ativo?: boolean
           bairro?: string | null
           cep?: string | null
@@ -694,6 +696,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          asaas_customer_id?: string | null
           ativo?: boolean
           bairro?: string | null
           cep?: string | null
@@ -1091,6 +1094,7 @@ export type Database = {
           departamento: string | null
           email: string | null
           id: string
+          jornada_horas: number
           logradouro: string | null
           nascimento: string | null
           nome: string
@@ -1121,6 +1125,7 @@ export type Database = {
           departamento?: string | null
           email?: string | null
           id?: string
+          jornada_horas?: number
           logradouro?: string | null
           nascimento?: string | null
           nome: string
@@ -1151,6 +1156,7 @@ export type Database = {
           departamento?: string | null
           email?: string | null
           id?: string
+          jornada_horas?: number
           logradouro?: string | null
           nascimento?: string | null
           nome?: string
@@ -1875,6 +1881,53 @@ export type Database = {
             foreignKeyName: "occupational_exams_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_integrations: {
+        Row: {
+          api_key: string
+          created_at: string
+          enabled: boolean
+          environment: string
+          id: string
+          provider: string
+          tenant_id: string
+          updated_at: string
+          wallet_id: string | null
+          webhook_token: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          enabled?: boolean
+          environment?: string
+          id?: string
+          provider?: string
+          tenant_id: string
+          updated_at?: string
+          wallet_id?: string | null
+          webhook_token?: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          enabled?: boolean
+          environment?: string
+          id?: string
+          provider?: string
+          tenant_id?: string
+          updated_at?: string
+          wallet_id?: string | null
+          webhook_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_integrations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -3819,7 +3872,7 @@ export type Database = {
         | "outro"
       bank_account_type: "corrente" | "poupanca" | "caixa" | "cartao"
       charge_status: "pendente" | "pago" | "cancelado" | "estornado"
-      charge_type: "boleto" | "pix" | "manual"
+      charge_type: "boleto" | "pix" | "manual" | "cartao"
       contract_periodicity:
         | "mensal"
         | "bimestral"
@@ -4055,7 +4108,7 @@ export const Constants = {
       ],
       bank_account_type: ["corrente", "poupanca", "caixa", "cartao"],
       charge_status: ["pendente", "pago", "cancelado", "estornado"],
-      charge_type: ["boleto", "pix", "manual"],
+      charge_type: ["boleto", "pix", "manual", "cartao"],
       contract_periodicity: [
         "mensal",
         "bimestral",

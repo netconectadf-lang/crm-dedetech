@@ -42,6 +42,7 @@ type OS = {
   proxima_revisao_em: string | null;
   recomendacoes: string | null;
   assinatura_cliente_url: string | null;
+  tenant_id: string;
   clients: {
     razao_social: string;
     documento: string | null;
@@ -64,7 +65,7 @@ export default async function CertificadoPage({
 
   const { data: osData } = await supabase
     .from("service_orders")
-    .select("numero, status, executada_em, pragas, estruturas, metodo, garantia_meses, periodo_reentrada_horas, proxima_revisao_em, recomendacoes, assinatura_cliente_url, clients(razao_social, documento, logradouro, numero, bairro, cidade, uf)")
+    .select("numero, status, executada_em, pragas, estruturas, metodo, garantia_meses, periodo_reentrada_horas, proxima_revisao_em, recomendacoes, assinatura_cliente_url, tenant_id, clients(razao_social, documento, logradouro, numero, bairro, cidade, uf)")
     .eq("id", id)
     .maybeSingle();
   if (!osData) notFound();
@@ -83,6 +84,22 @@ export default async function CertificadoPage({
       assinaturaUrl = signed?.signedUrl ?? null;
     }
   }
+
+  // Fotos da execução enviadas pelo app de campo (bucket privado, por tenant/OS).
+  const fotosDir = `${os.tenant_id}/os/${id}/fotos`;
+  const { data: fotoFiles } = await createAdminClient()
+    .storage.from("assinaturas")
+    .list(fotosDir, { limit: 50, sortBy: { column: "name", order: "asc" } });
+  const fotos = (
+    await Promise.all(
+      (fotoFiles ?? [])
+        .filter((f) => f.name && !f.name.startsWith("."))
+        .map(async (f) => {
+          const { data } = await createAdminClient().storage.from("assinaturas").createSignedUrl(`${fotosDir}/${f.name}`, 3600);
+          return data?.signedUrl ?? null;
+        })
+    )
+  ).filter(Boolean) as string[];
 
   const [{ data: prodLines }, { data: tenantData }, { data: rtData }] = await Promise.all([
     supabase.from("service_order_products").select("products(nome_comercial, principio_ativo, grupo_quimico, registro_anvisa, antidoto)").eq("os_id", id),
@@ -193,6 +210,18 @@ export default async function CertificadoPage({
           <section className="mt-4 text-sm">
             <p className="font-semibold">Recomendações</p>
             <p className="whitespace-pre-line text-muted-foreground">{os.recomendacoes}</p>
+          </section>
+        )}
+
+        {fotos.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-2 text-sm font-semibold" style={{ color: cor }}>Registro fotográfico</h2>
+            <div className="grid grid-cols-3 gap-2">
+              {fotos.map((url, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={url} alt={`Foto ${i + 1}`} className="aspect-square w-full rounded-md border object-cover" />
+              ))}
+            </div>
           </section>
         )}
 

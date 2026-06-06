@@ -6,6 +6,7 @@ import { gerarCobrancaDaOS } from "@/app/(app)/financeiro/actions";
 import { enviarNPS } from "../nps-actions";
 
 import { createClient } from "@/lib/supabase/server";
+import { ExecucaoMidia } from "@/components/execucao-midia";
 import { requireRole } from "@/lib/auth";
 import { formatDate, formatPhone, formatBRL, onlyDigits } from "@/lib/format";
 import { rotuloCliente, nomeExibicao } from "@/lib/clientes";
@@ -323,6 +324,8 @@ export default async function OsDetailPage({
           )}
         </CardContent>
       </Card>
+
+      <ExecucaoMidia osId={id} />
 
       {finalizada && (
         <div className="grid gap-5 lg:grid-cols-2">

@@ -81,10 +81,11 @@ export async function deleteRecord(
 ): Promise<void> {
   const ctx = await requireRole(roles);
   const supabase = await untypedClient();
-  await supabase
+  const { error } = await supabase
     .from(table)
     .delete()
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
+  if (error) throw new Error("Não foi possível excluir o registro. Tente novamente.");
   revalidatePath(path);
 }

@@ -126,7 +126,12 @@ export async function mudarStatusOS(id: string, status: OsStatus) {
 export async function excluirOS(id: string) {
   const ctx = await requireRole(MANAGE);
   const supabase = await createClient();
-  await supabase.from("service_orders").delete().eq("id", id).eq("tenant_id", ctx.tenantId);
+  const { error } = await supabase
+    .from("service_orders")
+    .delete()
+    .eq("id", id)
+    .eq("tenant_id", ctx.tenantId);
+  if (error) throw new Error("Não foi possível excluir a OS. Tente novamente.");
   redirect("/os");
 }
 

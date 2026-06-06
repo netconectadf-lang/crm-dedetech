@@ -32,7 +32,6 @@ export async function salvarContrato(
 
 export async function excluirContrato(id: string) {
   await deleteRecord("contracts", id, ROLES, "/contratos");
-  redirect("/contratos");
 }
 
 export async function mudarStatusContrato(

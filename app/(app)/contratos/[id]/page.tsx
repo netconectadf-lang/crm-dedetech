@@ -177,7 +177,12 @@ export default async function ContratoPage({
               defaultValues={c}
               action={salvarContrato.bind(null, c.id)}
             />
-            <DeleteButton nome={c.titulo} action={excluirContrato.bind(null, c.id)} />
+            <DeleteButton
+              nome={c.titulo}
+              action={excluirContrato.bind(null, c.id)}
+              successMessage="Contrato excluído com sucesso"
+              redirectTo="/contratos"
+            />
           </div>
         }
       />

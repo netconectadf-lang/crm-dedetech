@@ -14,8 +14,9 @@ import {
 } from "@/lib/contratos";
 import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
-import { salvarContrato } from "./actions";
+import { salvarContrato, excluirContrato } from "./actions";
 import { AjudaTela } from "@/components/app/ajuda-tela";
+import { DeleteButton } from "@/components/app/delete-button";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -212,11 +213,18 @@ export default async function ContratosPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button asChild variant="ghost" size="icon">
-                        <Link href={`/contratos/${c.id}`}>
-                          <ExternalLink className="size-4" />
-                        </Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button asChild variant="ghost" size="icon">
+                          <Link href={`/contratos/${c.id}`}>
+                            <ExternalLink className="size-4" />
+                          </Link>
+                        </Button>
+                        <DeleteButton
+                          nome={c.titulo}
+                          action={excluirContrato.bind(null, c.id)}
+                          successMessage="Contrato excluído com sucesso"
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

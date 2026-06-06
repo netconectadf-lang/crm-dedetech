@@ -179,7 +179,11 @@ export default async function ProdutosPage() {
                           defaultValues={p}
                           action={salvarProduto.bind(null, p.id)}
                         />
-                        <DeleteButton nome={p.nome_comercial} action={excluirProduto.bind(null, p.id)} />
+                        <DeleteButton
+                          nome={p.nome_comercial}
+                          action={excluirProduto.bind(null, p.id)}
+                          successMessage="Produto excluído com sucesso"
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

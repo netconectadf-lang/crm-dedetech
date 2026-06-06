@@ -260,7 +260,11 @@ export default async function FuncionariosPage() {
                           defaultValues={f}
                           action={salvarFuncionario.bind(null, f.id)}
                         />
-                        <DeleteButton nome={f.nome} action={excluirFuncionario.bind(null, f.id)} />
+                        <DeleteButton
+                          nome={f.nome}
+                          action={excluirFuncionario.bind(null, f.id)}
+                          successMessage="Funcionário excluído com sucesso"
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

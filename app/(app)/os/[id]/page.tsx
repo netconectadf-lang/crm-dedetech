@@ -216,7 +216,12 @@ export default async function OsDetailPage({
               defaultValues={os}
               action={atualizarOS.bind(null, os.id)}
             />
-            <DeleteButton nome={`OS #${os.numero}`} action={excluirOS.bind(null, os.id)} />
+            <DeleteButton
+              nome={`OS #${os.numero}`}
+              action={excluirOS.bind(null, os.id)}
+              successMessage="OS excluída com sucesso"
+              redirectTo="/os"
+            />
           </div>
         }
       />

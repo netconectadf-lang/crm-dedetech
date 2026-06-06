@@ -132,7 +132,7 @@ export async function excluirOS(id: string) {
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
   if (error) throw new Error("Não foi possível excluir a OS. Tente novamente.");
-  redirect("/os");
+  revalidatePath("/os");
 }
 
 export async function salvarFicha(

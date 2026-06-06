@@ -18,8 +18,9 @@ import {
   type OsStatus,
 } from "@/lib/os";
 import type { Field } from "@/components/app/resource-form";
-import { criarOS } from "./actions";
+import { criarOS, excluirOS } from "./actions";
 import { AjudaTela } from "@/components/app/ajuda-tela";
+import { DeleteButton } from "@/components/app/delete-button";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -93,7 +94,8 @@ export default async function OsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  await requireRole(["owner", "operacional", "tecnico", "financeiro"]);
+  const ctx = await requireRole(["owner", "operacional", "tecnico", "financeiro"]);
+  const podeExcluir = ["owner", "operacional", "financeiro"].includes(ctx.role);
   const { status } = await searchParams;
   const supabase = await createClient();
 
@@ -365,9 +367,18 @@ export default async function OsPage({
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button asChild variant="ghost" size="icon">
-                          <Link href={`/os/${o.id}`}><ExternalLink className="size-4" /></Link>
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button asChild variant="ghost" size="icon">
+                            <Link href={`/os/${o.id}`}><ExternalLink className="size-4" /></Link>
+                          </Button>
+                          {podeExcluir && (
+                            <DeleteButton
+                              nome={`OS #${o.numero}`}
+                              action={excluirOS.bind(null, o.id)}
+                              successMessage="OS excluída com sucesso"
+                            />
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

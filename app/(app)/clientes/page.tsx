@@ -214,6 +214,7 @@ export default async function ClientesPage({
                         <DeleteButton
                           nome={c.razao_social}
                           action={excluirCliente.bind(null, c.id)}
+                          successMessage="Cliente excluído com sucesso"
                         />
                       </div>
                     </TableCell>

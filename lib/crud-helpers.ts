@@ -86,6 +86,13 @@ export async function deleteRecord(
     .delete()
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
-  if (error) throw new Error("Não foi possível excluir o registro. Tente novamente.");
+  if (error) {
+    if ((error as { code?: string }).code === "23503") {
+      throw new Error(
+        "Não é possível excluir: há registros vinculados (ex.: OS, contratos ou cobranças).",
+      );
+    }
+    throw new Error("Não foi possível excluir o registro. Tente novamente.");
+  }
   revalidatePath(path);
 }

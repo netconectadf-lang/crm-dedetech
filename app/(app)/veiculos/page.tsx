@@ -167,7 +167,11 @@ export default async function VeiculosPage() {
                           defaultValues={v}
                           action={salvarVeiculo.bind(null, v.id)}
                         />
-                        <DeleteButton nome={v.placa} action={excluirVeiculo.bind(null, v.id)} />
+                        <DeleteButton
+                          nome={v.placa}
+                          action={excluirVeiculo.bind(null, v.id)}
+                          successMessage="Veículo excluído com sucesso"
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

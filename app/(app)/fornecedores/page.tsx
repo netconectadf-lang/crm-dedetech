@@ -151,7 +151,11 @@ export default async function FornecedoresPage() {
                           defaultValues={f}
                           action={salvarFornecedor.bind(null, f.id)}
                         />
-                        <DeleteButton nome={f.razao_social} action={excluirFornecedor.bind(null, f.id)} />
+                        <DeleteButton
+                          nome={f.razao_social}
+                          action={excluirFornecedor.bind(null, f.id)}
+                          successMessage="Fornecedor excluído com sucesso"
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

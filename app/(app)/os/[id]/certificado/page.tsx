@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth";
 import { formatCpfCnpj, formatDate } from "@/lib/format";
 import { METHOD_LABEL, type ApplicationMethod } from "@/lib/os";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/print-button";
 import { SignaturePad } from "@/components/os/signature-pad";
@@ -29,6 +29,45 @@ const CERT_LIGHT = {
   color: "#0f172a",
   colorScheme: "light",
 } as unknown as CSSProperties;
+
+/** #RRGGBB -> rgba(...,a). Deriva tons claros da cor da marca para fundos/bordas. */
+function hexToRgba(hex: string, a: number) {
+  const h = (hex || "#0F766E").replace("#", "");
+  const n = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const r = parseInt(n.slice(0, 2), 16);
+  const g = parseInt(n.slice(2, 4), 16);
+  const b = parseInt(n.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+const SHIELD_PATH = "M60 34 L84 44 L84 64 C84 80 72 90 60 96 C48 90 36 80 36 64 L36 44 Z";
+
+/** Campo rotulado: label minúsculo em caixa-alta na cor da marca + valor em grafite. */
+function Field({ label, value, color, full }: { label: string; value: ReactNode; color: string; full?: boolean }) {
+  return (
+    <div className={full ? "col-span-2" : ""}>
+      <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color }}>{label}</p>
+      <p className="mt-0.5 text-sm font-medium leading-snug" style={{ color: "#0f172a" }}>{value}</p>
+    </div>
+  );
+}
+
+/** Selo/carimbo oficial vetorial (nítido no PDF) — borda serrilhada + escudo + check. */
+function Seal({ color }: { color: string }) {
+  const dots = Array.from({ length: 40 }, (_, i) => {
+    const a = (i / 40) * Math.PI * 2;
+    return <circle key={i} cx={60 + Math.cos(a) * 57} cy={60 + Math.sin(a) * 57} r={2} fill={color} />;
+  });
+  return (
+    <svg width="92" height="92" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      {dots}
+      <circle cx="60" cy="60" r="52" fill="#ffffff" stroke={color} strokeWidth="2.5" />
+      <circle cx="60" cy="60" r="44" fill="none" stroke={color} strokeWidth="1" strokeDasharray="1.5 3" opacity="0.55" />
+      <path d={SHIELD_PATH} fill={color} transform="translate(60 60) scale(0.78) translate(-60 -60)" />
+      <path d="M50 63 L57 71 L72 53" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" transform="translate(60 60) scale(0.78) translate(-60 -60)" />
+    </svg>
+  );
+}
 
 type OS = {
   numero: number;
@@ -103,7 +142,7 @@ export default async function CertificadoPage({
 
   const [{ data: prodLines }, { data: tenantData }, { data: rtData }] = await Promise.all([
     supabase.from("service_order_products").select("products(nome_comercial, principio_ativo, grupo_quimico, registro_anvisa, antidoto)").eq("os_id", id),
-    supabase.from("tenants").select("razao_social, nome_fantasia, cnpj, registro_vigilancia_sanitaria, cor_primaria").limit(1).maybeSingle(),
+    supabase.from("tenants").select("razao_social, nome_fantasia, cnpj, registro_vigilancia_sanitaria, cor_primaria, logo_url").limit(1).maybeSingle(),
     supabase.from("employees").select("nome, registro_conselho").eq("responsavel_tecnico", true).eq("ativo", true).limit(1).maybeSingle(),
   ]);
 
@@ -118,11 +157,13 @@ export default async function CertificadoPage({
     .map((l) => l.products)
     .filter((p): p is ProdCert => p != null);
 
-  const tenant = tenantData as { razao_social: string; nome_fantasia: string | null; cnpj: string | null; registro_vigilancia_sanitaria: string | null; cor_primaria: string | null } | null;
+  const tenant = tenantData as { razao_social: string; nome_fantasia: string | null; cnpj: string | null; registro_vigilancia_sanitaria: string | null; cor_primaria: string | null; logo_url: string | null } | null;
   const rt = rtData as { nome: string; registro_conselho: string | null } | null;
 
   const empresa = tenant?.nome_fantasia || tenant?.razao_social || "Empresa";
   const cor = tenant?.cor_primaria || "#0F766E";
+  // logo da empresa cadastrada nas Configurações; se não houver, cai no nome em texto.
+  const logoUrl = tenant?.logo_url || null;
   const cli = os.clients;
   const endereco = cli
     ? [cli.logradouro, cli.numero, cli.bairro, cli.cidade && `${cli.cidade}/${cli.uf}`].filter(Boolean).join(", ")
@@ -140,121 +181,160 @@ export default async function CertificadoPage({
         </div>
       </div>
 
-      <div id="certificado" style={CERT_LIGHT} className="rounded-2xl border p-8 print:border-0 print:p-0">
-        <header className="flex items-center justify-between border-b pb-4" style={{ borderColor: cor }}>
-          <div>
-            <h1 className="text-xl font-bold" style={{ color: cor }}>{empresa}</h1>
-            {tenant?.cnpj && <p className="text-xs text-muted-foreground">CNPJ: {formatCpfCnpj(tenant.cnpj)}</p>}
-            {tenant?.registro_vigilancia_sanitaria && (
-              <p className="text-xs text-muted-foreground">Reg. Vigilância Sanitária: {tenant.registro_vigilancia_sanitaria}</p>
-            )}
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-semibold">Certificado de Execução</p>
-            <p className="text-xs text-muted-foreground">OS #{os.numero}</p>
-            {os.executada_em && <p className="text-xs text-muted-foreground">{formatDate(os.executada_em)}</p>}
-          </div>
-        </header>
+      <div
+        id="certificado"
+        style={CERT_LIGHT}
+        className="relative rounded-2xl bg-white p-3 shadow-sm print:rounded-none print:p-0 print:shadow-none"
+      >
+        {/* moldura dupla verde (estilo certificado clássico) */}
+        <div className="relative rounded-xl" style={{ border: `2px solid ${cor}`, padding: 5 }}>
+          <div className="relative overflow-hidden rounded-lg" style={{ border: `1px solid ${hexToRgba(cor, 0.45)}` }}>
+            {/* cantos decorados */}
+            <span aria-hidden className="absolute left-3 top-3 size-4" style={{ borderLeft: `2px solid ${cor}`, borderTop: `2px solid ${cor}` }} />
+            <span aria-hidden className="absolute right-3 top-3 size-4" style={{ borderRight: `2px solid ${cor}`, borderTop: `2px solid ${cor}` }} />
+            <span aria-hidden className="absolute bottom-3 left-3 size-4" style={{ borderLeft: `2px solid ${cor}`, borderBottom: `2px solid ${cor}` }} />
+            <span aria-hidden className="absolute bottom-3 right-3 size-4" style={{ borderRight: `2px solid ${cor}`, borderBottom: `2px solid ${cor}` }} />
 
-        <section className="mt-4 space-y-1 text-sm">
-          <p><strong>Cliente:</strong> {cli?.razao_social ?? "—"} {cli?.documento ? `· ${formatCpfCnpj(cli.documento)}` : ""}</p>
-          <p><strong>Local do serviço:</strong> {endereco}</p>
-          <p><strong>Pragas-alvo controladas:</strong> {os.pragas?.length ? os.pragas.join(", ") : "—"}</p>
-          <p><strong>Áreas/estruturas tratadas:</strong> {os.estruturas?.length ? os.estruturas.join(", ") : "—"}</p>
-          <p><strong>Método de aplicação:</strong> {os.metodo ? METHOD_LABEL[os.metodo] : "—"}</p>
-          {os.periodo_reentrada_horas != null && (
-            <p><strong>Período de reentrada:</strong> {os.periodo_reentrada_horas} horas</p>
+            {/* marca d'água — escudo institucional */}
+            <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <svg width="320" height="320" viewBox="0 0 120 120" style={{ opacity: 0.05 }}>
+                <path d={SHIELD_PATH} fill={cor} />
+              </svg>
+            </div>
+
+            <div className="relative p-8 print:p-7">
+              {/* CABEÇALHO com LOGO */}
+              <header className="flex items-start justify-between gap-4">
+                <div>
+                  {logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={logoUrl} alt={empresa} className="h-16 w-auto object-contain" style={{ maxWidth: 230 }} />
+                  ) : (
+                    <h1 className="text-xl font-bold leading-tight" style={{ color: cor }}>{empresa}</h1>
+                  )}
+                  <div className="mt-1.5">
+                    {tenant?.cnpj && <p className="text-[11px] text-muted-foreground">CNPJ {formatCpfCnpj(tenant.cnpj)}</p>}
+                    {tenant?.registro_vigilancia_sanitaria && (
+                      <p className="text-[11px] text-muted-foreground">Reg. Vig. Sanitária {tenant.registro_vigilancia_sanitaria}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span
+                    className="inline-block rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ background: hexToRgba(cor, 0.1), color: cor }}
+                  >
+                    Certificado de Execução
+                  </span>
+                  <p className="mt-2 text-2xl font-black leading-none" style={{ color: cor }}>OS #{os.numero}</p>
+                  {os.executada_em && <p className="mt-1 text-[11px] text-muted-foreground">Emitido em {formatDate(os.executada_em)}</p>}
+                </div>
+              </header>
+
+              <div className="my-6 h-px w-full" style={{ background: hexToRgba(cor, 0.18) }} />
+
+          {/* DADOS DO SERVIÇO */}
+          <section className="grid grid-cols-2 gap-x-8 gap-y-4">
+            <Field full color={cor} label="Cliente" value={<>{cli?.razao_social ?? "—"}{cli?.documento ? ` · ${formatCpfCnpj(cli.documento)}` : ""}</>} />
+            <Field full color={cor} label="Local do serviço" value={endereco} />
+            <Field color={cor} label="Pragas-alvo controladas" value={os.pragas?.length ? os.pragas.join(", ") : "—"} />
+            <Field color={cor} label="Áreas/estruturas tratadas" value={os.estruturas?.length ? os.estruturas.join(", ") : "—"} />
+            <Field color={cor} label="Método de aplicação" value={os.metodo ? METHOD_LABEL[os.metodo] : "—"} />
+            <Field
+              color={cor}
+              label="Garantia"
+              value={`${os.garantia_meses > 0 ? `${os.garantia_meses} meses` : "—"}${os.proxima_revisao_em ? ` · próx. revisão ${formatDate(os.proxima_revisao_em)}` : ""}`}
+            />
+            {os.periodo_reentrada_horas != null && (
+              <Field color={cor} label="Período de reentrada" value={`${os.periodo_reentrada_horas} horas`} />
+            )}
+          </section>
+
+          {/* INTOXICAÇÃO */}
+          <section
+            className="mt-6 flex items-start gap-3 rounded-xl p-4"
+            style={{ background: hexToRgba(cor, 0.06), borderLeft: `3px solid ${cor}` }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="mt-0.5 shrink-0" aria-hidden>
+              <path d="M12 3 L22 20 H2 Z" fill="none" stroke={cor} strokeWidth="2" strokeLinejoin="round" />
+              <path d="M12 9 V14" stroke={cor} strokeWidth="2" strokeLinecap="round" />
+              <circle cx="12" cy="17" r="1.1" fill={cor} />
+            </svg>
+            <div className="text-xs">
+              <p className="font-semibold" style={{ color: "#0f172a" }}>Em caso de intoxicação</p>
+              <p className="text-muted-foreground">
+                Disque-Intoxicação (CIT): <strong style={{ color: "#0f172a" }}>0800 722 6001</strong>.
+                {produtos.some((p) => p?.antidoto) && (
+                  <> Antídoto/orientação: {produtos.map((p) => p?.antidoto).filter(Boolean).join("; ")}.</>
+                )}
+              </p>
+            </div>
+          </section>
+
+          {os.recomendacoes && (
+            <section className="mt-6">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest" style={{ color: cor }}>Recomendações</p>
+              <p className="whitespace-pre-line text-sm text-muted-foreground">{os.recomendacoes}</p>
+            </section>
           )}
-          <p><strong>Garantia:</strong> {os.garantia_meses > 0 ? `${os.garantia_meses} meses` : "—"}{os.proxima_revisao_em ? ` · próxima revisão: ${formatDate(os.proxima_revisao_em)}` : ""}</p>
-        </section>
 
-        <section className="mt-4">
-          <p className="mb-1 text-sm font-semibold">Produtos utilizados</p>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="py-1">Produto</th>
-                <th className="py-1">Princípio ativo</th>
-                <th className="py-1">Grupo químico</th>
-                <th className="py-1">Registro ANVISA</th>
-              </tr>
-            </thead>
-            <tbody>
-              {produtos.length === 0 ? (
-                <tr><td colSpan={4} className="py-2 text-muted-foreground">—</td></tr>
-              ) : (
-                produtos.map((p, i) => (
-                  <tr key={i} className="border-b">
-                    <td className="py-1">{p?.nome_comercial}</td>
-                    <td className="py-1">{p?.principio_ativo ?? "—"}</td>
-                    <td className="py-1">{p?.grupo_quimico ?? "—"}</td>
-                    <td className="py-1">{p?.registro_anvisa ?? "—"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </section>
+          {fotos.length > 0 && (
+            <section className="mt-7">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest" style={{ color: cor }}>Registro fotográfico</p>
+              <div className="grid grid-cols-3 gap-2">
+                {fotos.map((url, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={url} alt={`Foto ${i + 1}`} className="aspect-square w-full rounded-md border object-cover" />
+                ))}
+              </div>
+            </section>
+          )}
 
-        <section className="mt-4 rounded-lg bg-muted/40 p-3 text-xs">
-          <p className="font-semibold">Em caso de intoxicação</p>
-          <p className="text-muted-foreground">
-            Disque-Intoxicação (CIT): <strong>0800 722 6001</strong>.
-            {produtos.some((p) => p?.antidoto) && (
-              <> Antídoto/orientação: {produtos.map((p) => p?.antidoto).filter(Boolean).join("; ")}.</>
-            )}
-          </p>
-        </section>
-
-        {os.recomendacoes && (
-          <section className="mt-4 text-sm">
-            <p className="font-semibold">Recomendações</p>
-            <p className="whitespace-pre-line text-muted-foreground">{os.recomendacoes}</p>
-          </section>
-        )}
-
-        {fotos.length > 0 && (
-          <section className="mt-8">
-            <h2 className="mb-2 text-sm font-semibold" style={{ color: cor }}>Registro fotográfico</h2>
-            <div className="grid grid-cols-3 gap-2">
-              {fotos.map((url, i) => (
+          {/* ASSINATURAS + SELO */}
+          <footer
+            className="relative mt-14 grid grid-cols-2 gap-10 pt-10 text-center text-sm"
+            style={{ borderTop: `1px solid ${hexToRgba(cor, 0.18)}` }}
+          >
+            <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 bg-white px-2">
+              <Seal color={cor} />
+            </div>
+            <div className="flex flex-col items-center justify-end">
+              {assinaturaUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={i} src={url} alt={`Foto ${i + 1}`} className="aspect-square w-full rounded-md border object-cover" />
-              ))}
-            </div>
-          </section>
-        )}
-
-        <footer className="mt-10 grid grid-cols-2 gap-8 border-t pt-8 text-center text-sm">
-          <div className="flex flex-col items-center justify-end">
-            {assinaturaUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={assinaturaUrl}
-                alt="Assinatura do cliente"
-                className="mb-1 h-16 object-contain"
-              />
-            )}
-            <div className="w-full border-t pt-1">
-              <p className="font-medium">{cli?.razao_social ?? "Cliente"}</p>
-              <p className="text-xs text-muted-foreground">Assinatura do cliente</p>
-            </div>
-          </div>
-          <div className="flex flex-col items-center justify-end">
-            <div className="w-full border-t pt-1">
-              {rt ? (
-                <>
-                  <p className="font-medium">{rt.nome}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Responsável Técnico{rt.registro_conselho ? ` · ${rt.registro_conselho}` : ""}
-                  </p>
-                </>
-              ) : (
-                <p className="text-xs text-muted-foreground">Responsável Técnico</p>
+                <img src={assinaturaUrl} alt="Assinatura do cliente" className="mb-1 h-16 object-contain" />
               )}
+              <div className="w-full border-t pt-1">
+                <p className="font-medium" style={{ color: "#0f172a" }}>{cli?.razao_social ?? "Cliente"}</p>
+                <p className="text-xs text-muted-foreground">Assinatura do cliente</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center justify-end">
+              <div className="w-full border-t pt-1">
+                {rt ? (
+                  <>
+                    <p className="font-medium" style={{ color: "#0f172a" }}>{rt.nome}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Responsável Técnico{rt.registro_conselho ? ` · ${rt.registro_conselho}` : ""}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Responsável Técnico</p>
+                )}
+              </div>
+            </div>
+          </footer>
+
+          {/* RODAPÉ DE VALIDAÇÃO */}
+          <div
+            className="mt-8 flex items-center justify-between gap-2 text-[10px] text-muted-foreground"
+            style={{ borderTop: `1px solid ${hexToRgba(cor, 0.12)}`, paddingTop: 10 }}
+          >
+            <span>Documento emitido eletronicamente por {empresa}</span>
+            <span>OS #{os.numero}{os.executada_em ? ` · ${formatDate(os.executada_em)}` : ""}</span>
+          </div>
             </div>
           </div>
-        </footer>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 rounded-xl border border-border/60 bg-card/60 p-5 print:hidden sm:grid-cols-2">

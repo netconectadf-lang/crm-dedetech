@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth";
 
 export type ConfigState = { error?: string; message?: string } | null;
@@ -67,6 +68,28 @@ export async function updateTenant(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
+  // Upload opcional da logo: o admin escolhe o arquivo no form; sobe pro bucket
+  // público "branding" e guarda a URL pública em logo_url. Só atualiza logo_url
+  // quando um arquivo novo é enviado (salvar sem escolher arquivo não apaga a logo).
+  let logoUrl: string | undefined;
+  const logoFile = formData.get("logo");
+  if (logoFile instanceof File && logoFile.size > 0) {
+    if (!logoFile.type.startsWith("image/")) {
+      return { error: "A logo precisa ser uma imagem (PNG, JPG, WEBP ou SVG)." };
+    }
+    if (logoFile.size > 2 * 1024 * 1024) {
+      return { error: "A logo deve ter no máximo 2 MB." };
+    }
+    const ext = (logoFile.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = `${ctx.tenantId}/logo-${Date.now()}.${ext || "png"}`;
+    const admin = createAdminClient();
+    const { error: upErr } = await admin.storage
+      .from("branding")
+      .upload(path, logoFile, { contentType: logoFile.type, upsert: true });
+    if (upErr) return { error: "Não foi possível enviar a logo." };
+    logoUrl = admin.storage.from("branding").getPublicUrl(path).data.publicUrl;
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("tenants")
@@ -85,6 +108,7 @@ export async function updateTenant(
       nfse_iss_retido: parsed.data.nfse_iss_retido,
       email_remetente_nome: parsed.data.email_remetente_nome ?? null,
       email_responder_para: parsed.data.email_responder_para || null,
+      ...(logoUrl ? { logo_url: logoUrl } : {}),
     } as never)
     .eq("id", ctx.tenantId);
   if (error) return { error: "Não foi possível salvar." };

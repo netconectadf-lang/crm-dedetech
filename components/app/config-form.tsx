@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { updateTenant, type ConfigState } from "@/app/(app)/configuracoes/actions";
@@ -13,6 +13,7 @@ type Tenant = {
   nome_fantasia: string | null;
   registro_vigilancia_sanitaria: string | null;
   cor_primaria: string | null;
+  logo_url: string | null;
   preco_combustivel_litro: number | null;
   custo_hora_padrao: number | null;
   nfse_inscricao_municipal: string | null;
@@ -29,6 +30,7 @@ export function ConfigForm({ tenant }: { tenant: Tenant }) {
     updateTenant,
     null,
   );
+  const [logoPreview, setLogoPreview] = useState<string | null>(tenant.logo_url);
 
   useEffect(() => {
     if (state?.message) toast.success(state.message);
@@ -73,6 +75,33 @@ export function ConfigForm({ tenant }: { tenant: Tenant }) {
           placeholder="#0F766E"
           defaultValue={tenant.cor_primaria ?? "#0F766E"}
         />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="logo">Logo da empresa</Label>
+        <div className="flex items-center gap-4">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-white">
+            {logoPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoPreview} alt="Logo da empresa" className="h-full w-full object-contain p-1" />
+            ) : (
+              <span className="text-[10px] text-muted-foreground">sem logo</span>
+            )}
+          </div>
+          <Input
+            id="logo"
+            name="logo"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            className="cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) setLogoPreview(URL.createObjectURL(file));
+            }}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Aparece no certificado, laudos e propostas. PNG com fundo transparente, até 2 MB.
+        </p>
       </div>
 
       <div className="mt-2 border-t pt-4">

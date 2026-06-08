@@ -13,6 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Initial = {
   pragas: string[];
@@ -195,8 +202,10 @@ function TagPicker({
   const [novo, setNovo] = useState("");
   const [pending, startTransition] = useTransition();
 
-  // opções a mostrar = catálogo + quaisquer selecionadas fora do catálogo
-  const todas = Array.from(new Set([...options, ...selected]));
+  // catálogo disponível para adicionar = tudo que ainda não foi selecionado
+  const disponiveis = Array.from(new Set(options))
+    .filter((o) => !selected.includes(o))
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
 
   function criar() {
     const nome = novo.trim();
@@ -210,29 +219,48 @@ function TagPicker({
   return (
     <div className="grid gap-2">
       <Label>{label}</Label>
-      {todas.length > 0 && (
+
+      {/* mostra SÓ o que foi selecionado (chips removíveis) */}
+      {selected.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
-          {todas.map((nome) => {
-            const on = selected.includes(nome);
-            return (
-              <button
-                key={nome}
-                type="button"
-                onClick={() => onToggle(nome)}
-                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
-                  on
-                    ? "border-primary bg-primary/15 text-primary"
-                    : "border-input text-muted-foreground hover:border-primary/40"
-                }`}
-              >
-                {nome}
-                {on && <X className="size-3" />}
-              </button>
-            );
-          })}
+          {selected.map((nome) => (
+            <button
+              key={nome}
+              type="button"
+              onClick={() => onToggle(nome)}
+              className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary/15 px-2.5 py-1 text-xs text-primary"
+            >
+              {nome}
+              <X className="size-3" />
+            </button>
+          ))}
         </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">Nada selecionado ainda.</p>
       )}
-      <div className="flex gap-2">
+
+      <div className="flex flex-wrap items-center gap-2">
+        {/* dropdown p/ incluir do catálogo */}
+        <Select value="" onValueChange={(v) => v && onToggle(v)}>
+          <SelectTrigger className="h-9 w-60">
+            <SelectValue placeholder="+ incluir da lista…" />
+          </SelectTrigger>
+          <SelectContent>
+            {disponiveis.length === 0 ? (
+              <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                Tudo já selecionado
+              </div>
+            ) : (
+              disponiveis.map((o) => (
+                <SelectItem key={o} value={o}>
+                  {o}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+
+        {/* criar uma nova fora do catálogo */}
         <Input
           value={novo}
           onChange={(e) => setNovo(e.target.value)}

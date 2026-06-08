@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatBRL } from "@/lib/format";
 import { QUOTE_STATUS_LABEL, QUOTE_STATUS_TONE, type QuoteStatus } from "@/lib/funil";
-import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
+import { nomeExibicao, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { criarOrcamentoAvulso } from "./actions";
 import { AjudaTela } from "@/components/app/ajuda-tela";
@@ -68,7 +68,7 @@ export default async function OrcamentosPage() {
       label: "Cliente",
       type: "select",
       required: true,
-      options: clients.map((c) => ({ value: c.id, label: rotuloCliente(c) })),
+      options: clients.map((c) => ({ value: c.id, label: nomeExibicao(c) })),
     },
   ];
 

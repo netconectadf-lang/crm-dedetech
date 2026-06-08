@@ -3,7 +3,7 @@ import { Plus, Wallet, KanbanSquare, Landmark, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatBRL } from "@/lib/format";
-import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
+import { nomeExibicao, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import type { DealCard } from "@/components/funil/kanban-board";
 import { KanbanBoard } from "@/components/funil/kanban-board";
@@ -69,7 +69,7 @@ export default async function FunilPage() {
       type: "select",
       options: [
         { value: "none", label: "Sem vínculo" },
-        ...clients.map((c) => ({ value: c.id, label: rotuloCliente(c) })),
+        ...clients.map((c) => ({ value: c.id, label: nomeExibicao(c) })),
       ],
     },
     { name: "descricao", label: "Observações", type: "textarea" },

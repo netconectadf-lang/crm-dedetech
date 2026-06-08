@@ -12,7 +12,7 @@ import {
   type ContractPeriodicity,
   type ContractStatus,
 } from "@/lib/contratos";
-import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
+import { nomeExibicao, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { salvarContrato, excluirContrato } from "./actions";
 import { AjudaTela } from "@/components/app/ajuda-tela";
@@ -87,7 +87,7 @@ export default async function ContratosPage() {
       label: "Cliente",
       type: "select",
       required: true,
-      options: clients.map((c) => ({ value: c.id, label: rotuloCliente(c) })),
+      options: clients.map((c) => ({ value: c.id, label: nomeExibicao(c) })),
     },
     { name: "titulo", label: "Título do contrato", required: true, full: true },
     {

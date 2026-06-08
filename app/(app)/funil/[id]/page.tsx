@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, FileText, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatBRL, formatPhone, onlyDigits } from "@/lib/format";
-import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
+import { nomeExibicao, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import {
   STAGE_LABEL,
   STAGE_TONE,
@@ -126,7 +126,7 @@ export default async function DealPage({
       type: "select",
       options: [
         { value: "none", label: "Sem vínculo" },
-        ...clients.map((c) => ({ value: c.id, label: rotuloCliente(c) })),
+        ...clients.map((c) => ({ value: c.id, label: nomeExibicao(c) })),
       ],
     },
     { name: "descricao", label: "Observações", type: "textarea" },

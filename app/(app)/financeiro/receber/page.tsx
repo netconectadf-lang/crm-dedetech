@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { formatBRL, formatDate } from "@/lib/format";
 import { effectiveStatus, PAYMENT_LABEL, type FinanceStatus, type PaymentMethod } from "@/lib/financeiro";
-import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
+import { nomeExibicao, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { salvarReceber, receber, cancelarReceber, excluirReceber } from "../actions";
 import { gerarCobranca } from "../charge-actions";
@@ -80,7 +80,7 @@ export default async function ReceberPage({
   const filtradas = f ? contas.filter((c) => effectiveStatus(c).key === f) : contas;
 
   const createFields: Field[] = [
-    { name: "client_id", label: "Cliente", type: "select", options: [{ value: "none", label: "—" }, ...clients.map((c) => ({ value: c.id, label: rotuloCliente(c) }))] },
+    { name: "client_id", label: "Cliente", type: "select", options: [{ value: "none", label: "—" }, ...clients.map((c) => ({ value: c.id, label: nomeExibicao(c) }))] },
     { name: "descricao", label: "Descrição", required: true, full: true },
     { name: "valor", label: "Valor (R$)", type: "number", required: true },
     { name: "vencimento", label: "Vencimento", type: "date", required: true },

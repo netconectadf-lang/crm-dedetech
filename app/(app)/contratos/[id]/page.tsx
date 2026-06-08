@@ -17,7 +17,7 @@ import {
   type ContractStatus,
   type AdjustmentIndex,
 } from "@/lib/contratos";
-import { rotuloCliente, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
+import { nomeExibicao, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { ResourceForm } from "@/components/app/resource-form";
 import { ResourceDialog } from "@/components/app/resource-dialog";
@@ -131,7 +131,7 @@ export default async function ContratoPage({
       label: "Cliente",
       type: "select",
       required: true,
-      options: clients.map((cl) => ({ value: cl.id, label: rotuloCliente(cl) })),
+      options: clients.map((cl) => ({ value: cl.id, label: nomeExibicao(cl) })),
     },
     { name: "titulo", label: "Título", required: true, full: true },
     {

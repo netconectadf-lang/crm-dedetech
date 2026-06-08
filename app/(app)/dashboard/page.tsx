@@ -14,6 +14,8 @@ import {
   AlertTriangle,
   CalendarClock,
   RefreshCw,
+  Plus,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -25,7 +27,6 @@ import { STAGE_LABEL } from "@/lib/funil";
 import { OS_STATUS_LABEL, type OsStatus } from "@/lib/os";
 import { cn } from "@/lib/utils";
 import { KpiCard, Panel } from "@/components/dashboard/kpi-card";
-import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { CashflowChart } from "@/components/dashboard/cashflow-chart";
 
 export const metadata = { title: "Dashboard" };
@@ -167,8 +168,34 @@ export default async function DashboardPage() {
         </span>
       </div>
 
-      {/* Onboarding — primeiros passos (só p/ dono, some quando completo) */}
-      {ctx.role === "owner" && <OnboardingChecklist tenantId={ctx.tenantId} />}
+      {/* Ações rápidas — atalhos para os cadastros do dia a dia */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {(
+          [
+            { href: "/os", label: "Incluir nova OS", icon: Plus, show: showOp },
+            { href: "/os?status=agendada", label: "Atender OS", icon: ClipboardList, show: showOp },
+            { href: "/financeiro/pagar", label: "Pagar", icon: ArrowUpCircle, show: showFin },
+            { href: "/financeiro/receber", label: "Receber", icon: ArrowDownCircle, show: showFin },
+            { href: "/notas", label: "Notas fiscais", icon: FileText, show: showFin },
+          ] as { href: string; label: string; icon: LucideIcon; show: boolean }[]
+        )
+          .filter((a) => a.show)
+          .map((a) => {
+            const Icon = a.icon;
+            return (
+              <Link
+                key={a.label}
+                href={a.href}
+                className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 py-4 text-center transition-colors hover:border-primary/40 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-inset ring-primary/20 transition-colors group-hover:bg-primary/15">
+                  <Icon className="size-5" />
+                </span>
+                <span className="text-sm font-medium text-foreground">{a.label}</span>
+              </Link>
+            );
+          })}
+      </div>
 
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

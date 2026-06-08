@@ -18,6 +18,7 @@ import { evolutionConfigured, getConnectionState } from "@/lib/whatsapp/evolutio
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 
 export const metadata = { title: "Integrações" };
 
@@ -121,6 +122,9 @@ export default async function IntegracoesPage() {
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
       <PageHeader title="Integrações" description="Conecte serviços externos à sua empresa." />
+
+      {/* Primeiros passos — checklist de configuração (movido do dashboard) */}
+      <OnboardingChecklist tenantId={ctx.tenantId} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {integracoes.map((item) => {

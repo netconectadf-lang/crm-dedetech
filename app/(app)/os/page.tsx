@@ -10,7 +10,7 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { nomeExibicao } from "@/lib/clientes";
+import { nomeExibicao, nomeSobrenome } from "@/lib/clientes";
 import {
   OS_STATUS_LABEL,
   OS_STATUS_TONE,
@@ -360,7 +360,7 @@ export default async function OsPage({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell>{o.employees?.nome ?? "—"}</TableCell>
+                      <TableCell>{nomeSobrenome(o.employees?.nome)}</TableCell>
                       <TableCell>
                         <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${OS_STATUS_TONE[o.status]}`}>
                           {OS_STATUS_LABEL[o.status]}

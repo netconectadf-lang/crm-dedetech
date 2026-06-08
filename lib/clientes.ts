@@ -102,6 +102,14 @@ export function nomeExibicao(
   return c.nome_fantasia?.trim() || nomeCurto(c.razao_social);
 }
 
+/** Nome e sobrenome de uma pessoa: primeiro + último nome (ex: "EMERSON MATA"). */
+export function nomeSobrenome(nome: string | null | undefined): string {
+  if (!nome) return "—";
+  const t = nome.trim().split(/\s+/).filter(Boolean);
+  if (t.length <= 1) return t[0] ?? "—";
+  return `${t[0]} ${t[t.length - 1]}`;
+}
+
 /**
  * Descobre as redes (marcas que se repetem ≥ minOcorr e não são genéricas)
  * a partir de uma lista de clientes. Retorna o conjunto de marcas-rede e a

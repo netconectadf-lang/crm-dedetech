@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ExecucaoMidia } from "@/components/execucao-midia";
 import { requireRole } from "@/lib/auth";
 import { formatDate, formatPhone, formatBRL, onlyDigits } from "@/lib/format";
-import { rotuloCliente, nomeExibicao } from "@/lib/clientes";
+import { nomeExibicao } from "@/lib/clientes";
 import { OS_STATUS_LABEL, OS_STATUS_TONE, type OsStatus, type ApplicationMethod } from "@/lib/os";
 import { StatusStepper } from "@/components/os/status-stepper";
 import { OsTimeline } from "@/components/os/os-timeline";
@@ -150,7 +150,7 @@ export default async function OsDetailPage({
   const markup = custoTotal > 0 ? Math.round((margem / custoTotal) * 100) : null;
 
   const editFields: Field[] = [
-    { name: "client_id", label: "Cliente", type: "select", required: true, options: clients.map((c) => ({ value: c.id, label: rotuloCliente(c) })) },
+    { name: "client_id", label: "Cliente", type: "select", required: true, options: clients.map((c) => ({ value: c.id, label: nomeExibicao(c) })) },
     { name: "unit_id", label: "Unidade", type: "select", options: [{ value: "none", label: "—" }, ...unidades.map((u) => ({ value: u.id, label: u.apelido }))] },
     { name: "scheduled_at", label: "Agendamento", type: "date" },
     { name: "tecnico_id", label: "Técnico", type: "select", options: [{ value: "none", label: "—" }, ...tecnicos.map((t) => ({ value: t.id, label: t.nome }))] },

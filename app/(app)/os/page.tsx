@@ -10,7 +10,7 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { rotuloCliente, nomeExibicao } from "@/lib/clientes";
+import { nomeExibicao } from "@/lib/clientes";
 import {
   OS_STATUS_LABEL,
   OS_STATUS_TONE,
@@ -179,7 +179,7 @@ export default async function OsPage({
       label: "Cliente",
       type: "select",
       required: true,
-      options: clients.map((c) => ({ value: c.id, label: rotuloCliente(c) })),
+      options: clients.map((c) => ({ value: c.id, label: nomeExibicao(c) })),
     },
     { name: "scheduled_at", label: "Agendamento", type: "date" },
     {

@@ -51,10 +51,10 @@ const FILTROS = [
 export default async function ReceberPage({
   searchParams,
 }: {
-  searchParams: Promise<{ f?: string }>;
+  searchParams: Promise<{ f?: string; nova?: string }>;
 }) {
   await requireRole(["owner", "financeiro"]);
-  const { f } = await searchParams;
+  const { f, nova } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: arData }, { data: clientsData }, { data: banksData }] =
@@ -143,6 +143,7 @@ export default async function ReceberPage({
               title="Nova conta a receber"
               fields={createFields}
               action={salvarReceber.bind(null, null)}
+              autoOpen={nova === "1"}
             />
           </div>
         }

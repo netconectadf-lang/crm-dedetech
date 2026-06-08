@@ -49,10 +49,10 @@ const FILTROS = [
 export default async function PagarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ f?: string }>;
+  searchParams: Promise<{ f?: string; nova?: string }>;
 }) {
   await requireRole(["owner", "financeiro"]);
-  const { f } = await searchParams;
+  const { f, nova } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: apData }, { data: supData }, { data: ccData }, { data: banksData }] =
@@ -140,6 +140,7 @@ export default async function PagarPage({
               title="Nova conta a pagar"
               fields={createFields}
               action={salvarPagar.bind(null, null)}
+              autoOpen={nova === "1"}
             />
           </div>
         }

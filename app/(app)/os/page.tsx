@@ -90,11 +90,11 @@ function tipoServicoDasObs(obs: string | null): string | null {
 export default async function OsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; nova?: string }>;
 }) {
   const ctx = await requireRole(["owner", "operacional", "tecnico", "financeiro"]);
   const podeExcluir = ["owner", "operacional", "financeiro"].includes(ctx.role);
-  const { status } = await searchParams;
+  const { status, nova } = await searchParams;
   const supabase = await createClient();
 
   const hoje = new Date().toISOString().slice(0, 10);
@@ -248,6 +248,7 @@ export default async function OsPage({
               servicos={servicos}
               pragas={pragasCat}
               estruturas={estrutCat}
+              autoOpen={nova === "1"}
             />
           </div>
         }

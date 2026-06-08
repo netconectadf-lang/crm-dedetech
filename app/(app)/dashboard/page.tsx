@@ -50,6 +50,15 @@ const osDot: Record<OsStatus, string> = {
   cancelada: "bg-destructive",
 };
 
+// Cores dos botões de ação rápida (cada um com sua cor)
+const QA_TONE: Record<string, string> = {
+  emerald: "bg-emerald-500/12 text-emerald-300 ring-emerald-500/25 group-hover:bg-emerald-500/20",
+  amber: "bg-amber-500/12 text-amber-300 ring-amber-500/25 group-hover:bg-amber-500/20",
+  rose: "bg-rose-500/12 text-rose-300 ring-rose-500/25 group-hover:bg-rose-500/20",
+  sky: "bg-sky-500/12 text-sky-300 ring-sky-500/25 group-hover:bg-sky-500/20",
+  violet: "bg-violet-500/12 text-violet-300 ring-violet-500/25 group-hover:bg-violet-500/20",
+};
+
 const CHIP_TONE: Record<string, string> = {
   emerald: "bg-emerald-500/12 text-emerald-300 ring-emerald-500/25",
   sky: "bg-sky-500/12 text-sky-300 ring-sky-500/25",
@@ -169,15 +178,15 @@ export default async function DashboardPage() {
       </div>
 
       {/* Ações rápidas — atalhos para os cadastros do dia a dia */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
         {(
           [
-            { href: "/os", label: "Incluir nova OS", icon: Plus, show: showOp },
-            { href: "/os?status=agendada", label: "Atender OS", icon: ClipboardList, show: showOp },
-            { href: "/financeiro/pagar", label: "Pagar", icon: ArrowUpCircle, show: showFin },
-            { href: "/financeiro/receber", label: "Receber", icon: ArrowDownCircle, show: showFin },
-            { href: "/notas", label: "Notas fiscais", icon: FileText, show: showFin },
-          ] as { href: string; label: string; icon: LucideIcon; show: boolean }[]
+            { href: "/os?nova=1", label: "Incluir nova OS", icon: Plus, tone: "emerald", show: showOp },
+            { href: "/os?status=agendada", label: "Atender OS", icon: ClipboardList, tone: "amber", show: showOp },
+            { href: "/financeiro/pagar?nova=1", label: "Pagar", icon: ArrowUpCircle, tone: "rose", show: showFin },
+            { href: "/financeiro/receber?nova=1", label: "Receber", icon: ArrowDownCircle, tone: "sky", show: showFin },
+            { href: "/notas", label: "Notas fiscais", icon: FileText, tone: "violet", show: showFin },
+          ] as { href: string; label: string; icon: LucideIcon; tone: string; show: boolean }[]
         )
           .filter((a) => a.show)
           .map((a) => {
@@ -186,12 +195,17 @@ export default async function DashboardPage() {
               <Link
                 key={a.label}
                 href={a.href}
-                className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 py-4 text-center transition-colors hover:border-primary/40 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 py-3.5 text-center transition-colors hover:border-primary/40 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:py-4"
               >
-                <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-inset ring-primary/20 transition-colors group-hover:bg-primary/15">
+                <span
+                  className={cn(
+                    "flex size-10 items-center justify-center rounded-lg ring-1 ring-inset transition-colors",
+                    QA_TONE[a.tone],
+                  )}
+                >
                   <Icon className="size-5" />
                 </span>
-                <span className="text-sm font-medium text-foreground">{a.label}</span>
+                <span className="text-xs font-medium text-foreground sm:text-sm">{a.label}</span>
               </Link>
             );
           })}

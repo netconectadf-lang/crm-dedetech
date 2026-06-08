@@ -22,6 +22,7 @@ export function ResourceDialog({
   defaultValues,
   submitLabel,
   docOcr,
+  autoOpen = false,
 }: {
   trigger: React.ReactNode;
   title: string;
@@ -31,8 +32,10 @@ export function ResourceDialog({
   defaultValues?: Record<string, unknown>;
   submitLabel?: string;
   docOcr?: boolean;
+  /** Abre o dialog automaticamente (ex.: atalho do dashboard ?nova=1). */
+  autoOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

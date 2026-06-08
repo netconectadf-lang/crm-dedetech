@@ -44,6 +44,7 @@ export function NovaOSDialog({
   servicos,
   pragas,
   estruturas,
+  autoOpen = false,
 }: {
   clientes: Opt[];
   tecnicos: Opt[];
@@ -51,8 +52,10 @@ export function NovaOSDialog({
   servicos: { id: string; nome: string }[];
   pragas: string[];
   estruturas: string[];
+  /** Abre o dialog automaticamente (ex.: vindo do atalho do dashboard /os?nova=1). */
+  autoOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
   const [state, formAction, pending] = useActionState<SaveState, FormData>(criarOS, null);
 
   const [serviceId, setServiceId] = useState("");

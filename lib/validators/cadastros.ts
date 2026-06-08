@@ -163,6 +163,9 @@ export const vehicleSchema = z.object({
   vencimento_licenciamento: opt(z.string()),
   km_atual: numero,
   km_proxima_revisao: numero,
+  // Consumo em km/litro — usado no cálculo do custo de combustível da OS
+  // (combustível = km × preço/L ÷ consumo). Sem isso o consumo não persistia.
+  consumo_km_l: numero,
   ativo: z.coerce.boolean().default(true),
 });
 

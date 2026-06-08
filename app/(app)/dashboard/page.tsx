@@ -297,15 +297,6 @@ export default async function DashboardPage() {
               href="/estoque"
               tone={m.estoqueCritico > 0 ? "warning" : "cyan"}
             />
-            <KpiCard
-              style={next()}
-              icon={Radar}
-              label="Pontos MIP críticos"
-              value={String(m.mipCritico)}
-              hint={m.mipCritico > 0 ? "exigem ação" : "sob controle"}
-              href="/mip"
-              tone={m.mipCritico > 0 ? "danger" : "cyan"}
-            />
           </>
         )}
       </div>

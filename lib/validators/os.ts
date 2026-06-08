@@ -35,6 +35,18 @@ const listaNomes = z.preprocess((v) => {
   return [];
 }, z.array(z.string()));
 
+/**
+ * Schema da CRIAÇÃO de OS — além dos campos básicos, aceita tipo de serviço,
+ * tipo de imóvel e as pragas/estruturas iniciais. Separado do osSchema (usado
+ * em atualizarOS) para não zerar as listas ao editar os campos básicos.
+ */
+export const criarOSSchema = osSchema.extend({
+  service_id: uuidOpt,
+  tipo_imovel: opt(z.string()),
+  pragas: listaNomes,
+  estruturas: listaNomes,
+});
+
 export const fichaSchema = z.object({
   pragas: listaNomes,
   estruturas: listaNomes,

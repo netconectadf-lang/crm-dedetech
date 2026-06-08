@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { enviarNpsDaOS } from "@/lib/nps/enviar";
 import type { SaveState } from "@/lib/crud-helpers";
-import { osSchema, fichaSchema, osProductSchema } from "@/lib/validators/os";
+import { osSchema, criarOSSchema, fichaSchema, osProductSchema } from "@/lib/validators/os";
 import type { AppRole } from "@/lib/types";
 import type { OsStatus } from "@/lib/os";
 
@@ -19,7 +19,7 @@ export async function criarOS(
   formData: FormData,
 ): Promise<SaveState> {
   const ctx = await requireRole(MANAGE);
-  const parsed = osSchema.safeParse(Object.fromEntries(formData));
+  const parsed = criarOSSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }

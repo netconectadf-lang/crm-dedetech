@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  Plus,
   ExternalLink,
   ClipboardList,
   AlertTriangle,
@@ -17,13 +16,12 @@ import {
   OS_PENDENTE,
   type OsStatus,
 } from "@/lib/os";
-import type { Field } from "@/components/app/resource-form";
-import { criarOS, excluirOS } from "./actions";
+import { excluirOS } from "./actions";
 import { AjudaTela } from "@/components/app/ajuda-tela";
 import { DeleteButton } from "@/components/app/delete-button";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
-import { ResourceDialog } from "@/components/app/resource-dialog";
+import { NovaOSDialog } from "@/components/os/nova-os-dialog";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -110,14 +108,25 @@ export default async function OsPage({
     .order("scheduled_at", { ascending: true, nullsFirst: false });
   if (status) query = query.eq("status", status as never);
 
-  const [{ data: osData }, { data: allOs }, { data: clientsData }, { data: tecData }, { data: vehData }] =
-    await Promise.all([
-      query,
-      supabase.from("service_orders").select("status, scheduled_at"),
-      supabase.from("clients").select("id, razao_social, nome_fantasia, documento, bairro, cidade, uf, logradouro, numero").eq("ativo", true).order("razao_social"),
-      supabase.from("employees").select("id, nome").eq("ativo", true).order("nome"),
-      supabase.from("vehicles").select("id, placa, modelo").eq("ativo", true).order("placa"),
-    ]);
+  const [
+    { data: osData },
+    { data: allOs },
+    { data: clientsData },
+    { data: tecData },
+    { data: vehData },
+    { data: servData },
+    { data: pragasData },
+    { data: estrutData },
+  ] = await Promise.all([
+    query,
+    supabase.from("service_orders").select("status, scheduled_at"),
+    supabase.from("clients").select("id, razao_social, nome_fantasia, documento, bairro, cidade, uf, logradouro, numero").eq("ativo", true).order("razao_social"),
+    supabase.from("employees").select("id, nome").eq("ativo", true).order("nome"),
+    supabase.from("vehicles").select("id, placa, modelo").eq("ativo", true).order("placa"),
+    supabase.from("services").select("id, nome").eq("ativo", true).order("nome"),
+    supabase.from("pragas").select("nome").eq("ativo", true).order("nome"),
+    supabase.from("estruturas").select("nome").eq("ativo", true).order("nome"),
+  ]);
 
   const oss = (osData as OS[] | null) ?? [];
 
@@ -162,6 +171,17 @@ export default async function OsPage({
   const clients = (clientsData as ClienteOpcao[] | null) ?? [];
   const tecnicos = (tecData as { id: string; nome: string }[] | null) ?? [];
   const veiculos = (vehData as { id: string; placa: string; modelo: string | null }[] | null) ?? [];
+  const servicos = (servData as { id: string; nome: string }[] | null) ?? [];
+  const pragasCat = ((pragasData as { nome: string }[] | null) ?? []).map((p) => p.nome);
+  const estrutCat = ((estrutData as { nome: string }[] | null) ?? []).map((e) => e.nome);
+
+  // Opções (value/label) para o dialog de Nova OS
+  const clienteOpts = clients.map((c) => ({ value: c.id, label: nomeExibicao(c) }));
+  const tecnicoOpts = tecnicos.map((t) => ({ value: t.id, label: t.nome }));
+  const veiculoOpts = veiculos.map((v) => ({
+    value: v.id,
+    label: `${v.placa}${v.modelo ? ` · ${v.modelo}` : ""}`,
+  }));
 
   // KPIs operacionais
   const dia = (o: { scheduled_at: string | null }) => o.scheduled_at?.slice(0, 10);
@@ -172,32 +192,6 @@ export default async function OsPage({
     (o) => pendente(o.status) && dia(o) && dia(o)! >= hoje && dia(o)! <= semana,
   ).length;
   const kpiFaturar = all.filter((o) => o.status === "executada").length;
-
-  const fields: Field[] = [
-    {
-      name: "client_id",
-      label: "Cliente",
-      type: "select",
-      required: true,
-      options: clients.map((c) => ({ value: c.id, label: nomeExibicao(c) })),
-    },
-    { name: "scheduled_at", label: "Agendamento", type: "date" },
-    {
-      name: "tecnico_id",
-      label: "Técnico",
-      type: "select",
-      options: [{ value: "none", label: "—" }, ...tecnicos.map((t) => ({ value: t.id, label: t.nome }))],
-    },
-    {
-      name: "vehicle_id",
-      label: "Veículo",
-      type: "select",
-      options: [
-        { value: "none", label: "—" },
-        ...veiculos.map((v) => ({ value: v.id, label: `${v.placa}${v.modelo ? ` · ${v.modelo}` : ""}` })),
-      ],
-    },
-  ];
 
   const filtros: { key: string; label: string }[] = [
     { key: "", label: "Todas" },
@@ -247,12 +241,13 @@ export default async function OsPage({
               ]}
               dica="OS originadas de contrato ou orçamento já trazem o tipo de serviço preenchido automaticamente."
             />
-            <ResourceDialog
-              trigger={<Button><Plus className="size-4" /> Nova OS</Button>}
-              title="Nova ordem de serviço"
-              fields={fields}
-              action={criarOS}
-              submitLabel="Criar OS"
+            <NovaOSDialog
+              clientes={clienteOpts}
+              tecnicos={tecnicoOpts}
+              veiculos={veiculoOpts}
+              servicos={servicos}
+              pragas={pragasCat}
+              estruturas={estrutCat}
             />
           </div>
         }

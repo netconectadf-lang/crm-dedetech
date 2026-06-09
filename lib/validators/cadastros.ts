@@ -24,6 +24,46 @@ const digits = z
   .optional()
   .transform((v) => (v ? v.replace(/\D/g, "") : undefined));
 
+/** Valida CPF pelos dígitos verificadores. */
+export function validarCPF(cpf: string): boolean {
+  const c = (cpf ?? "").replace(/\D/g, "");
+  if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
+  let s = 0;
+  for (let i = 0; i < 9; i++) s += parseInt(c[i], 10) * (10 - i);
+  let d = 11 - (s % 11);
+  if (d >= 10) d = 0;
+  if (d !== parseInt(c[9], 10)) return false;
+  s = 0;
+  for (let i = 0; i < 10; i++) s += parseInt(c[i], 10) * (11 - i);
+  d = 11 - (s % 11);
+  if (d >= 10) d = 0;
+  return d === parseInt(c[10], 10);
+}
+
+/** Valida CNPJ pelos dígitos verificadores. */
+export function validarCNPJ(cnpj: string): boolean {
+  const c = (cnpj ?? "").replace(/\D/g, "");
+  if (c.length !== 14 || /^(\d)\1{13}$/.test(c)) return false;
+  const dig = (len: number) => {
+    const pesos = len === 12
+      ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+      : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    let s = 0;
+    for (let i = 0; i < len; i++) s += parseInt(c[i], 10) * pesos[i];
+    const r = s % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  return dig(12) === parseInt(c[12], 10) && dig(13) === parseInt(c[13], 10);
+}
+
+/** Documento opcional, mas se preenchido tem que ser um CPF ou CNPJ VÁLIDO. */
+export function documentoValido(v: string | undefined): boolean {
+  if (!v) return true;
+  if (v.length === 11) return validarCPF(v);
+  if (v.length === 14) return validarCNPJ(v);
+  return false;
+}
+
 const numero = z.preprocess(
   (v) => (v === "" || v == null ? undefined : Number(v)),
   z.number().optional(),
@@ -32,10 +72,7 @@ const numero = z.preprocess(
 // ─── Cliente ─────────────────────────────────────────────────────────
 export const clientSchema = z.object({
   tipo: z.enum(["PF", "PJ"]),
-  documento: digits.refine(
-    (v) => !v || v.length === 11 || v.length === 14,
-    "CPF (11) ou CNPJ (14) inválido",
-  ),
+  documento: digits.refine(documentoValido, "CPF/CNPJ inválido — confira os dígitos."),
   razao_social: z.string().min(2, "Informe o nome / razão social"),
   nome_fantasia: opt(z.string()),
   inscricao_estadual: opt(z.string()),

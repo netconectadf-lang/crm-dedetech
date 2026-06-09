@@ -8,7 +8,7 @@ import { effectiveStatus, PAYMENT_LABEL, type FinanceStatus, type PaymentMethod 
 import { nomeExibicao, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { salvarReceber, receber, cancelarReceber, excluirReceber } from "../actions";
-import { gerarCobranca } from "../charge-actions";
+import { CobrarButtons } from "@/components/financeiro/cobrar-buttons";
 import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
@@ -70,6 +70,22 @@ export default async function ReceberPage({
   const contas = (arData as AR[] | null) ?? [];
   const clients = (clientsData as ClienteOpcao[] | null) ?? [];
   const banks = (banksData as { id: string; nome: string }[] | null) ?? [];
+
+  // Última cobrança (fatura/PIX) gerada por conta — pra mostrar o link na linha
+  const arIds = contas.map((c) => c.id);
+  const { data: chargesData } = arIds.length
+    ? await supabase
+        .from("charges")
+        .select("ar_id, invoice_url, pix_payload, created_at")
+        .in("ar_id", arIds)
+        .order("created_at", { ascending: false })
+    : { data: [] };
+  const faturaPorAr = new Map<string, { invoiceUrl: string | null; pixPayload: string | null }>();
+  for (const ch of (chargesData as { ar_id: string; invoice_url: string | null; pix_payload: string | null }[] | null) ?? []) {
+    if (ch.invoice_url && !faturaPorAr.has(ch.ar_id)) {
+      faturaPorAr.set(ch.ar_id, { invoiceUrl: ch.invoice_url, pixPayload: ch.pix_payload });
+    }
+  }
 
   const abertas = contas.filter((c) => c.status === "a_vencer" || c.status === "parcial");
   const emAberto = abertas.reduce((s, c) => s + (Number(c.valor) - Number(c.valor_pago)), 0);
@@ -201,15 +217,7 @@ export default async function ReceberPage({
                         <div className="flex justify-end gap-1">
                           {aberto && (
                             <>
-                              <form action={gerarCobranca.bind(null, c.id, "pix")}>
-                                <Button type="submit" variant="ghost" size="sm" title="Gerar cobrança PIX">PIX</Button>
-                              </form>
-                              <form action={gerarCobranca.bind(null, c.id, "boleto")}>
-                                <Button type="submit" variant="ghost" size="sm" title="Gerar boleto">Boleto</Button>
-                              </form>
-                              <form action={gerarCobranca.bind(null, c.id, "cartao")}>
-                                <Button type="submit" variant="ghost" size="sm" title="Gerar link de cartão">Cartão</Button>
-                              </form>
+                              <CobrarButtons arId={c.id} existing={faturaPorAr.get(c.id)} />
                               <ResourceDialog
                                 trigger={<Button variant="ghost" size="sm" className="text-emerald-300"><Check className="size-4" /> Receber</Button>}
                                 title="Registrar recebimento"

@@ -15,12 +15,21 @@ import type { AppRole } from "@/lib/types";
 
 const ROLES: AppRole[] = ["owner", "financeiro"];
 
+export type CobrancaResult = {
+  ok: boolean;
+  error?: string;
+  invoiceUrl?: string | null;
+  pixPayload?: string | null;
+  manual?: boolean;
+};
+
 /**
  * Gera uma cobrança (boleto/PIX/cartão) para uma Conta a Receber. Usa a conta
  * Asaas da empresa quando conectada (sincronizando o cliente como customer);
  * sem integração, registra uma cobrança MANUAL. Notifica o cliente com o link.
+ * Retorna o resultado (link/PIX ou o erro do Asaas) para a UI exibir.
  */
-export async function gerarCobranca(arId: string, tipo: ChargeTipo) {
+export async function gerarCobranca(arId: string, tipo: ChargeTipo): Promise<CobrancaResult> {
   const ctx = await requireRole(ROLES);
   const supabase = await createClient();
 
@@ -46,7 +55,7 @@ export async function gerarCobranca(arId: string, tipo: ChargeTipo) {
       asaas_customer_id: string | null;
     } | null;
   } | null;
-  if (!ar) return;
+  if (!ar) return { ok: false, error: "Conta a receber não encontrada." };
 
   const config = await getPaymentIntegration(supabase, ctx.tenantId);
 
@@ -80,6 +89,18 @@ export async function gerarCobranca(arId: string, tipo: ChargeTipo) {
     tipo,
   });
 
+  // Asaas conectado mas não criou → surface o motivo (não cria cobrança fantasma)
+  if (config && asaas.skipped) {
+    return {
+      ok: false,
+      error:
+        "Não consegui criar o cliente no Asaas. Confira se o cliente tem CPF/CNPJ válido.",
+    };
+  }
+  if (config && !asaas.ok) {
+    return { ok: false, error: asaas.error ? `Asaas recusou: ${asaas.error}` : "O Asaas recusou a cobrança." };
+  }
+
   const { data: chargeData } = await supabase
     .from("charges")
     .insert({
@@ -111,4 +132,10 @@ export async function gerarCobranca(arId: string, tipo: ChargeTipo) {
   }
 
   revalidatePath("/financeiro/receber");
+  return {
+    ok: true,
+    invoiceUrl: asaas.invoiceUrl ?? null,
+    pixPayload: asaas.pixPayload ?? null,
+    manual: asaas.skipped === true,
+  };
 }

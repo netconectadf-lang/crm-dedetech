@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { saveRecord, deleteRecord, type SaveState } from "@/lib/crud-helpers";
+import { gerarCobranca, type CobrancaResult } from "./charge-actions";
+import type { ChargeTipo } from "@/lib/asaas";
 import {
   receivableSchema,
   payableSchema,
@@ -246,4 +248,82 @@ export async function gerarCobrancaDaOS(osId: string) {
     .eq("tenant_id", ctx.tenantId);
 
   redirect("/financeiro/receber");
+}
+
+/**
+ * Fatura a OS com o VALOR informado e já gera a cobrança no Asaas no tipo
+ * escolhido (PIX/boleto/cartão), num passo só. Reaproveita a conta a receber
+ * da OS se já existir. Retorna o link/PIX (ou o erro) para a UI exibir.
+ */
+export async function faturarEGerarCobranca(
+  osId: string,
+  input: { valor: number; vencimento: string; tipo: ChargeTipo },
+): Promise<CobrancaResult> {
+  const ctx = await requireRole(["owner", "financeiro"]);
+  const supabase = await createClient();
+
+  const valor = Number(input.valor);
+  if (!valor || valor <= 0) return { ok: false, error: "Informe um valor válido." };
+
+  const { data: osData } = await supabase
+    .from("service_orders")
+    .select("id, numero, status, client_id, contract_id")
+    .eq("id", osId)
+    .maybeSingle();
+  const os = osData as {
+    id: string;
+    numero: number;
+    status: string;
+    client_id: string;
+    contract_id: string | null;
+  } | null;
+  if (!os) return { ok: false, error: "OS não encontrada." };
+
+  const venc =
+    input.vencimento ||
+    (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      return d.toISOString().slice(0, 10);
+    })();
+
+  // reaproveita a conta a receber da OS se já existir; senão cria
+  const { data: arExist } = await supabase
+    .from("accounts_receivable")
+    .select("id")
+    .eq("os_id", osId)
+    .neq("status", "cancelado")
+    .maybeSingle();
+  let arId = (arExist as { id: string } | null)?.id;
+
+  if (!arId) {
+    const { data: novo, error } = await supabase
+      .from("accounts_receivable")
+      .insert({
+        tenant_id: ctx.tenantId,
+        client_id: os.client_id,
+        os_id: os.id,
+        contract_id: os.contract_id,
+        descricao: `OS #${os.numero}`,
+        valor,
+        vencimento: venc,
+      } as never)
+      .select("id")
+      .single();
+    if (error || !novo) return { ok: false, error: "Não foi possível criar a conta a receber." };
+    arId = (novo as { id: string }).id;
+  }
+
+  if (os.status !== "faturada") {
+    await supabase
+      .from("service_orders")
+      .update({ status: "faturada" } as never)
+      .eq("id", os.id)
+      .eq("tenant_id", ctx.tenantId);
+  }
+
+  const r = await gerarCobranca(arId, input.tipo);
+  revalidatePath(`/os/${osId}`);
+  revalidatePath("/financeiro/receber");
+  return r;
 }

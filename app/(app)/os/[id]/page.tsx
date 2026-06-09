@@ -22,6 +22,7 @@ import { OsStatusButtons } from "@/components/os/os-status-buttons";
 import { FinalizeButton } from "@/components/os/finalize-button";
 import { AddOsProduct } from "@/components/os/add-os-product";
 import { FichaForm } from "@/components/os/ficha-form";
+import { EmitirNotaButton } from "@/components/notas/emitir-nota";
 import { atualizarOS, excluirOS, removerProdutoOS } from "../actions";
 import { PageHeader } from "@/components/app/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -123,7 +124,7 @@ export default async function OsDetailPage({
       supabase.from("clients").select("id, razao_social, nome_fantasia, documento, bairro, cidade, uf, logradouro, numero").eq("ativo", true).order("razao_social"),
       supabase.from("employees").select("id, nome").eq("ativo", true).order("nome"),
       supabase.from("vehicles").select("id, placa").eq("ativo", true).order("placa"),
-      supabase.from("accounts_receivable").select("valor").eq("os_id", id).neq("status", "cancelado"),
+      supabase.from("accounts_receivable").select("id, valor").eq("os_id", id).neq("status", "cancelado"),
       supabase.from("pragas").select("nome").eq("ativo", true).order("nome"),
       supabase.from("estruturas").select("nome").eq("ativo", true).order("nome"),
       supabase.from("service_providers").select("id, nome").eq("ativo", true).order("nome"),
@@ -143,8 +144,9 @@ export default async function OsDetailPage({
   const finalizada = os.status === "executada" || os.status === "faturada";
   const podeFinalizar = ["agendada", "a_caminho", "em_execucao"].includes(os.status);
 
-  const ar = (arData as { valor: number }[] | null) ?? [];
+  const ar = (arData as { id: string; valor: number }[] | null) ?? [];
   const receita = ar.reduce((s, a) => s + Number(a.valor), 0);
+  const cobrancaId = ar[0]?.id ?? null;
   const custoTotal = Number(os.custo_total ?? 0);
   const margem = receita - custoTotal;
   const markup = custoTotal > 0 ? Math.round((margem / custoTotal) * 100) : null;
@@ -197,6 +199,14 @@ export default async function OsDetailPage({
             )}
             {os.status === "executada" && (
               <GerarCobrancaOSDialog osId={os.id} valorSugerido={receita} />
+            )}
+            {os.status === "faturada" && cobrancaId && (
+              <EmitirNotaButton
+                arId={cobrancaId}
+                variant="outline"
+                size="default"
+                label="Gerar nota fiscal"
+              />
             )}
             {finalizada && (
               <form action={enviarNPS.bind(null, os.id)}>

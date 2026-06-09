@@ -7,13 +7,20 @@ import { ScrollText } from "lucide-react";
 import { emitirNotaDaCobranca } from "@/app/(app)/notas/actions";
 import { Button } from "@/components/ui/button";
 
-export function EmitirNotaButton({ arId }: { arId: string }) {
+type Props = {
+  arId: string;
+  variant?: React.ComponentProps<typeof Button>["variant"];
+  size?: React.ComponentProps<typeof Button>["size"];
+  label?: string;
+};
+
+export function EmitirNotaButton({ arId, variant = "ghost", size = "sm", label = "NFS-e" }: Props) {
   const [pending, start] = useTransition();
   return (
     <Button
       type="button"
-      variant="ghost"
-      size="sm"
+      variant={variant}
+      size={size}
       title="Emitir NFS-e"
       disabled={pending}
       onClick={() =>
@@ -24,7 +31,7 @@ export function EmitirNotaButton({ arId }: { arId: string }) {
         })
       }
     >
-      <ScrollText className="size-4" /> NFS-e
+      <ScrollText className="size-4" /> {pending ? "Emitindo…" : label}
     </Button>
   );
 }

@@ -70,3 +70,51 @@ export function proximasVisitas(
   }
   return datas;
 }
+
+/**
+ * Data de faturamento de um contrato que cai no mês de referência (ano/mês,
+ * mês 1-12), respeitando vigência e periodicidade. Retorna null se não há
+ * faturamento devido nesse mês (ex.: contrato trimestral fora do ciclo, ou
+ * mês anterior ao início / posterior ao fim da vigência).
+ */
+export function faturamentoNoMes(
+  vigenciaInicio: string,
+  diaFaturamento: number,
+  periodicidade: ContractPeriodicity,
+  ano: number,
+  mes: number, // 1-12
+  vigenciaFim?: string | null,
+): Date | null {
+  const step = PERIODICITY_MONTHS[periodicidade];
+  const inicio = new Date(`${vigenciaInicio}T00:00:00`);
+  const dia = Math.min(Math.max(diaFaturamento, 1), 28);
+
+  const primeiroDoMesRef = new Date(ano, mes - 1, 1);
+  const ultimoDoMesRef = new Date(ano, mes, 0); // dia 0 do próximo mês = último dia
+
+  // primeira ocorrência (mês da vigência, no dia de faturamento)
+  let cursor = new Date(inicio.getFullYear(), inicio.getMonth(), dia);
+
+  // avança em passos de `step` meses até alcançar/passar o mês de referência
+  let guard = 0;
+  while (cursor < primeiroDoMesRef && guard < 600) {
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + step, dia);
+    guard++;
+  }
+
+  // a ocorrência precisa cair dentro do mês de referência
+  if (cursor < primeiroDoMesRef || cursor > ultimoDoMesRef) return null;
+
+  // respeita o fim da vigência
+  if (vigenciaFim) {
+    const fim = new Date(`${vigenciaFim}T00:00:00`);
+    if (cursor > fim) return null;
+  }
+  return cursor;
+}
+
+/** Formata um Date local como "YYYY-MM-DD" (sem timezone shift). */
+export function ymdLocal(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}

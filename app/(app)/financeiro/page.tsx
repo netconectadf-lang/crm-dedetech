@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -5,6 +6,7 @@ import {
   Landmark,
   Plus,
   Pencil,
+  FileStack,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
@@ -141,7 +143,11 @@ export default async function FinanceiroPage() {
         title="Financeiro"
         description="Caixa real, fluxo, inadimplência e resultado do mês."
         action={
-          <AjudaTela
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href="/financeiro/faturamento"><FileStack className="size-4" /> Faturamento em lote</Link>
+            </Button>
+            <AjudaTela
             titulo="Como funciona o Financeiro"
             descricao="Visão geral do dinheiro: o que entra, o que sai, quanto sobra e quem está devendo."
             topicos={[
@@ -173,6 +179,7 @@ export default async function FinanceiroPage() {
             ]}
             dica="O saldo só fica certo se você der baixa (marcar como pago/recebido) nas contas e vincular cada uma à conta bancária correta."
           />
+          </div>
         }
       />
 

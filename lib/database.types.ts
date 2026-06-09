@@ -1899,6 +1899,7 @@ export type Database = {
           enabled: boolean
           environment: string
           id: string
+          juros_cartao_pct: number
           provider: string
           tenant_id: string
           updated_at: string
@@ -1911,6 +1912,7 @@ export type Database = {
           enabled?: boolean
           environment?: string
           id?: string
+          juros_cartao_pct?: number
           provider?: string
           tenant_id: string
           updated_at?: string
@@ -1923,6 +1925,7 @@ export type Database = {
           enabled?: boolean
           environment?: string
           id?: string
+          juros_cartao_pct?: number
           provider?: string
           tenant_id?: string
           updated_at?: string

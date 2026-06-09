@@ -18,6 +18,7 @@ type Props = {
   accountName?: string;
   environment: "sandbox" | "production";
   walletId: string;
+  jurosCartao: number;
   webhookUrl: string;
   webhookToken: string;
 };
@@ -53,6 +54,7 @@ export function PagamentosForm({
   accountName,
   environment,
   walletId,
+  jurosCartao,
   webhookUrl,
   webhookToken,
 }: Props) {
@@ -134,6 +136,20 @@ export function PagamentosForm({
         <div className="space-y-1.5">
           <Label htmlFor="wallet_id">Wallet ID (opcional)</Label>
           <Input id="wallet_id" name="wallet_id" defaultValue={walletId} placeholder="para split/repasse — deixe em branco se não usa" autoComplete="off" />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="juros_cartao_pct">Juros do cartão (% ao mês, a partir da 3x)</Label>
+          <Input
+            id="juros_cartao_pct"
+            name="juros_cartao_pct"
+            type="number"
+            step="0.01"
+            min="0"
+            defaultValue={jurosCartao || ""}
+            placeholder="ex.: 2,99 — 1x e 2x ficam sem juros"
+            autoComplete="off"
+          />
         </div>
 
         {teste && (

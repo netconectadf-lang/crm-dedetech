@@ -153,6 +153,95 @@ export type AsaasCharge = {
   error?: string;
 };
 
+function asaasErro(txt: string): string {
+  try {
+    const j = JSON.parse(txt);
+    return j?.errors?.[0]?.description ?? txt.slice(0, 300);
+  } catch {
+    return txt.slice(0, 300);
+  }
+}
+
+/**
+ * Cria e cobra no cartão (checkout transparente) com o TOTAL ajustado (já com
+ * juros, calculado pelo chamador) e o nº de parcelas. O cartão vai direto pro
+ * Asaas (não armazenamos). Retorna o status (CONFIRMED/RECEIVED = aprovado).
+ */
+export async function criarPagamentoCartaoAsaas(
+  config: AsaasConfig,
+  input: {
+    customerId: string;
+    total: number;
+    installmentCount: number;
+    dueDate: string;
+    descricao: string;
+    holderName: string;
+    number: string;
+    expiryMonth: string;
+    expiryYear: string;
+    ccv: string;
+    nome: string;
+    email: string;
+    cpfCnpj: string;
+    postalCode: string;
+    addressNumber: string;
+    phone: string;
+    remoteIp: string;
+  },
+): Promise<{ ok: boolean; status?: string; id?: string; error?: string }> {
+  try {
+    const body: Record<string, unknown> = {
+      customer: input.customerId,
+      billingType: "CREDIT_CARD",
+      dueDate: input.dueDate,
+      description: input.descricao,
+      externalReference: input.descricao,
+      creditCard: {
+        holderName: input.holderName,
+        number: input.number.replace(/\D/g, ""),
+        expiryMonth: input.expiryMonth,
+        expiryYear: input.expiryYear,
+        ccv: input.ccv,
+      },
+      creditCardHolderInfo: {
+        name: input.nome,
+        email: input.email,
+        cpfCnpj: input.cpfCnpj.replace(/\D/g, ""),
+        postalCode: input.postalCode.replace(/\D/g, ""),
+        addressNumber: input.addressNumber || "S/N",
+        phone: input.phone.replace(/\D/g, ""),
+      },
+      remoteIp: input.remoteIp,
+    };
+    if (input.installmentCount > 1) {
+      body.installmentCount = input.installmentCount;
+      body.totalValue = input.total;
+    } else {
+      body.value = input.total;
+    }
+
+    const res = await asaasFetch(config, "/payments", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    const txt = await res.text();
+    if (!res.ok) return { ok: false, error: asaasErro(txt) };
+    const d = JSON.parse(txt);
+    return { ok: true, status: d?.status, id: d?.id };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/** Apaga uma cobrança pendente no Asaas (best-effort, p/ não duplicar). */
+export async function deletarCobrancaAsaas(config: AsaasConfig, paymentId: string): Promise<void> {
+  try {
+    await asaasFetch(config, `/payments/${paymentId}`, { method: "DELETE" });
+  } catch {
+    /* best-effort */
+  }
+}
+
 /**
  * Cria uma cobrança no Asaas (boleto, PIX ou link de cartão). Sem config ou
  * sem customerId, devolve skipped — o chamador registra cobrança MANUAL.

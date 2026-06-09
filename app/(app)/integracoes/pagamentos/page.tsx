@@ -26,7 +26,7 @@ export default async function PagamentosPage() {
 
   const { data } = await supabase
     .from("payment_integrations")
-    .select("api_key, environment, wallet_id, webhook_token, enabled")
+    .select("api_key, environment, wallet_id, webhook_token, enabled, juros_cartao_pct")
     .eq("tenant_id", ctx.tenantId)
     .maybeSingle();
   const row = data as {
@@ -35,6 +35,7 @@ export default async function PagamentosPage() {
     wallet_id: string | null;
     webhook_token: string;
     enabled: boolean;
+    juros_cartao_pct: number | null;
   } | null;
 
   const connected = Boolean(row?.enabled && row?.api_key);
@@ -114,6 +115,7 @@ export default async function PagamentosPage() {
             accountName={accountName}
             environment={environment}
             walletId={row?.wallet_id ?? ""}
+            jurosCartao={Number(row?.juros_cartao_pct ?? 0)}
             webhookUrl={webhookUrl}
             webhookToken={row?.webhook_token ?? ""}
           />

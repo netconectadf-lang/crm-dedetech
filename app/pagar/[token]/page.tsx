@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatBRL, formatDate } from "@/lib/format";
 import { PixBox } from "@/components/pagar/pix-box";
+import { CartaoForm } from "@/components/pagar/cartao-form";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pagamento" };
@@ -40,10 +41,14 @@ export default async function PagarPage({ params }: { params: Promise<{ token: s
     );
   }
 
-  const [{ data: tenant }, { data: ar }] = await Promise.all([
+  const [{ data: tenant }, { data: ar }, { data: integ }, { data: cliente }] = await Promise.all([
     admin.from("tenants").select("nome_fantasia, logo_url, cor_primaria").eq("id", charge.tenant_id).maybeSingle(),
     charge.ar_id
       ? admin.from("accounts_receivable").select("descricao").eq("id", charge.ar_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    admin.from("payment_integrations").select("juros_cartao_pct").eq("tenant_id", charge.tenant_id).maybeSingle(),
+    charge.client_id
+      ? admin.from("clients").select("razao_social, documento, email, telefone, cep, numero").eq("id", charge.client_id).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
   const t = tenant as { nome_fantasia: string | null; logo_url: string | null; cor_primaria: string | null } | null;
@@ -51,6 +56,18 @@ export default async function PagarPage({ params }: { params: Promise<{ token: s
   const cor = t?.cor_primaria ?? "#10b981";
   const descricao = (ar as { descricao: string } | null)?.descricao ?? "Cobrança";
   const cancelada = charge.status === "cancelado" || charge.status === "estornado";
+  const jurosPct = Number((integ as { juros_cartao_pct: number | null } | null)?.juros_cartao_pct ?? 0);
+  const c = cliente as
+    | { razao_social: string; documento: string | null; email: string | null; telefone: string | null; cep: string | null; numero: string | null }
+    | null;
+  const holderPrefill = {
+    nome: c?.razao_social ?? "",
+    cpf: c?.documento ?? "",
+    email: c?.email ?? "",
+    telefone: c?.telefone ?? "",
+    cep: c?.cep ?? "",
+    numero: c?.numero ?? "",
+  };
 
   return (
     <Shell cor={cor} empresa={empresa} logo={t?.logo_url ?? undefined}>
@@ -66,6 +83,10 @@ export default async function PagarPage({ params }: { params: Promise<{ token: s
         <p className="rounded-lg border border-border bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
           Esta cobrança foi {charge.status === "estornado" ? "estornada" : "cancelada"}.
         </p>
+      ) : charge.status === "pago" ? (
+        <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-6 text-center text-sm font-semibold text-emerald-700">
+          Pagamento confirmado! ✓
+        </p>
       ) : charge.tipo === "pix" ? (
         <PixBox
           token={token}
@@ -73,10 +94,8 @@ export default async function PagarPage({ params }: { params: Promise<{ token: s
           pixQrImage={charge.pix_qr}
           statusInicial={charge.status}
         />
-      ) : charge.status === "pago" ? (
-        <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-6 text-center text-sm font-semibold text-emerald-700">
-          Pagamento confirmado! ✓
-        </p>
+      ) : charge.tipo === "cartao" ? (
+        <CartaoForm token={token} valorBase={charge.valor} jurosPct={jurosPct} holder={holderPrefill} cor={cor} />
       ) : charge.invoice_url ? (
         <a
           href={charge.invoice_url}

@@ -37,6 +37,7 @@ export async function salvarPagamentos(
   const apiKey = String(formData.get("api_key") ?? "").trim();
   const environment = parseAmbiente(formData.get("environment"));
   const walletId = String(formData.get("wallet_id") ?? "").trim() || null;
+  const jurosCartao = Math.max(0, Number(String(formData.get("juros_cartao_pct") ?? "0").replace(",", ".")) || 0);
   if (!apiKey) return { ok: false, error: "Informe a chave de API do Asaas." };
 
   // valida antes de salvar — evita gravar uma chave que não funciona
@@ -57,6 +58,7 @@ export async function salvarPagamentos(
         api_key: apiKey,
         environment,
         wallet_id: walletId,
+        juros_cartao_pct: jurosCartao,
         enabled: true,
       } as never)
       .eq("tenant_id", ctx.tenantId);
@@ -68,6 +70,7 @@ export async function salvarPagamentos(
       api_key: apiKey,
       environment,
       wallet_id: walletId,
+      juros_cartao_pct: jurosCartao,
       enabled: true,
     } as never);
     if (error) return { ok: false, error: "Não foi possível conectar." };

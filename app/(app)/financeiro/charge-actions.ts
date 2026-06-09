@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "node:crypto";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { appOrigin } from "@/lib/app-url";
 import {
   getPaymentIntegration,
   ensureAsaasCustomer,
@@ -20,6 +22,7 @@ export type CobrancaResult = {
   error?: string;
   invoiceUrl?: string | null;
   pixPayload?: string | null;
+  payUrl?: string | null; // página de pagamento PRÓPRIA (/pagar/[token])
   manual?: boolean;
 };
 
@@ -101,6 +104,9 @@ export async function gerarCobranca(arId: string, tipo: ChargeTipo): Promise<Cob
     return { ok: false, error: asaas.error ? `Asaas recusou: ${asaas.error}` : "O Asaas recusou a cobrança." };
   }
 
+  const payToken = randomUUID();
+  const payUrl = `${await appOrigin()}/pagar/${payToken}`;
+
   const { data: chargeData } = await supabase
     .from("charges")
     .insert({
@@ -114,18 +120,20 @@ export async function gerarCobranca(arId: string, tipo: ChargeTipo): Promise<Cob
       provider_charge_id: asaas.id ?? null,
       invoice_url: asaas.invoiceUrl ?? null,
       pix_payload: asaas.pixPayload ?? null,
+      pix_qr: asaas.pixQrImage ?? null,
+      pay_token: payToken,
     } as never)
     .select("id, invoice_url")
     .single();
   const charge = chargeData as { id: string; invoice_url: string | null } | null;
 
-  // notifica o cliente com o link (inerte sem WhatsApp/e-mail configurado)
-  if (ar.clients?.telefone && asaas.invoiceUrl) {
+  // notifica o cliente com o link da NOSSA página de pagamento
+  if (ar.clients?.telefone) {
     await dispatch({
       tenantId: ctx.tenantId,
       canal: "whatsapp",
       destino: ar.clients.telefone,
-      corpo: `Olá! Sua cobrança "${ar.descricao}" está disponível: ${asaas.invoiceUrl}`,
+      corpo: `Olá! Sua cobrança "${ar.descricao}" está disponível para pagamento: ${payUrl}`,
       related_kind: "cobranca",
       related_id: charge?.id,
     });
@@ -136,6 +144,7 @@ export async function gerarCobranca(arId: string, tipo: ChargeTipo): Promise<Cob
     ok: true,
     invoiceUrl: asaas.invoiceUrl ?? null,
     pixPayload: asaas.pixPayload ?? null,
+    payUrl,
     manual: asaas.skipped === true,
   };
 }

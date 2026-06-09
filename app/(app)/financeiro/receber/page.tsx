@@ -9,6 +9,7 @@ import { nomeExibicao, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clien
 import type { Field } from "@/components/app/resource-form";
 import { salvarReceber, receber, cancelarReceber, excluirReceber } from "../actions";
 import { CobrarButtons } from "@/components/financeiro/cobrar-buttons";
+import { appOrigin } from "@/lib/app-url";
 import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
@@ -71,19 +72,24 @@ export default async function ReceberPage({
   const clients = (clientsData as ClienteOpcao[] | null) ?? [];
   const banks = (banksData as { id: string; nome: string }[] | null) ?? [];
 
-  // Última cobrança (fatura/PIX) gerada por conta — pra mostrar o link na linha
+  // Última cobrança gerada por conta — pra mostrar o link de pagamento na linha
   const arIds = contas.map((c) => c.id);
   const { data: chargesData } = arIds.length
     ? await supabase
         .from("charges")
-        .select("ar_id, invoice_url, pix_payload, created_at")
+        .select("ar_id, invoice_url, pix_payload, pay_token, created_at")
         .in("ar_id", arIds)
         .order("created_at", { ascending: false })
     : { data: [] };
-  const faturaPorAr = new Map<string, { invoiceUrl: string | null; pixPayload: string | null }>();
-  for (const ch of (chargesData as { ar_id: string; invoice_url: string | null; pix_payload: string | null }[] | null) ?? []) {
-    if (ch.invoice_url && !faturaPorAr.has(ch.ar_id)) {
-      faturaPorAr.set(ch.ar_id, { invoiceUrl: ch.invoice_url, pixPayload: ch.pix_payload });
+  const origin = await appOrigin();
+  const faturaPorAr = new Map<string, { payUrl: string | null; invoiceUrl: string | null; pixPayload: string | null }>();
+  for (const ch of (chargesData as { ar_id: string; invoice_url: string | null; pix_payload: string | null; pay_token: string | null }[] | null) ?? []) {
+    if ((ch.pay_token || ch.invoice_url) && !faturaPorAr.has(ch.ar_id)) {
+      faturaPorAr.set(ch.ar_id, {
+        payUrl: ch.pay_token ? `${origin}/pagar/${ch.pay_token}` : null,
+        invoiceUrl: ch.invoice_url,
+        pixPayload: ch.pix_payload,
+      });
     }
   }
 

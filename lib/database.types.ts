@@ -351,6 +351,8 @@ export type Database = {
           id: string
           invoice_url: string | null
           pix_payload: string | null
+          pay_token: string | null
+          pix_qr: string | null
           provider: string
           provider_charge_id: string | null
           status: Database["public"]["Enums"]["charge_status"]
@@ -367,6 +369,8 @@ export type Database = {
           id?: string
           invoice_url?: string | null
           pix_payload?: string | null
+          pay_token?: string | null
+          pix_qr?: string | null
           provider?: string
           provider_charge_id?: string | null
           status?: Database["public"]["Enums"]["charge_status"]
@@ -383,6 +387,8 @@ export type Database = {
           id?: string
           invoice_url?: string | null
           pix_payload?: string | null
+          pay_token?: string | null
+          pix_qr?: string | null
           provider?: string
           provider_charge_id?: string | null
           status?: Database["public"]["Enums"]["charge_status"]

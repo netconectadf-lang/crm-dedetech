@@ -149,6 +149,7 @@ export type AsaasCharge = {
   id?: string;
   invoiceUrl?: string;
   pixPayload?: string;
+  pixQrImage?: string; // QR Code em base64 (encodedImage do Asaas)
   error?: string;
 };
 
@@ -182,11 +183,16 @@ export async function criarCobrancaAsaas(
     if (!res.ok) return { ok: false, error: (await res.text()).slice(0, 200) };
     const d = await res.json();
 
-    // para PIX, busca o QR Code copia-e-cola
+    // para PIX, busca o QR Code (copia-e-cola + imagem)
     let pixPayload: string | undefined;
+    let pixQrImage: string | undefined;
     if (args.tipo === "pix" && d?.id) {
       const qr = await asaasFetch(config, `/payments/${d.id}/pixQrCode`);
-      if (qr.ok) pixPayload = (await qr.json())?.payload;
+      if (qr.ok) {
+        const qrData = await qr.json();
+        pixPayload = qrData?.payload;
+        pixQrImage = qrData?.encodedImage;
+      }
     }
 
     return {
@@ -194,6 +200,7 @@ export async function criarCobrancaAsaas(
       id: d?.id,
       invoiceUrl: d?.invoiceUrl ?? d?.bankSlipUrl,
       pixPayload,
+      pixQrImage,
     };
   } catch (e) {
     return { ok: false, error: String(e) };

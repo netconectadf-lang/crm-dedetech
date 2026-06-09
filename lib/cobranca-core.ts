@@ -14,6 +14,7 @@ export type CobrancaResult = {
   error?: string;
   invoiceUrl?: string | null;
   pixPayload?: string | null;
+  pixQrImage?: string | null; // QR PIX em base64 (p/ o app exibir como imagem)
   payUrl?: string | null; // página de pagamento PRÓPRIA (/pagar/[token])
   manual?: boolean;
 };
@@ -127,6 +128,7 @@ export async function gerarCobrancaCore(
     ok: true,
     invoiceUrl: asaas.invoiceUrl ?? null,
     pixPayload: asaas.pixPayload ?? null,
+    pixQrImage: asaas.pixQrImage ?? null,
     payUrl,
     manual: asaas.skipped === true,
   };

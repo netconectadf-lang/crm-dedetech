@@ -23,6 +23,7 @@ export default async function IntegracaoNfsePage() {
     inscricaoMunicipal: null,
     codigoMunicipio: null,
     codTribNacional: null,
+    codTribMunicipal: null,
     aliquotaIss: null,
     issRetido: false,
     opSimplesNacional: 3,

@@ -12,6 +12,7 @@ export type ConfigFiscal = {
   inscricaoMunicipal: string | null;
   codigoMunicipio: string | null;
   codTribNacional: string | null;
+  codTribMunicipal: string | null;
   aliquotaIss: number | null;
   issRetido: boolean;
   opSimplesNacional: OpSimplesNacional;
@@ -93,8 +94,8 @@ export async function carregarConfigFiscal(tenantId: string): Promise<ConfigFisc
     .from("tenants")
     .select(
       "cnpj, nfse_inscricao_municipal, nfse_codigo_municipio, nfse_cod_trib_nacional, " +
-        "nfse_aliquota_iss, nfse_iss_retido, nfse_op_simples_nacional, nfse_reg_especial, " +
-        "nfse_ambiente, nfse_serie",
+        "nfse_cod_trib_municipal, nfse_aliquota_iss, nfse_iss_retido, nfse_op_simples_nacional, " +
+        "nfse_reg_especial, nfse_ambiente, nfse_serie",
     )
     .eq("id", tenantId)
     .maybeSingle();
@@ -105,6 +106,7 @@ export async function carregarConfigFiscal(tenantId: string): Promise<ConfigFisc
     inscricaoMunicipal: (t.nfse_inscricao_municipal as string) ?? null,
     codigoMunicipio: (t.nfse_codigo_municipio as string) ?? null,
     codTribNacional: (t.nfse_cod_trib_nacional as string) ?? null,
+    codTribMunicipal: (t.nfse_cod_trib_municipal as string) ?? null,
     aliquotaIss: (t.nfse_aliquota_iss as number) ?? null,
     issRetido: Boolean(t.nfse_iss_retido),
     opSimplesNacional: ((t.nfse_op_simples_nacional as number) ?? 3) as OpSimplesNacional,

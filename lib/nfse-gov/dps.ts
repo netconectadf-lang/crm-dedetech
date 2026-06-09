@@ -127,6 +127,7 @@ export function montarDps(d: DadosEmissao, now: Date): { xml: string; id: string
     `</locPrest>` +
     `<cServ>` +
     `<cTribNac>${esc(serv.codTribNacional)}</cTribNac>` +
+    (serv.codTribMunicipal ? `<cTribMun>${esc(String(parseInt(digits(serv.codTribMunicipal) || "0", 10)))}</cTribMun>` : "") +
     `<xDescServ>${esc(serv.descricao)}</xDescServ>` +
     (serv.nbs ? `<cNBS>${esc(serv.nbs)}</cNBS>` : "") +
     `</cServ>` +
@@ -147,6 +148,22 @@ export function montarDps(d: DadosEmissao, now: Date): { xml: string; id: string
     `</totTrib>` +
     `</trib>` +
     `</valores>` +
+    // --- IBS/CBS (Reforma Tributária) — exigido pelo leiaute do DF/ISSnet ---
+    (d.ibsCbs
+      ? `<IBSCBS>` +
+        `<finNFSe>${esc(d.ibsCbs.finNFSe)}</finNFSe>` +
+        `<cIndOp>${esc(d.ibsCbs.cIndOp)}</cIndOp>` +
+        `<indDest>${esc(d.ibsCbs.indDest)}</indDest>` +
+        `<valores>` +
+        `<trib>` +
+        `<gIBSCBS>` +
+        `<CST>${esc(d.ibsCbs.cst)}</CST>` +
+        `<cClassTrib>${esc(d.ibsCbs.cClassTrib)}</cClassTrib>` +
+        `</gIBSCBS>` +
+        `</trib>` +
+        `</valores>` +
+        `</IBSCBS>`
+      : "") +
     `</infDPS>`;
 
   const xml =

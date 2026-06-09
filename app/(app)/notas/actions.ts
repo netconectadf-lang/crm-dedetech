@@ -6,8 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { onlyDigits } from "@/lib/format";
 import { emitirNfse, consultarNfse, cancelarNfse } from "@/lib/nfse-gov";
+import { emitirNfseDF } from "@/lib/nfse-df";
+import { ibsCbsPadrao, nbsPorTrib } from "@/lib/nfse-df/correlacao";
 import { carregarCertificado, carregarConfigFiscal } from "@/lib/nfse-gov/store";
 import type { DadosEmissao } from "@/lib/nfse-gov";
+
+/** Municípios que emitem pelo webservice ISSnet (padrão nacional, SOAP) em vez do Sefin Nacional. */
+const MUNICIPIOS_ISSNET = new Set(["5300108"]); // Distrito Federal (Brasília)
 import type { AppRole } from "@/lib/types";
 
 const FISCAL: AppRole[] = ["owner", "financeiro"];
@@ -27,11 +32,13 @@ export async function emitirNotaDaCobranca(arId: string): Promise<SaveState> {
 
   // 2. parâmetros fiscais
   const cfg = await carregarConfigFiscal(ctx.tenantId);
+  const ehIssnet = !!cfg?.codigoMunicipio && MUNICIPIOS_ISSNET.has(cfg.codigoMunicipio);
   const faltando: string[] = [];
   if (!cfg?.cnpj) faltando.push("CNPJ da empresa");
   if (!cfg?.codigoMunicipio) faltando.push("código do município (IBGE)");
   if (!cfg?.codTribNacional) faltando.push("código de tributação nacional");
   if (cfg?.aliquotaIss == null) faltando.push("alíquota do ISS");
+  if (ehIssnet && !cfg?.codTribMunicipal) faltando.push("código de tributação municipal");
   if (faltando.length) {
     return { error: `Complete os dados fiscais em Integrações → NFS-e Nacional: ${faltando.join(", ")}.` };
   }
@@ -105,6 +112,8 @@ export async function emitirNotaDaCobranca(arId: string): Promise<SaveState> {
     },
     servico: {
       codTribNacional: cfg!.codTribNacional!,
+      codTribMunicipal: cfg!.codTribMunicipal ?? undefined,
+      nbs: nbsPorTrib(cfg!.codTribNacional!),
       descricao: discriminacao,
       codMunicipioPrestacao: cfg!.codigoMunicipio!,
     },
@@ -113,6 +122,8 @@ export async function emitirNotaDaCobranca(arId: string): Promise<SaveState> {
       aliquotaIss: Number(cfg!.aliquotaIss),
       retISSQN: cfg!.issRetido ? 2 : 1,
     },
+    // Reforma Tributária (IBS/CBS) — só no padrão nacional via ISSnet (ex.: DF).
+    ...(ehIssnet ? { ibsCbs: ibsCbsPadrao() } : {}),
   };
 
   // 5. registra (processando) e emite
@@ -127,7 +138,7 @@ export async function emitirNotaDaCobranca(arId: string): Promise<SaveState> {
     .select("id")
     .single();
 
-  const r = await emitirNfse(dados, certificado);
+  const r = ehIssnet ? await emitirNfseDF(dados, certificado) : await emitirNfse(dados, certificado);
 
   await supabase
     .from("nfse")

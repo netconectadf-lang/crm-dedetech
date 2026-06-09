@@ -50,12 +50,31 @@ export type Tomador = {
 export type Servico = {
   /** Código de tributação nacional do ISSQN — 6 dígitos (item+subitem+desdobro da LC 116). */
   codTribNacional: string;
+  /** Código de tributação municipal do ISSQN (obrigatório no leiaute do DF/ISSnet). */
+  codTribMunicipal?: string;
   /** Descrição completa do serviço (até 2000 caracteres). */
   descricao: string;
   /** Município onde o serviço foi prestado (IBGE 7 dígitos). */
   codMunicipioPrestacao: string;
   /** Código NBS (opcional). */
   nbs?: string;
+};
+
+/**
+ * Grupo IBS/CBS da Reforma Tributária (obrigatório no leiaute v1.01 do DF).
+ * Os códigos saem da tabela de correlação oficial (cTribNac → cClassTrib/CST/cIndOp).
+ */
+export type IbsCbs = {
+  /** Finalidade da NFS-e: "0" = regular. */
+  finNFSe: string;
+  /** Código indicador da operação (6 díg.). Ex.: "020201" = serviço sobre bem imóvel. */
+  cIndOp: string;
+  /** Indicador do destinatário: "0" = destinatário é o próprio tomador. */
+  indDest: string;
+  /** Código de Situação Tributária IBS/CBS (3 díg.). Ex.: "000" = tributação integral. */
+  cst: string;
+  /** Código de Classificação Tributária (6 díg.). Ex.: "000001" = tributação integral. */
+  cClassTrib: string;
 };
 
 /** Valores e tributação. */
@@ -80,6 +99,8 @@ export type DadosEmissao = {
   valores: Valores;
   /** Versão do aplicativo emissor (vai em verAplic). */
   versaoAplicativo?: string;
+  /** Grupo IBS/CBS da Reforma Tributária — exigido pelo leiaute do DF/ISSnet. */
+  ibsCbs?: IbsCbs;
 };
 
 /** Certificado digital A1 (PKCS#12). */

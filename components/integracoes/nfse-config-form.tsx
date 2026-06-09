@@ -14,6 +14,7 @@ type Config = {
   inscricaoMunicipal: string | null;
   codigoMunicipio: string | null;
   codTribNacional: string | null;
+  codTribMunicipal: string | null;
   aliquotaIss: number | null;
   issRetido: boolean;
   opSimplesNacional: number;
@@ -49,7 +50,11 @@ export function NfseConfigForm({ config }: { config: Config }) {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="codTribNacional">Cód. tributação nacional (6 díg.)</Label>
-        <Input id="codTribNacional" name="codTribNacional" defaultValue={config.codTribNacional ?? ""} placeholder="070213" />
+        <Input id="codTribNacional" name="codTribNacional" defaultValue={config.codTribNacional ?? ""} placeholder="071301" />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="codTribMunicipal">Cód. tributação municipal (só DF/ISSnet)</Label>
+        <Input id="codTribMunicipal" name="codTribMunicipal" defaultValue={config.codTribMunicipal ?? ""} placeholder="710" />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="aliquotaIss">Alíquota do ISS (%)</Label>

@@ -3266,6 +3266,7 @@ export type Database = {
           nfse_aliquota_iss: number | null
           nfse_ambiente: number
           nfse_cod_trib_nacional: string | null
+          nfse_cod_trib_municipal: string | null
           nfse_codigo_municipio: string | null
           nfse_inscricao_municipal: string | null
           nfse_iss_retido: boolean
@@ -3298,6 +3299,7 @@ export type Database = {
           nfse_aliquota_iss?: number | null
           nfse_ambiente?: number
           nfse_cod_trib_nacional?: string | null
+          nfse_cod_trib_municipal?: string | null
           nfse_codigo_municipio?: string | null
           nfse_inscricao_municipal?: string | null
           nfse_iss_retido?: boolean
@@ -3330,6 +3332,7 @@ export type Database = {
           nfse_aliquota_iss?: number | null
           nfse_ambiente?: number
           nfse_cod_trib_nacional?: string | null
+          nfse_cod_trib_municipal?: string | null
           nfse_codigo_municipio?: string | null
           nfse_inscricao_municipal?: string | null
           nfse_iss_retido?: boolean

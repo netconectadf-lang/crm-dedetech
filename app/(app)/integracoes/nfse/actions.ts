@@ -63,6 +63,7 @@ const configSchema = z.object({
   inscricaoMunicipal: z.string().optional(),
   codigoMunicipio: z.string().regex(/^\d{7}$/, "Código IBGE deve ter 7 dígitos").optional().or(z.literal("")),
   codTribNacional: z.string().regex(/^\d{6}$/, "Código de tributação nacional deve ter 6 dígitos").optional().or(z.literal("")),
+  codTribMunicipal: z.string().regex(/^\d{1,10}$/, "Código de tributação municipal deve ter até 10 dígitos").optional().or(z.literal("")),
   aliquotaIss: z.preprocess(
     (v) => (v === "" || v == null ? undefined : Number(v)),
     z.number().min(0).max(100).optional(),
@@ -83,6 +84,7 @@ export async function salvarConfigNfse(_prev: SaveState, formData: FormData): Pr
     inscricaoMunicipal: formData.get("inscricaoMunicipal") || undefined,
     codigoMunicipio: formData.get("codigoMunicipio") || undefined,
     codTribNacional: formData.get("codTribNacional") || undefined,
+    codTribMunicipal: formData.get("codTribMunicipal") || undefined,
     aliquotaIss: formData.get("aliquotaIss") || undefined,
     issRetido: formData.get("issRetido") ?? false,
     opSimplesNacional: formData.get("opSimplesNacional") ?? 3,
@@ -101,6 +103,7 @@ export async function salvarConfigNfse(_prev: SaveState, formData: FormData): Pr
       nfse_inscricao_municipal: d.inscricaoMunicipal || null,
       nfse_codigo_municipio: d.codigoMunicipio || null,
       nfse_cod_trib_nacional: d.codTribNacional || null,
+      nfse_cod_trib_municipal: d.codTribMunicipal || null,
       nfse_aliquota_iss: d.aliquotaIss ?? null,
       nfse_iss_retido: d.issRetido,
       nfse_op_simples_nacional: d.opSimplesNacional,

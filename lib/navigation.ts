@@ -43,6 +43,7 @@ import {
   ScanSearch,
   BookOpen,
   Route,
+  HandCoins,
   type LucideIcon,
 } from "lucide-react";
 
@@ -205,6 +206,12 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/financeiro/pagar",
         label: "A pagar",
         icon: ArrowUpCircle,
+        roles: ["owner", "financeiro"],
+      },
+      {
+        href: "/comissoes",
+        label: "Comissões",
+        icon: HandCoins,
         roles: ["owner", "financeiro"],
       },
       {

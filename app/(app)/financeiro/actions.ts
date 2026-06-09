@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { saveRecord, deleteRecord, type SaveState } from "@/lib/crud-helpers";
+import { liberarComissoesDaAr } from "@/lib/comissoes";
 import { gerarCobranca, type CobrancaResult } from "./charge-actions";
 import type { ChargeTipo } from "@/lib/asaas";
 import {
@@ -66,7 +67,13 @@ export async function receber(
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
 
+  // ao quitar, libera as comissões provisionadas dessa conta (base = recebido)
+  if (quitado) {
+    await liberarComissoesDaAr(supabase, ctx.tenantId, id, novoPago);
+  }
+
   revalidatePath("/financeiro/receber");
+  revalidatePath("/comissoes");
   return { message: quitado ? "Recebimento quitado." : "Recebimento parcial." };
 }
 

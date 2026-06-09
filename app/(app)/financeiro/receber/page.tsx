@@ -17,6 +17,7 @@ import { ResourceDialog } from "@/components/app/resource-dialog";
 import { DeleteButton } from "@/components/app/delete-button";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { EmitirNotaButton } from "@/components/notas/emitir-nota";
+import { AddComissaoButton } from "@/components/comissoes/add-comissao";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -58,7 +59,7 @@ export default async function ReceberPage({
   const { f, nova } = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: arData }, { data: clientsData }, { data: banksData }] =
+  const [{ data: arData }, { data: clientsData }, { data: banksData }, { data: empData }] =
     await Promise.all([
       supabase
         .from("accounts_receivable")
@@ -66,11 +67,13 @@ export default async function ReceberPage({
         .order("vencimento"),
       supabase.from("clients").select(CLIENTE_OPCAO_COLS).eq("ativo", true).order("razao_social"),
       supabase.from("bank_accounts").select("id, nome").eq("ativo", true).order("nome"),
+      supabase.from("employees").select("id, nome").eq("ativo", true).order("nome"),
     ]);
 
   const contas = (arData as AR[] | null) ?? [];
   const clients = (clientsData as ClienteOpcao[] | null) ?? [];
   const banks = (banksData as { id: string; nome: string }[] | null) ?? [];
+  const funcionarios = (empData as { id: string; nome: string }[] | null) ?? [];
 
   // Última cobrança gerada por conta — pra mostrar o link de pagamento na linha
   const arIds = contas.map((c) => c.id);
@@ -237,6 +240,7 @@ export default async function ReceberPage({
                               </form>
                             </>
                           )}
+                          <AddComissaoButton arId={c.id} funcionarios={funcionarios} />
                           <EmitirNotaButton arId={c.id} />
                           <DeleteButton nome={c.descricao} action={excluirReceber.bind(null, c.id)} />
                         </div>

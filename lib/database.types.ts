@@ -940,6 +940,60 @@ export type Database = {
           },
         ]
       }
+      commissions: {
+        Row: {
+          ar_id: string | null
+          base_valor: number
+          created_at: string
+          employee_id: string
+          id: string
+          liberada_em: string | null
+          os_id: string | null
+          paga_em: string | null
+          percentual: number | null
+          status: string
+          tenant_id: string
+          tipo: string
+          updated_at: string
+          valor: number
+          valor_fixo: number | null
+        }
+        Insert: {
+          ar_id?: string | null
+          base_valor?: number
+          created_at?: string
+          employee_id: string
+          id?: string
+          liberada_em?: string | null
+          os_id?: string | null
+          paga_em?: string | null
+          percentual?: number | null
+          status?: string
+          tenant_id: string
+          tipo: string
+          updated_at?: string
+          valor?: number
+          valor_fixo?: number | null
+        }
+        Update: {
+          ar_id?: string | null
+          base_valor?: number
+          created_at?: string
+          employee_id?: string
+          id?: string
+          liberada_em?: string | null
+          os_id?: string | null
+          paga_em?: string | null
+          percentual?: number | null
+          status?: string
+          tenant_id?: string
+          tipo?: string
+          updated_at?: string
+          valor?: number
+          valor_fixo?: number | null
+        }
+        Relationships: []
+      }
       cost_centers: {
         Row: {
           ativo: boolean

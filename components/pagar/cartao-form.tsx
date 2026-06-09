@@ -64,27 +64,25 @@ export function CartaoForm({
 
   if (estado === "ok") {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-8 text-center">
-        <span className="flex size-12 items-center justify-center rounded-full bg-emerald-500 text-2xl text-white">✓</span>
-        <p className="text-lg font-semibold text-emerald-700">Pagamento aprovado!</p>
-        <p className="text-sm text-muted-foreground">Obrigado. Seu pagamento foi confirmado.</p>
+      <div className="flex flex-col items-center gap-2 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-8 text-center">
+        <span className="flex size-12 items-center justify-center rounded-full bg-emerald-400 text-2xl text-[#052E1F]">✓</span>
+        <p className="text-lg font-bold text-emerald-300">Pagamento aprovado!</p>
+        <p className="text-sm text-white/55">Obrigado. Seu pagamento foi confirmado.</p>
       </div>
     );
   }
 
-  const inputCls = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
+  const inputCls =
+    "w-full rounded-2xl border border-white/10 bg-[#0A1F17] px-4 py-3.5 text-[15px] text-white placeholder:text-white/40 outline-none transition-colors focus:border-emerald-400/60";
+  const labelCls = "text-[11px] font-semibold uppercase tracking-wide text-white/55";
 
   return (
-    <form onSubmit={pagar} className="grid gap-3">
+    <form onSubmit={pagar} className="grid gap-3.5">
       <div className="grid gap-1.5">
-        <label className="text-xs font-medium text-muted-foreground">Parcelas</label>
-        <select
-          value={parcelas}
-          onChange={(e) => setParcelas(Number(e.target.value))}
-          className={inputCls}
-        >
+        <label className={labelCls}>Parcelas</label>
+        <select value={parcelas} onChange={(e) => setParcelas(Number(e.target.value))} className={inputCls}>
           {opcoes.map((o) => (
-            <option key={o.n} value={o.n}>
+            <option key={o.n} value={o.n} className="bg-[#0E2A20] text-white">
               {o.n}x de {formatBRL(o.valorParcela)}
               {o.juros ? ` (total ${formatBRL(o.total)})` : " sem juros"}
             </option>
@@ -103,7 +101,7 @@ export function CartaoForm({
           value={card.ccv} onChange={(e) => setCard({ ...card, ccv: e.target.value })} required />
       </div>
 
-      <p className="mt-1 text-xs font-medium text-muted-foreground">Dados do titular</p>
+      <p className={`mt-1.5 ${labelCls}`}>Dados do titular</p>
       <input className={inputCls} placeholder="CPF do titular" inputMode="numeric"
         value={h.cpf} onChange={(e) => setH({ ...h, cpf: e.target.value })} required />
       <div className="grid grid-cols-2 gap-3">
@@ -116,18 +114,18 @@ export function CartaoForm({
         value={h.telefone} onChange={(e) => setH({ ...h, telefone: e.target.value })} required />
 
       {estado === "erro" && (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">{erro}</p>
+        <p className="rounded-xl border border-red-400/30 bg-red-400/10 px-3 py-2.5 text-xs text-red-300">{erro}</p>
       )}
 
       <button
         type="submit"
         disabled={estado === "processando"}
-        className="mt-1 w-full rounded-md px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        className="mt-1.5 w-full rounded-2xl px-4 py-4 text-[15px] font-bold text-[#052E1F] transition-opacity active:opacity-90 disabled:opacity-60"
         style={{ backgroundColor: cor }}
       >
         {estado === "processando" ? "Processando…" : "Pagar com cartão"}
       </button>
-      <p className="text-center text-[11px] text-muted-foreground">
+      <p className="text-center text-[11px] leading-relaxed text-white/40">
         Pagamento seguro processado pelo Asaas. Não armazenamos os dados do cartão.
       </p>
     </form>

@@ -42,23 +42,23 @@ export function PixBox({
 
   if (pago) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-8 text-center">
-        <span className="flex size-12 items-center justify-center rounded-full bg-emerald-500 text-white text-2xl">✓</span>
-        <p className="text-lg font-semibold text-emerald-700">Pagamento confirmado!</p>
-        <p className="text-sm text-muted-foreground">Obrigado. Já recebemos seu pagamento.</p>
+      <div className="flex flex-col items-center gap-2 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-8 text-center">
+        <span className="flex size-12 items-center justify-center rounded-full bg-emerald-400 text-2xl text-[#052E1F]">✓</span>
+        <p className="text-lg font-bold text-emerald-300">Pagamento confirmado!</p>
+        <p className="text-sm text-white/55">Obrigado. Já recebemos seu pagamento.</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <p className="text-sm text-muted-foreground">Pague com PIX — escaneie o QR Code ou copie o código:</p>
+      <p className="text-sm text-white/55">Pague com PIX — escaneie o QR Code ou copie o código:</p>
       {pixQrImage && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={`data:image/png;base64,${pixQrImage}`}
           alt="QR Code PIX"
-          className="size-56 rounded-lg border border-border bg-white p-2"
+          className="size-60 rounded-2xl bg-white p-3"
         />
       )}
       {pixPayload && (
@@ -67,17 +67,17 @@ export function PixBox({
             readOnly
             value={pixPayload}
             onFocus={(e) => e.currentTarget.select()}
-            className="h-20 w-full resize-none rounded-md border border-input bg-muted/30 p-2 font-mono text-xs"
+            className="h-20 w-full resize-none rounded-2xl border border-white/10 bg-[#0A1F17] p-3 font-mono text-xs text-white/80"
           />
           <button
             onClick={copiar}
-            className="mt-2 w-full rounded-md bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+            className="mt-2.5 w-full rounded-2xl bg-emerald-400 px-4 py-3.5 text-[15px] font-bold text-[#052E1F] transition-opacity active:opacity-90"
           >
             {copiado ? "Código copiado! ✓" : "Copiar código PIX"}
           </button>
         </div>
       )}
-      <p className="text-xs text-muted-foreground">
+      <p className="text-center text-[11px] leading-relaxed text-white/40">
         Assim que o pagamento for confirmado, esta página atualiza automaticamente.
       </p>
     </div>

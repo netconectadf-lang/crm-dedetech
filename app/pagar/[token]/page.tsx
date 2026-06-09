@@ -71,22 +71,23 @@ export default async function PagarPage({ params }: { params: Promise<{ token: s
 
   return (
     <Shell cor={cor} empresa={empresa} logo={t?.logo_url ?? undefined}>
-      <div className="mb-5 text-center">
-        <p className="text-sm text-muted-foreground">{descricao}</p>
-        <p className="mt-1 text-3xl font-bold tabular-nums">{formatBRL(charge.valor)}</p>
+      <div className="mb-6 text-center">
+        <p className="text-sm text-white/55">{descricao}</p>
+        <p className="mt-1 text-4xl font-extrabold tracking-tight text-white tabular-nums">{formatBRL(charge.valor)}</p>
         {charge.vencimento && (
-          <p className="mt-1 text-xs text-muted-foreground">Vencimento: {formatDate(charge.vencimento)}</p>
+          <p className="mt-1.5 text-xs text-white/40">Vencimento: {formatDate(charge.vencimento)}</p>
         )}
       </div>
 
       {cancelada ? (
-        <p className="rounded-lg border border-border bg-muted/30 px-4 py-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm text-white/60">
           Esta cobrança foi {charge.status === "estornado" ? "estornada" : "cancelada"}.
         </p>
       ) : charge.status === "pago" ? (
-        <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-6 text-center text-sm font-semibold text-emerald-700">
-          Pagamento confirmado! ✓
-        </p>
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-8 text-center">
+          <span className="flex size-12 items-center justify-center rounded-full bg-emerald-400 text-2xl text-[#052E1F]">✓</span>
+          <p className="text-lg font-bold text-emerald-300">Pagamento confirmado!</p>
+        </div>
       ) : charge.tipo === "pix" ? (
         <PixBox
           token={token}
@@ -101,13 +102,13 @@ export default async function PagarPage({ params }: { params: Promise<{ token: s
           href={charge.invoice_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full rounded-md px-4 py-3 text-center text-sm font-semibold text-white"
+          className="block w-full rounded-2xl px-4 py-4 text-center text-sm font-bold text-[#052E1F]"
           style={{ backgroundColor: cor }}
         >
           Abrir cobrança ({charge.tipo === "boleto" ? "boleto" : "pagamento"})
         </a>
       ) : (
-        <p className="text-center text-sm text-muted-foreground">Cobrança indisponível no momento.</p>
+        <p className="text-center text-sm text-white/55">Cobrança indisponível no momento.</p>
       )}
     </Shell>
   );
@@ -125,21 +126,21 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-background p-6 shadow-lg">
-        <div className="mb-5 flex flex-col items-center gap-2">
+    <main className="flex min-h-screen items-center justify-center bg-[#08140F] p-5">
+      <div className="w-full max-w-sm rounded-[28px] border border-white/[0.06] bg-[#0E2A20] p-6 shadow-2xl shadow-black/40">
+        <div className="mb-6 flex flex-col items-center gap-2.5">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logo} alt={empresa} className="h-12 object-contain" />
+            <img src={logo} alt={empresa} className="h-14 object-contain" />
           ) : (
             <span
-              className="flex size-12 items-center justify-center rounded-xl text-lg font-bold text-white"
+              className="flex size-14 items-center justify-center rounded-2xl text-xl font-bold text-[#052E1F]"
               style={{ backgroundColor: cor }}
             >
               {empresa.charAt(0)}
             </span>
           )}
-          <p className="font-semibold">{empresa}</p>
+          <p className="text-lg font-bold text-white">{empresa}</p>
         </div>
         {children}
       </div>

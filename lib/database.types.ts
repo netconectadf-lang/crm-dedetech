@@ -641,6 +641,7 @@ export type Database = {
       clients: {
         Row: {
           asaas_customer_id: string | null
+          geo_falhou: boolean
           ativo: boolean
           bairro: string | null
           cep: string | null
@@ -672,6 +673,7 @@ export type Database = {
         }
         Insert: {
           asaas_customer_id?: string | null
+          geo_falhou?: boolean
           ativo?: boolean
           bairro?: string | null
           cep?: string | null
@@ -703,6 +705,7 @@ export type Database = {
         }
         Update: {
           asaas_customer_id?: string | null
+          geo_falhou?: boolean
           ativo?: boolean
           bairro?: string | null
           cep?: string | null

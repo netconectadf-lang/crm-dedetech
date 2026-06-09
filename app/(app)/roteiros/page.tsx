@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { MapaLoader, type Ponto } from "@/components/mapa/map-loader";
 import { QuadroRoteiro, type OsRoteiro, type TecnicoOpt } from "@/components/roteiros/quadro-roteiro";
+import { GeocodeButton } from "@/components/clientes/geocode-button";
 
 export const metadata = { title: "Roteiros do dia" };
 
@@ -128,10 +129,13 @@ export default async function RoteirosPage({
       </div>
 
       {semGeo > 0 && (
-        <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-2 text-xs text-amber-300">
-          {semGeo} visita(s) sem localização (lat/lng) — não entram na otimização nem no mapa. Cadastre o
-          endereço/coordenadas do cliente para incluí-las.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3">
+          <p className="text-xs text-amber-300">
+            {semGeo} visita(s) sem localização — não entram na otimização nem no mapa. Use o botão para
+            buscar as coordenadas pelos endereços cadastrados.
+          </p>
+          <GeocodeButton />
+        </div>
       )}
 
       <QuadroRoteiro data={data} osList={osList} tecnicos={tecnicos} />

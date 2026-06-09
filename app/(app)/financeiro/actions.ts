@@ -105,6 +105,7 @@ export async function salvarPagar(
     roles: ROLES,
     path: "/financeiro/pagar",
     id,
+    setCreatedBy: true,
   });
 }
 

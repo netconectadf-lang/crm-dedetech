@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, ArrowLeft, Check, Ban, ArrowUpCircle, AlertTriangle, ClipboardList } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth";
 import { formatBRL, formatDate } from "@/lib/format";
 import { effectiveStatus, categoriaDespesa, PAYMENT_LABEL, RECURRENCE_LABEL, type FinanceStatus, type PaymentMethod, type Recurrence } from "@/lib/financeiro";
@@ -35,6 +36,8 @@ type AP = {
   vencimento: string;
   status: FinanceStatus;
   recorrencia: Recurrence;
+  created_at: string;
+  created_by: string | null;
   suppliers: { razao_social: string } | null;
 };
 
@@ -59,14 +62,25 @@ export default async function PagarPage({
     await Promise.all([
       supabase
         .from("accounts_payable")
-        .select("id, descricao, valor, valor_pago, vencimento, status, recorrencia, suppliers(razao_social)")
-        .order("vencimento"),
+        .select("id, descricao, valor, valor_pago, vencimento, status, recorrencia, created_at, created_by, suppliers(razao_social)")
+        .order("created_at", { ascending: false }),
       supabase.from("suppliers").select("id, razao_social").eq("ativo", true).order("razao_social"),
       supabase.from("cost_centers").select("id, nome").eq("ativo", true).order("nome"),
       supabase.from("bank_accounts").select("id, nome").eq("ativo", true).order("nome"),
     ]);
 
   const contas = (apData as AP[] | null) ?? [];
+
+  // nome de quem cadastrou cada conta (admin client p/ ler profiles sem barrar no RLS)
+  const criadorIds = [...new Set(contas.map((c) => c.created_by).filter(Boolean))] as string[];
+  const { data: profsData } = criadorIds.length
+    ? await createAdminClient().from("profiles").select("id, full_name").in("id", criadorIds)
+    : { data: [] };
+  const nomePorId = new Map<string, string>();
+  for (const p of (profsData as { id: string; full_name: string | null }[] | null) ?? []) {
+    if (p.full_name) nomePorId.set(p.id, p.full_name);
+  }
+
   const suppliers = (supData as { id: string; razao_social: string }[] | null) ?? [];
   const centros = (ccData as { id: string; nome: string }[] | null) ?? [];
   const banks = (banksData as { id: string; nome: string }[] | null) ?? [];
@@ -174,6 +188,7 @@ export default async function PagarPage({
                   <TableHead>Vencimento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Criado por</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -202,6 +217,9 @@ export default async function PagarPage({
                       <TableCell className="text-right tabular-nums">{formatBRL(c.valor)}</TableCell>
                       <TableCell>
                         <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${st.tone}`}>{st.label}</span>
+                      </TableCell>
+                      <TableCell className="max-w-[140px] truncate text-sm text-muted-foreground">
+                        {c.created_by && nomePorId.get(c.created_by) ? nomeCurto(nomePorId.get(c.created_by)!) : "—"}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">

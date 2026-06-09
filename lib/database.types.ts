@@ -77,6 +77,7 @@ export type Database = {
           bank_account_id: string | null
           cost_center_id: string | null
           created_at: string
+          created_by: string | null
           descricao: string
           forma_pagamento: Database["public"]["Enums"]["payment_method"] | null
           id: string
@@ -96,6 +97,7 @@ export type Database = {
           bank_account_id?: string | null
           cost_center_id?: string | null
           created_at?: string
+          created_by?: string | null
           descricao: string
           forma_pagamento?: Database["public"]["Enums"]["payment_method"] | null
           id?: string
@@ -115,6 +117,7 @@ export type Database = {
           bank_account_id?: string | null
           cost_center_id?: string | null
           created_at?: string
+          created_by?: string | null
           descricao?: string
           forma_pagamento?: Database["public"]["Enums"]["payment_method"] | null
           id?: string

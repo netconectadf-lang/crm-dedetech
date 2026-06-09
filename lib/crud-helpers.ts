@@ -25,6 +25,8 @@ type SaveArgs = {
   id?: string | null;
   /** ajustes extras no payload já validado (ex.: campos derivados). */
   transform?: (data: Record<string, unknown>) => Record<string, unknown>;
+  /** se true, grava `created_by` = usuário atual no INSERT (tabela precisa ter a coluna). */
+  setCreatedBy?: boolean;
 };
 
 /**
@@ -39,6 +41,7 @@ export async function saveRecord({
   path,
   id,
   transform,
+  setCreatedBy,
 }: SaveArgs): Promise<SaveState> {
   const ctx = await requireRole(roles);
 
@@ -64,7 +67,11 @@ export async function saveRecord({
   } else {
     const { error } = await supabase
       .from(table)
-      .insert({ ...payload, tenant_id: ctx.tenantId });
+      .insert({
+        ...payload,
+        tenant_id: ctx.tenantId,
+        ...(setCreatedBy ? { created_by: ctx.userId } : {}),
+      });
     if (error) return { error: "Não foi possível criar o registro." };
   }
 

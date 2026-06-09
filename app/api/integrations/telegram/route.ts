@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const st = await statusChat(ctx.tenantId, chatId);
     await reply(
       st === "aprovado"
-        ? "✅ Você está liberado! Lance despesas assim: `gasolina 150`. Envie o pedido em PDF para importar a compra."
+        ? "✅ Você está liberado!\n• A pagar: `gasolina 150`\n• A receber: `recebi 200 limpeza`\n• Compra: envie o pedido em PDF para importar."
         : `👋 Seu acesso foi solicitado (id \`${chatId}\`). Aguarde o administrador aprovar no painel (Integrações).`,
     );
     return NextResponse.json({ ok: true });
@@ -84,10 +84,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // ─── Despesa (texto livre) ─────────────────────────────────────────
-  const desp = parseDespesa(text);
+  // ─── Lançamento (texto livre): "recebi ..." = a receber; senão = despesa ─
+  const ehReceita = /^\s*recebi(?:mento)?\b/i.test(text);
+  const textoLimpo = ehReceita ? text.replace(/^\s*recebi(?:mento)?\b/i, "").trim() : text;
+  const desp = parseDespesa(textoLimpo);
   if (!desp) {
-    await reply("Não entendi 🤔. Mande *descrição valor*, ex.: `gasolina 150`.");
+    await reply(
+      "Não entendi 🤔. Mande *descrição valor*:\n`gasolina 150` (a pagar)\n`recebi 200 limpeza` (a receber)",
+    );
     return NextResponse.json({ ok: true });
   }
 
@@ -96,6 +100,27 @@ export async function POST(req: NextRequest) {
     [msg?.from?.first_name, msg?.from?.last_name].filter(Boolean).join(" ").trim() ||
     nome ||
     null;
+
+  if (ehReceita) {
+    const descricao = desp.descricao === "Despesa" ? "Recebimento" : desp.descricao;
+    const { error } = await db.from("accounts_receivable").insert({
+      tenant_id: ctx.tenantId,
+      descricao,
+      valor: desp.valor,
+      vencimento: hoje,
+      status: "a_vencer",
+      created_by_nome: autor,
+    });
+    if (error) {
+      await reply("❌ Não consegui lançar. Tente de novo.");
+      return NextResponse.json({ ok: true });
+    }
+    await reply(
+      `✅ Recebimento lançado em *A receber*:\n*${descricao}* — ${formatBRL(desp.valor)}\nVencimento: hoje.`,
+    );
+    return NextResponse.json({ ok: true });
+  }
+
   const { error } = await db.from("accounts_payable").insert({
     tenant_id: ctx.tenantId,
     descricao: desp.descricao,

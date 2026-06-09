@@ -2,10 +2,11 @@ import Link from "next/link";
 import { Plus, ArrowLeft, Check, Ban, ArrowDownCircle, AlertTriangle, ClipboardList } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth";
 import { formatBRL, formatDate } from "@/lib/format";
 import { effectiveStatus, PAYMENT_LABEL, type FinanceStatus, type PaymentMethod } from "@/lib/financeiro";
-import { nomeExibicao, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
+import { nomeExibicao, nomeCurto, CLIENTE_OPCAO_COLS, type ClienteOpcao } from "@/lib/clientes";
 import type { Field } from "@/components/app/resource-form";
 import { salvarReceber, receber, cancelarReceber, excluirReceber } from "../actions";
 import { CobrarButtons } from "@/components/financeiro/cobrar-buttons";
@@ -39,6 +40,9 @@ type AR = {
   vencimento: string;
   status: FinanceStatus;
   forma_pagamento: PaymentMethod | null;
+  created_at: string;
+  created_by: string | null;
+  created_by_nome: string | null;
   clients: { razao_social: string } | null;
 };
 
@@ -63,8 +67,8 @@ export default async function ReceberPage({
     await Promise.all([
       supabase
         .from("accounts_receivable")
-        .select("id, descricao, valor, valor_pago, vencimento, status, forma_pagamento, clients(razao_social)")
-        .order("vencimento"),
+        .select("id, descricao, valor, valor_pago, vencimento, status, forma_pagamento, created_at, created_by, created_by_nome, clients(razao_social)")
+        .order("created_at", { ascending: false }),
       supabase.from("clients").select(CLIENTE_OPCAO_COLS).eq("ativo", true).order("razao_social"),
       supabase.from("bank_accounts").select("id, nome").eq("ativo", true).order("nome"),
       supabase.from("employees").select("id, nome").eq("ativo", true).order("nome"),
@@ -74,6 +78,16 @@ export default async function ReceberPage({
   const clients = (clientsData as ClienteOpcao[] | null) ?? [];
   const banks = (banksData as { id: string; nome: string }[] | null) ?? [];
   const funcionarios = (empData as { id: string; nome: string }[] | null) ?? [];
+
+  // nome de quem cadastrou (usuário CRM); pessoas do bot vêm em created_by_nome
+  const criadorIds = [...new Set(contas.map((c) => c.created_by).filter(Boolean))] as string[];
+  const { data: profsData } = criadorIds.length
+    ? await createAdminClient().from("profiles").select("id, full_name").in("id", criadorIds)
+    : { data: [] };
+  const nomePorId = new Map<string, string>();
+  for (const p of (profsData as { id: string; full_name: string | null }[] | null) ?? []) {
+    if (p.full_name) nomePorId.set(p.id, p.full_name);
+  }
 
   // Última cobrança gerada por conta — pra mostrar o link de pagamento na linha
   const arIds = contas.map((c) => c.id);
@@ -201,6 +215,7 @@ export default async function ReceberPage({
                   <TableHead>Vencimento</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Criado por</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -208,6 +223,8 @@ export default async function ReceberPage({
                 {filtradas.map((c) => {
                   const st = effectiveStatus(c);
                   const aberto = c.status === "a_vencer" || c.status === "parcial";
+                  const autorNome = c.created_by_nome ?? (c.created_by ? nomePorId.get(c.created_by) ?? null : null);
+                  const viaTelegram = !!c.created_by_nome;
                   return (
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">{c.descricao}</TableCell>
@@ -221,6 +238,18 @@ export default async function ReceberPage({
                       </TableCell>
                       <TableCell>
                         <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${st.tone}`}>{st.label}</span>
+                      </TableCell>
+                      <TableCell className="max-w-[160px] text-sm text-muted-foreground">
+                        {autorNome ? (
+                          <span className="flex flex-col">
+                            <span className="truncate" title={autorNome}>{nomeCurto(autorNome)}</span>
+                            <span className={`text-[10px] ${viaTelegram ? "text-sky-400/80" : "text-muted-foreground/60"}`}>
+                              {viaTelegram ? "via Telegram" : "no sistema"}
+                            </span>
+                          </span>
+                        ) : (
+                          "—"
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">

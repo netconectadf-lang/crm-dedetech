@@ -33,6 +33,7 @@ export async function salvarReceber(
     roles: ROLES,
     path: "/financeiro/receber",
     id,
+    setCreatedBy: true,
   });
 }
 

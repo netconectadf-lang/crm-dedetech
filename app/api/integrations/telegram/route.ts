@@ -92,12 +92,17 @@ export async function POST(req: NextRequest) {
   }
 
   const hoje = new Date().toISOString().slice(0, 10);
+  const autor =
+    [msg?.from?.first_name, msg?.from?.last_name].filter(Boolean).join(" ").trim() ||
+    nome ||
+    null;
   const { error } = await db.from("accounts_payable").insert({
     tenant_id: ctx.tenantId,
     descricao: desp.descricao,
     valor: desp.valor,
     vencimento: hoje,
     status: "a_vencer",
+    created_by_nome: autor,
   });
   if (error) {
     await reply("❌ Não consegui lançar. Tente de novo.");

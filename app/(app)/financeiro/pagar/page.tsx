@@ -38,6 +38,7 @@ type AP = {
   recorrencia: Recurrence;
   created_at: string;
   created_by: string | null;
+  created_by_nome: string | null;
   suppliers: { razao_social: string } | null;
 };
 
@@ -62,7 +63,7 @@ export default async function PagarPage({
     await Promise.all([
       supabase
         .from("accounts_payable")
-        .select("id, descricao, valor, valor_pago, vencimento, status, recorrencia, created_at, created_by, suppliers(razao_social)")
+        .select("id, descricao, valor, valor_pago, vencimento, status, recorrencia, created_at, created_by, created_by_nome, suppliers(razao_social)")
         .order("created_at", { ascending: false }),
       supabase.from("suppliers").select("id, razao_social").eq("ativo", true).order("razao_social"),
       supabase.from("cost_centers").select("id, nome").eq("ativo", true).order("nome"),
@@ -197,6 +198,8 @@ export default async function PagarPage({
                   const st = effectiveStatus(c);
                   const cat = categoriaDespesa(c.descricao);
                   const aberto = c.status === "a_vencer" || c.status === "parcial";
+                  const autorNome = c.created_by_nome ?? (c.created_by ? nomePorId.get(c.created_by) ?? null : null);
+                  const viaTelegram = !!c.created_by_nome;
                   return (
                     <TableRow key={c.id}>
                       <TableCell>
@@ -218,8 +221,17 @@ export default async function PagarPage({
                       <TableCell>
                         <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${st.tone}`}>{st.label}</span>
                       </TableCell>
-                      <TableCell className="max-w-[140px] truncate text-sm text-muted-foreground">
-                        {c.created_by && nomePorId.get(c.created_by) ? nomeCurto(nomePorId.get(c.created_by)!) : "—"}
+                      <TableCell className="max-w-[160px] text-sm text-muted-foreground">
+                        {autorNome ? (
+                          <span className="flex flex-col">
+                            <span className="truncate" title={autorNome}>{nomeCurto(autorNome)}</span>
+                            <span className={`text-[10px] ${viaTelegram ? "text-sky-400/80" : "text-muted-foreground/60"}`}>
+                              {viaTelegram ? "via Telegram" : "no sistema"}
+                            </span>
+                          </span>
+                        ) : (
+                          "—"
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">

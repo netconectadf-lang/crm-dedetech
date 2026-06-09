@@ -78,6 +78,7 @@ export type Database = {
           cost_center_id: string | null
           created_at: string
           created_by: string | null
+          created_by_nome: string | null
           descricao: string
           forma_pagamento: Database["public"]["Enums"]["payment_method"] | null
           id: string
@@ -98,6 +99,7 @@ export type Database = {
           cost_center_id?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_nome?: string | null
           descricao: string
           forma_pagamento?: Database["public"]["Enums"]["payment_method"] | null
           id?: string
@@ -118,6 +120,7 @@ export type Database = {
           cost_center_id?: string | null
           created_at?: string
           created_by?: string | null
+          created_by_nome?: string | null
           descricao?: string
           forma_pagamento?: Database["public"]["Enums"]["payment_method"] | null
           id?: string

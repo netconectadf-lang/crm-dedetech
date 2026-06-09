@@ -14,6 +14,7 @@ const PUBLIC_PREFIXES = [
   "/nps",
   "/pagar",
   "/api/pagar",
+  "/api/cobranca",
   "/api/webhooks",
   "/api/integrations",
   "/api/cron",

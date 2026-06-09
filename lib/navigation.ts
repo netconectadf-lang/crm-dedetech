@@ -42,6 +42,7 @@ import {
   Handshake,
   ScanSearch,
   BookOpen,
+  Route,
   type LucideIcon,
 } from "lucide-react";
 
@@ -131,6 +132,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "MIP / Monitoramento",
         icon: Radar,
         roles: ["owner", "operacional", "tecnico", "financeiro"],
+      },
+      {
+        href: "/roteiros",
+        label: "Roteiros do dia",
+        icon: Route,
+        roles: ["owner", "operacional", "tecnico"],
       },
       {
         href: "/mapa",

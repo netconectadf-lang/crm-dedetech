@@ -2622,6 +2622,7 @@ export type Database = {
           garantia_meses: number
           id: string
           km_rodado: number | null
+          rota_seq: number | null
           lat: number | null
           lng: number | null
           metodo: Database["public"]["Enums"]["application_method"] | null
@@ -2663,6 +2664,7 @@ export type Database = {
           garantia_meses?: number
           id?: string
           km_rodado?: number | null
+          rota_seq?: number | null
           lat?: number | null
           lng?: number | null
           metodo?: Database["public"]["Enums"]["application_method"] | null
@@ -2704,6 +2706,7 @@ export type Database = {
           garantia_meses?: number
           id?: string
           km_rodado?: number | null
+          rota_seq?: number | null
           lat?: number | null
           lng?: number | null
           metodo?: Database["public"]["Enums"]["application_method"] | null

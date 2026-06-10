@@ -45,6 +45,7 @@ import {
   Route,
   HandCoins,
   BarChart3,
+  CalendarRange,
   type LucideIcon,
 } from "lucide-react";
 
@@ -134,6 +135,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "MIP / Monitoramento",
         icon: Radar,
         roles: ["owner", "operacional", "tecnico", "financeiro"],
+      },
+      {
+        href: "/agenda",
+        label: "Agenda de operadores",
+        icon: CalendarRange,
+        roles: ["owner", "operacional", "tecnico"],
       },
       {
         href: "/roteiros",

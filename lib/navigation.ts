@@ -44,6 +44,7 @@ import {
   BookOpen,
   Route,
   HandCoins,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 
@@ -218,6 +219,19 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/notas",
         label: "Notas fiscais",
         icon: Receipt,
+        roles: ["owner", "financeiro"],
+      },
+    ],
+  },
+  {
+    titulo: "Gestão",
+    icon: BarChart3,
+    accent: "indigo",
+    itens: [
+      {
+        href: "/relatorios",
+        label: "Relatórios",
+        icon: BarChart3,
         roles: ["owner", "financeiro"],
       },
     ],

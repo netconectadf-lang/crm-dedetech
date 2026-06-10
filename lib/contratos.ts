@@ -118,3 +118,33 @@ export function ymdLocal(d: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
+
+/**
+ * Quantos aniversários anuais completos transcorreram entre o início da
+ * vigência e a data de referência (ex.: a data de vencimento). Usado para saber
+ * quantas vezes o reajuste anual já incidiu sobre o contrato.
+ */
+export function aniversariosCompletos(vigenciaInicio: string, ref: Date): number {
+  const inicio = new Date(`${vigenciaInicio}T00:00:00`);
+  let anos = ref.getFullYear() - inicio.getFullYear();
+  const antesDoAniversario =
+    ref.getMonth() < inicio.getMonth() ||
+    (ref.getMonth() === inicio.getMonth() && ref.getDate() < inicio.getDate());
+  if (antesDoAniversario) anos -= 1;
+  return Math.max(anos, 0);
+}
+
+/**
+ * Aplica o reajuste anual composto sobre o valor base, uma vez por aniversário
+ * completo. `percentualAnual` é o índice acumulado do período (IGP-M/IPCA, % a.a.).
+ * Sem ciclos ou sem percentual, devolve o valor base. Arredonda a 2 casas.
+ */
+export function valorReajustado(
+  valorBase: number,
+  ciclos: number,
+  percentualAnual: number,
+): number {
+  if (!percentualAnual || ciclos <= 0) return valorBase;
+  const fator = Math.pow(1 + percentualAnual / 100, ciclos);
+  return Math.round(valorBase * fator * 100) / 100;
+}

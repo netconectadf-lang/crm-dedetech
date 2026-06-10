@@ -3,7 +3,12 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { faturamentoNoMes, ymdLocal, type ContractPeriodicity } from "@/lib/contratos";
+import {
+  faturamentoNoMes,
+  ymdLocal,
+  type ContractPeriodicity,
+  type AdjustmentIndex,
+} from "@/lib/contratos";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +29,7 @@ type ContratoRow = {
   periodicidade: ContractPeriodicity;
   vigencia_inicio: string;
   vigencia_fim: string | null;
+  indice_reajuste: AdjustmentIndex | null;
   client_id: string;
   clients: { razao_social: string } | null;
 };
@@ -49,7 +55,7 @@ export default async function FaturamentoPage({
 
   const { data: contratosData } = await supabase
     .from("contracts")
-    .select("id, titulo, valor, dia_faturamento, periodicidade, vigencia_inicio, vigencia_fim, client_id, clients(razao_social)")
+    .select("id, titulo, valor, dia_faturamento, periodicidade, vigencia_inicio, vigencia_fim, indice_reajuste, client_id, clients(razao_social)")
     .eq("status", "ativo");
   const contratos = (contratosData as unknown as ContratoRow[] | null) ?? [];
 
@@ -83,6 +89,8 @@ export default async function FaturamentoPage({
       titulo: x.c.titulo ?? "Contrato",
       valor: Number(x.c.valor),
       vencimento: x.vencimento,
+      indice: x.c.indice_reajuste ?? "nenhum",
+      vigenciaInicio: x.c.vigencia_inicio,
       jaFaturado: faturados.has(`${x.c.id}|${x.vencimento}`),
     }))
     .sort((a, b) => a.cliente.localeCompare(b.cliente));

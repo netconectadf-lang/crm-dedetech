@@ -25,8 +25,10 @@ import {
   variacao,
   type Periodo,
 } from "@/lib/relatorios";
+import { OS_STATUS } from "@/lib/os-status";
 import { PageHeader } from "@/components/app/page-header";
 import { Panel } from "@/components/dashboard/kpi-card";
+import { MiniStat } from "@/components/dashboard/mini-stat";
 import { MetricCard } from "@/components/relatorios/metric-card";
 import { FaturamentoChart } from "@/components/relatorios/faturamento-chart";
 import { DonutChart } from "@/components/relatorios/donut-chart";
@@ -51,39 +53,6 @@ type OsRow = {
 };
 type ComissaoRow = { valor: number; created_at: string; employees: { nome: string | null } | null };
 type NpsRow = { score: number | null; respondido_em: string | null };
-
-const STATUS_OS: { key: string; label: string; color: string }[] = [
-  { key: "agendada", label: "Agendada", color: "#38bdf8" },
-  { key: "a_caminho", label: "A caminho", color: "#fbbf24" },
-  { key: "em_execucao", label: "Em execução", color: "#a78bfa" },
-  { key: "executada", label: "Executada", color: "#34d399" },
-  { key: "faturada", label: "Faturada", color: "#22d3ee" },
-  { key: "cancelada", label: "Cancelada", color: "#71717a" },
-];
-
-function MiniStat({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: typeof Gauge;
-  label: string;
-  value: string;
-  tone: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3">
-      <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${tone}`}>
-        <Icon className="size-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
-        <p className="truncate text-base font-semibold tabular-nums">{value}</p>
-      </div>
-    </div>
-  );
-}
 
 export default async function RelatoriosPage({
   searchParams,
@@ -194,7 +163,7 @@ export default async function RelatoriosPage({
 
   // ─── donuts ─────────────────────────────────────────────────
   const statusCount = contarPor(osPer, (o) => o.status);
-  const donutOs = STATUS_OS.map((s) => ({
+  const donutOs = OS_STATUS.map((s) => ({
     label: s.label,
     value: statusCount.find((c) => c.chave === s.key)?.qtd ?? 0,
     color: s.color,

@@ -57,3 +57,51 @@ export function contarPor<T>(
 ): RankItem[] {
   return agruparRanking(rows, getChave, () => 1);
 }
+
+// ─── Período (ano inteiro ou um mês) e comparação ──────────────────────
+
+/** Período de análise: ano inteiro (`mes` undefined) ou um mês (1-12). */
+export type Periodo = { ano: number; mes?: number };
+
+/** O período imediatamente anterior (mês anterior, ou ano anterior). */
+export function periodoAnterior(p: Periodo): Periodo {
+  if (p.mes == null) return { ano: p.ano - 1 };
+  return p.mes <= 1 ? { ano: p.ano - 1, mes: 12 } : { ano: p.ano, mes: p.mes - 1 };
+}
+
+/** Rótulo legível do período (ex.: "Junho de 2026" ou "Ano de 2026"). */
+export function rotuloPeriodo(p: Periodo): string {
+  const MESES_LONGOS = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  ];
+  return p.mes == null ? `Ano de ${p.ano}` : `${MESES_LONGOS[p.mes - 1]} de ${p.ano}`;
+}
+
+/** Uma data ISO pertence ao período? (ano bate e, se houver, o mês também). */
+export function noPeriodo(iso: string | null | undefined, p: Periodo): boolean {
+  if (!iso) return false;
+  const { ano, mes } = anoMes(iso);
+  if (ano !== p.ano) return false;
+  return p.mes == null || mes === p.mes - 1;
+}
+
+/** Soma `getValor` das linhas que caem no período. */
+export function somaNoPeriodo<T>(
+  rows: T[],
+  p: Periodo,
+  getDate: (r: T) => string | null | undefined,
+  getValor: (r: T) => number,
+): number {
+  return rows.reduce((s, r) => (noPeriodo(getDate(r), p) ? s + getValor(r) : s), 0);
+}
+
+export type Variacao = { pct: number | null; dir: "up" | "down" | "flat" };
+
+/** Variação percentual de `atual` sobre `anterior` (null se base 0). */
+export function variacao(atual: number, anterior: number): Variacao {
+  if (anterior === 0) return { pct: atual === 0 ? 0 : null, dir: atual > 0 ? "up" : "flat" };
+  const pct = ((atual - anterior) / Math.abs(anterior)) * 100;
+  const dir = pct > 0.5 ? "up" : pct < -0.5 ? "down" : "flat";
+  return { pct: Math.round(pct), dir };
+}

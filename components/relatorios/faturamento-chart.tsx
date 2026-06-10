@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -45,8 +46,16 @@ function ChartTooltip({
   );
 }
 
-export function FaturamentoChart({ data }: { data: FaturamentoPoint[] }) {
+export function FaturamentoChart({
+  data,
+  highlight,
+}: {
+  data: FaturamentoPoint[];
+  /** índice do mês (0-11) a destacar; os demais ficam esmaecidos */
+  highlight?: number;
+}) {
   const hasData = data.some((d) => d.faturado > 0 || d.recebido > 0);
+  const op = (i: number) => (highlight == null || highlight === i ? 1 : 0.32);
 
   if (!hasData) {
     return (
@@ -80,8 +89,16 @@ export function FaturamentoChart({ data }: { data: FaturamentoPoint[] }) {
             tickFormatter={compactBRL}
           />
           <Tooltip content={<ChartTooltip />} cursor={{ fill: "var(--color-muted)", opacity: 0.3 }} />
-          <Bar dataKey="faturado" fill="var(--color-primary)" radius={[3, 3, 0, 0]} maxBarSize={28} />
-          <Bar dataKey="recebido" fill="#34d399" radius={[3, 3, 0, 0]} maxBarSize={28} />
+          <Bar dataKey="faturado" fill="var(--color-primary)" radius={[3, 3, 0, 0]} maxBarSize={28}>
+            {data.map((_, i) => (
+              <Cell key={i} fillOpacity={op(i)} />
+            ))}
+          </Bar>
+          <Bar dataKey="recebido" fill="#34d399" radius={[3, 3, 0, 0]} maxBarSize={28}>
+            {data.map((_, i) => (
+              <Cell key={i} fillOpacity={op(i)} />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>

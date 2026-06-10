@@ -1,11 +1,14 @@
-import { Gauge, Star, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Gauge, Star, ThumbsUp, MessageCircleReply } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { metricasNps, npsTone } from "@/lib/nps";
+import { agruparRanking } from "@/lib/relatorios";
 import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { KpiCard, Panel } from "@/components/dashboard/kpi-card";
+import { BarList, type BarRow } from "@/components/relatorios/bar-list";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -19,7 +22,12 @@ import {
 
 export const metadata = { title: "Comunicação" };
 
-type Resp = { score: number | null; comentario: string | null; respondido_em: string | null };
+type Resp = {
+  score: number | null;
+  comentario: string | null;
+  respondido_em: string | null;
+  service_orders: { tecnico_id: string | null; employees: { nome: string | null } | null } | null;
+};
 type Msg = {
   id: string;
   canal: string;
@@ -41,24 +49,47 @@ export default async function ComunicacaoPage() {
   const supabase = await createClient();
 
   const [{ data: npsData }, { data: msgData }] = await Promise.all([
-    supabase.from("nps_responses").select("score, comentario, respondido_em").not("respondido_em", "is", null),
+    supabase
+      .from("nps_responses")
+      .select(
+        "score, comentario, respondido_em, service_orders:os_id(tecnico_id, employees:tecnico_id(nome))",
+      ),
     supabase.from("messages").select("id, canal, destino, corpo, status, created_at").order("created_at", { ascending: false }).limit(50),
   ]);
 
-  const respostas = (npsData as Resp[] | null) ?? [];
+  const todas = (npsData as unknown as Resp[] | null) ?? [];
   const msgs = (msgData as Msg[] | null) ?? [];
 
-  const total = respostas.length;
-  const promotores = respostas.filter((r) => (r.score ?? 0) >= 9).length;
-  const detratores = respostas.filter((r) => (r.score ?? 0) <= 6).length;
-  const neutros = total - promotores - detratores;
-  const nps = total > 0 ? Math.round(((promotores - detratores) / total) * 100) : 0;
-  const media =
-    total > 0 ? (respostas.reduce((s, r) => s + (r.score ?? 0), 0) / total).toFixed(1) : "—";
-  const npsTone = total === 0 ? "default" : nps >= 50 ? "ok" : nps < 0 ? "danger" : "warning";
+  // taxa de resposta: respondidas / enviadas
+  const enviadas = todas.length;
+  const respostas = todas.filter((r) => r.respondido_em != null);
+  const respondidas = respostas.length;
+  const taxaResposta = enviadas > 0 ? Math.round((respondidas / enviadas) * 100) : 0;
+
+  const { total, promotores, neutros, detratores, nps, media } = metricasNps(
+    respostas.map((r) => r.score ?? 0),
+  );
+  const tone = npsTone(total, nps);
+  const mediaLabel = total > 0 ? media.toFixed(1) : "—";
   const pct = (n: number) => (total > 0 ? (n / total) * 100 : 0);
 
   const comentarios = respostas.filter((r) => r.comentario);
+
+  // satisfação por técnico (entre as respondidas com técnico atribuído)
+  const porTecnico = agruparRanking(
+    respostas.filter((r) => r.service_orders?.employees?.nome),
+    (r) => r.service_orders?.employees?.nome,
+    (r) => r.score ?? 0,
+  );
+  const tecnicoRows: BarRow[] = porTecnico.map((t) => {
+    const mediaTec = t.valor / t.qtd;
+    return {
+      label: t.chave,
+      value: mediaTec,
+      display: mediaTec.toFixed(1),
+      sub: `${t.qtd} resp`,
+    };
+  });
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
@@ -101,10 +132,16 @@ export default async function ComunicacaoPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Gauge} label="NPS" value={total > 0 ? String(nps) : "—"} hint={`${total} respostas`} tone={npsTone} />
-        <KpiCard icon={Star} label="Nota média" value={String(media)} hint="de 0 a 10" />
+        <KpiCard icon={Gauge} label="NPS" value={total > 0 ? String(nps) : "—"} hint={`${total} respostas`} tone={tone} />
+        <KpiCard icon={Star} label="Nota média" value={mediaLabel} hint="de 0 a 10" />
         <KpiCard icon={ThumbsUp} label="Promotores" value={String(promotores)} tone={promotores > 0 ? "ok" : "default"} hint="nota 9–10" />
-        <KpiCard icon={ThumbsDown} label="Detratores" value={String(detratores)} tone={detratores > 0 ? "danger" : "default"} hint="nota 0–6" />
+        <KpiCard
+          icon={MessageCircleReply}
+          label="Taxa de resposta"
+          value={enviadas > 0 ? `${taxaResposta}%` : "—"}
+          hint={`${respondidas}/${enviadas} respondidas`}
+          tone={taxaResposta >= 50 ? "ok" : taxaResposta > 0 ? "warning" : "default"}
+        />
       </div>
 
       {total > 0 && (
@@ -124,6 +161,15 @@ export default async function ComunicacaoPage() {
               </div>
             ))}
           </div>
+        </Panel>
+      )}
+
+      {tecnicoRows.length > 0 && (
+        <Panel title="Satisfação por técnico" accent="emerald">
+          <p className="-mt-1 text-xs text-muted-foreground">
+            Nota média (0–10) das pesquisas respondidas, por técnico responsável da OS.
+          </p>
+          <BarList rows={tecnicoRows} tone="emerald" />
         </Panel>
       )}
 

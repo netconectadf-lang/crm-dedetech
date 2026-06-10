@@ -36,7 +36,9 @@ describe("perfis de acesso no menu", () => {
 
   it("MASTER (owner): vê tudo", () => {
     const l = labels("owner");
-    for (const x of ["Integrações", "Configurações", "Produtos", "Visão geral", "Recursos Humanos", "Ordens de serviço"])
+    // "Funcionários" é item da seção Recursos Humanos (o título da seção não
+    // entra na lista de labels de itens — por isso checamos um item real).
+    for (const x of ["Integrações", "Configurações", "Produtos", "Visão geral", "Funcionários", "Ordens de serviço", "Relatórios", "Agenda de operadores"])
       expect(l).toContain(x);
   });
 });

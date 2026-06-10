@@ -241,6 +241,12 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: BarChart3,
         roles: ["owner", "financeiro"],
       },
+      {
+        href: "/trafego",
+        label: "Tráfego (Meta Ads)",
+        icon: Megaphone,
+        roles: ["owner", "comercial", "financeiro"],
+      },
     ],
   },
   {

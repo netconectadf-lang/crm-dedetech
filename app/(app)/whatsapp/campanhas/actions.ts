@@ -32,6 +32,42 @@ export async function criarCampanha(_prev: SaveState, formData: FormData): Promi
   redirect(`${LISTA}/${(data as { id: string }).id}`);
 }
 
+/** Vincula (ou troca) o script da campanha. */
+export async function vincularScript(
+  campanhaId: string,
+  scriptId: string,
+): Promise<{ error?: string }> {
+  const ctx = await requireRole(ROLES);
+  if (!scriptId) return { error: "Selecione um script." };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("wa_campanhas")
+    .update({ script_id: scriptId })
+    .eq("id", campanhaId)
+    .eq("tenant_id", ctx.tenantId);
+  if (error) return { error: "Não foi possível vincular o script." };
+  revalidatePath(`${LISTA}/${campanhaId}`);
+  return {};
+}
+
+/** Edita o texto (corpo) de um script. Atenção: afeta futuras campanhas que usem o mesmo script. */
+export async function salvarCorpoScript(
+  scriptId: string,
+  corpo: string,
+): Promise<{ error?: string }> {
+  const ctx = await requireRole(ROLES);
+  if (!corpo?.trim()) return { error: "A mensagem não pode ficar vazia." };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("wa_scripts")
+    .update({ corpo: corpo.trim() })
+    .eq("id", scriptId)
+    .eq("tenant_id", ctx.tenantId);
+  if (error) return { error: "Não foi possível salvar a mensagem." };
+  revalidatePath(LISTA);
+  return {};
+}
+
 /**
  * Cria uma campanha JÁ com os contatos selecionados (ex.: filtro frio + escorpião
  * na tela de contatos). Exclui opt_out/descartado e leva direto pra campanha.
@@ -89,13 +125,13 @@ export async function criarCampanhaComContatos(
  */
 export async function criarCampanhaPorFiltro(
   nome: string,
-  filtros: { temp?: string; praga?: string; status?: string; busca?: string },
+  filtros: { temp?: string; praga?: string; status?: string; rec?: string; busca?: string },
 ): Promise<{ error?: string }> {
   const ctx = await requireRole(ROLES);
   if (!nome?.trim()) return { error: "Dê um nome à campanha." };
   const supabase = await createClient();
 
-  const tags = [filtros.temp, filtros.praga].filter(Boolean) as string[];
+  const tags = [filtros.temp, filtros.praga, filtros.rec].filter(Boolean) as string[];
   const aplicar = () => {
     let q = supabase
       .from("wa_contatos")
@@ -146,6 +182,73 @@ export async function criarCampanhaPorFiltro(
     .eq("tenant_id", ctx.tenantId);
 
   redirect(`${LISTA}/${campanhaId}`);
+}
+
+/** Adiciona à campanha os contatos que casam com o filtro de etiquetas (temperatura/praga/recência) + status. */
+export async function adicionarContatosPorFiltro(
+  campanhaId: string,
+  _prev: SaveState,
+  formData: FormData,
+): Promise<SaveState> {
+  const ctx = await requireRole(ROLES);
+  const supabase = await createClient();
+
+  const temp = String(formData.get("temp") ?? "").trim();
+  const praga = String(formData.get("praga") ?? "").trim();
+  const status = String(formData.get("status") ?? "").trim();
+  const rec = String(formData.get("rec") ?? "").trim();
+
+  const tags = [temp, praga, rec].filter(Boolean);
+  const aplicar = () => {
+    let q = supabase
+      .from("wa_contatos")
+      .select("id, nome, telefone")
+      .eq("tenant_id", ctx.tenantId)
+      .not("status", "in", "(opt_out,descartado)");
+    if (tags.length) q = q.contains("tags", tags);
+    if (status) q = q.eq("status", status);
+    return q;
+  };
+
+  const todos: { id: string; nome: string; telefone: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await aplicar().range(from, from + 999);
+    if (error) return { error: "Erro ao buscar os contatos do filtro." };
+    const pg = (data as { id: string; nome: string; telefone: string }[] | null) ?? [];
+    todos.push(...pg);
+    if (pg.length < 1000) break;
+  }
+  if (!todos.length) return { error: "Nenhum contato elegível nesse filtro." };
+
+  const { data: jaData } = await supabase.from("wa_disparos").select("telefone").eq("campanha_id", campanhaId);
+  const ja = new Set(((jaData as { telefone: string }[] | null) ?? []).map((d) => d.telefone));
+  const novos = todos.filter((c) => !ja.has(c.telefone));
+  if (!novos.length) return { error: "Todos os contatos desse filtro já estão na campanha." };
+
+  for (let i = 0; i < novos.length; i += 500) {
+    await supabase.from("wa_disparos").insert(
+      novos.slice(i, i + 500).map((c) => ({
+        tenant_id: ctx.tenantId,
+        campanha_id: campanhaId,
+        contato_id: c.id,
+        telefone: c.telefone,
+        nome: c.nome,
+        status: "pendente",
+      })),
+    );
+  }
+  const { count } = await supabase
+    .from("wa_disparos")
+    .select("id", { count: "exact", head: true })
+    .eq("campanha_id", campanhaId);
+  await supabase
+    .from("wa_campanhas")
+    .update({ total_contatos: count ?? 0 })
+    .eq("id", campanhaId)
+    .eq("tenant_id", ctx.tenantId);
+
+  revalidatePath(`${LISTA}/${campanhaId}`);
+  return { message: `${novos.length} contato(s) adicionado(s) à campanha.` };
 }
 
 /** Monta a lista de destinatários (cria disparos pendentes para contatos elegíveis). */

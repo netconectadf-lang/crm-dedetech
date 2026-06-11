@@ -8,7 +8,7 @@ import { criarCampanhaPorFiltro } from "@/app/(app)/whatsapp/campanhas/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-type Filtros = { temp?: string; praga?: string; status?: string; busca?: string };
+type Filtros = { temp?: string; praga?: string; status?: string; rec?: string; busca?: string };
 
 /** Botão que cria uma campanha com TODOS os contatos do filtro atual (sem teto de 500). */
 export function AcaoFiltro({ filtros, count }: { filtros: Filtros; count: number }) {

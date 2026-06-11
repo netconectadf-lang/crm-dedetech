@@ -9,6 +9,8 @@ import { descobrirRedes } from "@/lib/clientes";
 import { montarDestinatarios, limparPendentes } from "../actions";
 import { Disparador } from "@/components/whatsapp/disparador";
 import { AdicionarClientes } from "@/components/whatsapp/adicionar-clientes";
+import { EscolherScript } from "@/components/whatsapp/escolher-script";
+import { AdicionarContatosFiltro } from "@/components/whatsapp/adicionar-contatos-filtro";
 import { PageHeader } from "@/components/app/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -72,6 +74,13 @@ export default async function CampanhaDetalhe({ params }: { params: Promise<{ id
     supabase.from("wa_disparos").select("id", { count: "exact", head: true }).eq("campanha_id", id).eq("status", "pendente"),
   ]);
   const script = scriptRaw as { nome: string; corpo: string } | null;
+  // todos os scripts ativos pra escolher na campanha
+  const { data: scriptsData } = await supabase
+    .from("wa_scripts")
+    .select("id, nome, corpo")
+    .eq("ativo", true)
+    .order("nome");
+  const scripts = (scriptsData as { id: string; nome: string; corpo: string }[] | null) ?? [];
   const disparos = (dispData as Disparo[] | null) ?? [];
   const [enviados, falhas, pendentes] = counts.map((c) => c.count ?? 0);
   const total = enviados + falhas + pendentes;
@@ -104,12 +113,16 @@ export default async function CampanhaDetalhe({ params }: { params: Promise<{ id
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Mensagem</CardTitle>
-          <CardDescription>Prévia do texto que será enviado (variáveis trocadas por contato).</CardDescription>
+          <CardDescription>Escolha o script da campanha e edite o texto se precisar.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="whitespace-pre-wrap rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
-            {script?.corpo ?? "—"}
-          </p>
+          {scripts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum script cadastrado ainda. Crie em WhatsApp → Scripts.
+            </p>
+          ) : (
+            <EscolherScript campanhaId={id} scriptIdAtual={camp.script_id} scripts={scripts} />
+          )}
         </CardContent>
       </Card>
 
@@ -129,6 +142,7 @@ export default async function CampanhaDetalhe({ params }: { params: Promise<{ id
                 <Users className="size-4" /> {total === 0 ? "Montar dos contatos" : "Adicionar novos contatos"}
               </Button>
             </form>
+            <AdicionarContatosFiltro campanhaId={id} />
             <AdicionarClientes campanhaId={id} segmentos={segmentos} redes={redes} ufs={ufs} />
             {pendentes > 0 && (
               <form action={limparPendentes.bind(null, id)}>

@@ -22,14 +22,14 @@ type Contato = {
 export default async function ContatosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ temp?: string; praga?: string; status?: string; q?: string }>;
+  searchParams: Promise<{ temp?: string; praga?: string; status?: string; rec?: string; q?: string }>;
 }) {
   await requireRole(["owner", "comercial", "financeiro"]);
   const supabase = await createClient();
-  const { temp, praga, status, q } = await searchParams;
+  const { temp, praga, status, rec, q } = await searchParams;
 
-  // filtro por etiquetas: temperatura/praga (tags, AND) + status + busca — no banco todo
-  const tagsFiltro = [temp, praga].filter(Boolean) as string[];
+  // filtro por etiquetas: temperatura/praga/recência (tags, AND) + status + busca — no banco todo
+  const tagsFiltro = [temp, praga, rec].filter(Boolean) as string[];
   let contatosQuery = supabase
     .from("wa_contatos")
     .select("id, nome, telefone, status, origem, tags", { count: "exact" })
@@ -38,7 +38,7 @@ export default async function ContatosPage({
   if (tagsFiltro.length) contatosQuery = contatosQuery.contains("tags", tagsFiltro);
   if (status) contatosQuery = contatosQuery.eq("status", status);
   if (q) contatosQuery = contatosQuery.or(`nome.ilike.%${q}%,telefone.ilike.%${q}%`);
-  const temFiltro = Boolean(temp || praga || status || q);
+  const temFiltro = Boolean(temp || praga || status || rec || q);
 
   const [{ data, count }, { count: clientesComTel }] = await Promise.all([
     contatosQuery,
@@ -96,12 +96,12 @@ export default async function ContatosPage({
       />
 
       <div className="flex flex-col gap-3">
-        <FiltrosContatos temp={temp} praga={praga} status={status} q={q} />
+        <FiltrosContatos temp={temp} praga={praga} status={status} rec={rec} q={q} />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-sm text-muted-foreground tabular-nums">
             {temFiltro ? `${count ?? 0} contato(s) no filtro` : `${count ?? contatos.length} contato(s)`}
           </span>
-          <AcaoFiltro filtros={{ temp, praga, status, busca: q }} count={count ?? 0} />
+          <AcaoFiltro filtros={{ temp, praga, status, rec, busca: q }} count={count ?? 0} />
         </div>
       </div>
 

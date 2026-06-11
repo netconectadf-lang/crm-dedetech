@@ -35,15 +35,22 @@ const STATUS: [string, string][] = [
   ["convertido", "Convertido"], ["descartado", "Descartado"], ["opt_out", "Descadastrado"],
 ];
 
+const RECENCIA: [string, string][] = [
+  ["ate-30d", "Até 30 dias"], ["31-60d", "31 a 60 dias"],
+  ["61-90d", "61 a 90 dias"], ["90d-mais", "Mais de 90 dias"],
+];
+
 export function FiltrosContatos({
   temp,
   praga,
   status,
+  rec,
   q,
 }: {
   temp?: string;
   praga?: string;
   status?: string;
+  rec?: string;
   q?: string;
 }) {
   const router = useRouter();
@@ -58,7 +65,7 @@ export function FiltrosContatos({
     router.push(qs ? `/whatsapp/contatos?${qs}` : "/whatsapp/contatos");
   }
 
-  const temFiltro = Boolean(temp || praga || status || q);
+  const temFiltro = Boolean(temp || praga || status || rec || q);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -81,6 +88,18 @@ export function FiltrosContatos({
         <SelectContent>
           <SelectItem value="todos">Todas as pragas</SelectItem>
           {PRAGAS.map(([v, l]) => (
+            <SelectItem key={v} value={v}>{l}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={rec ?? "todos"} onValueChange={(v) => setParam("rec", v)}>
+        <SelectTrigger size="sm" className="w-44">
+          <SelectValue placeholder="Último contato" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todos">Qualquer data</SelectItem>
+          {RECENCIA.map(([v, l]) => (
             <SelectItem key={v} value={v}>{l}</SelectItem>
           ))}
         </SelectContent>

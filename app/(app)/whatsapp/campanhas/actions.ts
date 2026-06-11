@@ -32,6 +32,122 @@ export async function criarCampanha(_prev: SaveState, formData: FormData): Promi
   redirect(`${LISTA}/${(data as { id: string }).id}`);
 }
 
+/**
+ * Cria uma campanha JÁ com os contatos selecionados (ex.: filtro frio + escorpião
+ * na tela de contatos). Exclui opt_out/descartado e leva direto pra campanha.
+ */
+export async function criarCampanhaComContatos(
+  nome: string,
+  contatoIds: string[],
+): Promise<{ error?: string }> {
+  const ctx = await requireRole(ROLES);
+  if (!nome?.trim()) return { error: "Dê um nome à campanha." };
+  if (!contatoIds?.length) return { error: "Nenhum contato selecionado." };
+
+  const supabase = await createClient();
+  const { data: camp, error: e1 } = await supabase
+    .from("wa_campanhas")
+    .insert({ tenant_id: ctx.tenantId, nome: nome.trim(), status: "rascunho" })
+    .select("id")
+    .single();
+  if (e1 || !camp) return { error: "Não foi possível criar a campanha." };
+  const campanhaId = (camp as { id: string }).id;
+
+  // dentre os selecionados, só os elegíveis (exclui não-perturbe e descartados)
+  const { data: contatos } = await supabase
+    .from("wa_contatos")
+    .select("id, nome, telefone")
+    .eq("tenant_id", ctx.tenantId)
+    .in("id", contatoIds)
+    .not("status", "in", "(opt_out,descartado)");
+  const lista = (contatos as { id: string; nome: string; telefone: string }[] | null) ?? [];
+
+  if (lista.length > 0) {
+    await supabase.from("wa_disparos").insert(
+      lista.map((c) => ({
+        tenant_id: ctx.tenantId,
+        campanha_id: campanhaId,
+        contato_id: c.id,
+        telefone: c.telefone,
+        nome: c.nome,
+        status: "pendente",
+      })),
+    );
+    await supabase
+      .from("wa_campanhas")
+      .update({ total_contatos: lista.length })
+      .eq("id", campanhaId)
+      .eq("tenant_id", ctx.tenantId);
+  }
+
+  redirect(`${LISTA}/${campanhaId}`);
+}
+
+/**
+ * Cria uma campanha com TODOS os contatos que casam com o FILTRO (etiquetas de
+ * temperatura/praga + status + busca) — sem o teto de 500 da tela. Pagina o banco.
+ */
+export async function criarCampanhaPorFiltro(
+  nome: string,
+  filtros: { temp?: string; praga?: string; status?: string; busca?: string },
+): Promise<{ error?: string }> {
+  const ctx = await requireRole(ROLES);
+  if (!nome?.trim()) return { error: "Dê um nome à campanha." };
+  const supabase = await createClient();
+
+  const tags = [filtros.temp, filtros.praga].filter(Boolean) as string[];
+  const aplicar = () => {
+    let q = supabase
+      .from("wa_contatos")
+      .select("id, nome, telefone")
+      .eq("tenant_id", ctx.tenantId)
+      .not("status", "in", "(opt_out,descartado)");
+    if (tags.length) q = q.contains("tags", tags);
+    if (filtros.status) q = q.eq("status", filtros.status);
+    if (filtros.busca) q = q.or(`nome.ilike.%${filtros.busca}%,telefone.ilike.%${filtros.busca}%`);
+    return q;
+  };
+
+  // busca todos, paginando de 1000 em 1000
+  const todos: { id: string; nome: string; telefone: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await aplicar().range(from, from + 999);
+    if (error) return { error: "Erro ao buscar os contatos do filtro." };
+    const pagina = (data as { id: string; nome: string; telefone: string }[] | null) ?? [];
+    todos.push(...pagina);
+    if (pagina.length < 1000) break;
+  }
+  if (!todos.length) return { error: "Nenhum contato elegível nesse filtro." };
+
+  const { data: camp, error: e1 } = await supabase
+    .from("wa_campanhas")
+    .insert({ tenant_id: ctx.tenantId, nome: nome.trim(), status: "rascunho" })
+    .select("id")
+    .single();
+  if (e1 || !camp) return { error: "Não foi possível criar a campanha." };
+  const campanhaId = (camp as { id: string }).id;
+
+  for (let i = 0; i < todos.length; i += 500) {
+    await supabase.from("wa_disparos").insert(
+      todos.slice(i, i + 500).map((c) => ({
+        tenant_id: ctx.tenantId,
+        campanha_id: campanhaId,
+        contato_id: c.id,
+        telefone: c.telefone,
+        nome: c.nome,
+        status: "pendente",
+      })),
+    );
+  }
+  await supabase
+    .from("wa_campanhas")
+    .update({ total_contatos: todos.length })
+    .eq("id", campanhaId)
+    .eq("tenant_id", ctx.tenantId);
+
+  redirect(`${LISTA}/${campanhaId}`);
+}
+
 /** Monta a lista de destinatários (cria disparos pendentes para contatos elegíveis). */
 export async function montarDestinatarios(campanhaId: string): Promise<void> {
   const ctx = await requireRole(ROLES);

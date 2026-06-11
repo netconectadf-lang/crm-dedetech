@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { ImportarContatos } from "@/components/whatsapp/importar-contatos";
 import { TabelaContatos } from "@/components/whatsapp/tabela-contatos";
+import { FiltrosContatos } from "@/components/whatsapp/filtros-contatos";
+import { AcaoFiltro } from "@/components/whatsapp/acao-filtro";
 import { AjudaTela } from "@/components/app/ajuda-tela";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
@@ -17,16 +19,29 @@ type Contato = {
   tags: string[] | null;
 };
 
-export default async function ContatosPage() {
+export default async function ContatosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ temp?: string; praga?: string; status?: string; q?: string }>;
+}) {
   await requireRole(["owner", "comercial", "financeiro"]);
   const supabase = await createClient();
+  const { temp, praga, status, q } = await searchParams;
+
+  // filtro por etiquetas: temperatura/praga (tags, AND) + status + busca — no banco todo
+  const tagsFiltro = [temp, praga].filter(Boolean) as string[];
+  let contatosQuery = supabase
+    .from("wa_contatos")
+    .select("id, nome, telefone, status, origem, tags", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (tagsFiltro.length) contatosQuery = contatosQuery.contains("tags", tagsFiltro);
+  if (status) contatosQuery = contatosQuery.eq("status", status);
+  if (q) contatosQuery = contatosQuery.or(`nome.ilike.%${q}%,telefone.ilike.%${q}%`);
+  const temFiltro = Boolean(temp || praga || status || q);
 
   const [{ data, count }, { count: clientesComTel }] = await Promise.all([
-    supabase
-      .from("wa_contatos")
-      .select("id, nome, telefone, status, origem, tags", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .limit(500),
+    contatosQuery,
     supabase
       .from("clients")
       .select("id", { count: "exact", head: true })
@@ -80,10 +95,24 @@ export default async function ContatosPage() {
         }
       />
 
+      <div className="flex flex-col gap-3">
+        <FiltrosContatos temp={temp} praga={praga} status={status} q={q} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {temFiltro ? `${count ?? 0} contato(s) no filtro` : `${count ?? contatos.length} contato(s)`}
+          </span>
+          <AcaoFiltro filtros={{ temp, praga, status, busca: q }} count={count ?? 0} />
+        </div>
+      </div>
+
       {contatos.length === 0 ? (
         <EmptyState
-          title="Nenhum contato ainda"
-          description="Importe de uma lista, dos clientes do CRM ou do WhatsApp conectado."
+          title={temFiltro ? "Nenhum contato nesse filtro" : "Nenhum contato ainda"}
+          description={
+            temFiltro
+              ? "Tente outra combinação de etiquetas ou limpe o filtro."
+              : "Importe de uma lista, dos clientes do CRM ou do WhatsApp conectado."
+          }
         />
       ) : (
         <TabelaContatos contatos={contatos} />

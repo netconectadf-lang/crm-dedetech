@@ -153,6 +153,12 @@ body {
   }
 }
 
+/* Skeleton shimmer — variáveis para animações de carregamento */
+:root {
+  --skeleton-bg: var(--muted);
+  --skeleton-shimmer: var(--muted-foreground);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

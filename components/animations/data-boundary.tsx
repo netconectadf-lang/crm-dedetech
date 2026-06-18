@@ -11,11 +11,15 @@
  */
 
 import { Suspense, ReactNode } from "react"
-import { SkeletonLoader, type SkeletonLoaderProps } from "./skeleton-loader"
+import { SkeletonLoader } from "./skeleton-loader"
 
-interface DataBoundaryProps extends Omit<SkeletonLoaderProps, "variant"> {
+type SkeletonVariant = "card" | "table-row" | "table-cell" | "line" | "circle" | "avatar"
+
+interface DataBoundaryProps {
   children: ReactNode
-  variant?: SkeletonLoaderProps["variant"]
+  variant?: SkeletonVariant
+  count?: number
+  className?: string
   /**
    * Fallback customizado
    * Se não passado, usa SkeletonLoader com variant/count
@@ -30,14 +34,16 @@ export function DataBoundary({
   className,
   fallback,
 }: DataBoundaryProps) {
+  const defaultFallback = (
+    <SkeletonLoader
+      variant={variant as any}
+      count={count}
+      className={className}
+    />
+  )
+
   return (
-    <Suspense
-      fallback={
-        fallback || (
-          <SkeletonLoader variant={variant} count={count} className={className} />
-        )
-      }
-    >
+    <Suspense fallback={fallback || defaultFallback}>
       {children}
     </Suspense>
   )

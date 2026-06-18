@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { publicSiteUrl } from "@/lib/public-url";
 
 export const metadata: Metadata = {
   title: { absolute: "Dedetech — Sistema de gestão para dedetizadoras" },
@@ -103,8 +104,7 @@ const FAQ = [
   },
 ];
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://dedetech-crm.vercel.app";
+const SITE_URL = publicSiteUrl();
 
 const jsonLd = {
   "@context": "https://schema.org",

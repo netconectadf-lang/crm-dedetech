@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/providers/analytics";
 import { PwaRegister } from "@/components/providers/pwa-register";
+import { publicSiteUrl } from "@/lib/public-url";
 
 const sans = Plus_Jakarta_Sans({
   variable: "--font-sans",
@@ -15,8 +16,7 @@ const mono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://dedetech-crm.vercel.app";
+const SITE_URL = publicSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

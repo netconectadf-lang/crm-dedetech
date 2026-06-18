@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
+import { publicSiteUrl } from "@/lib/public-url";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://dedetech-crm.vercel.app";
+const SITE_URL = publicSiteUrl();
 
 /** Apenas páginas públicas e indexáveis. */
 export default function sitemap(): MetadataRoute.Sitemap {

@@ -6,6 +6,7 @@ import { useActionState } from "react";
 import { signupAction, type FormState } from "@/app/(auth)/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { GoogleButton } from "@/components/auth/google-button";
+import { AuthShell } from "@/components/auth/auth-shell";
 import {
   Card,
   CardContent,
@@ -23,7 +24,8 @@ export default function SignupPage() {
   );
 
   return (
-    <Card>
+    <AuthShell>
+      <Card>
       <CardHeader>
         <CardTitle>Criar conta</CardTitle>
         <CardDescription>
@@ -78,6 +80,7 @@ export default function SignupPage() {
           </Link>
         </p>
       </CardContent>
-    </Card>
+      </Card>
+    </AuthShell>
   );
 }

@@ -1,93 +1,62 @@
 {
   "project": "crm-dedetizadora",
-  "generatedBy": "ai-bootstrap",
-  "version": 1,
+  "generatedBy": "reconciliado-com-banco",
+  "version": 2,
+  "note": "Keys alinhadas às features reais usadas na tabela plans (pacote comercial). Granularidade por módulo; sub-telas estão dobradas na feature do módulo (ex.: 'whatsapp' cobre campanhas/leads/contatos/scripts).",
   "categories": [
     {
       "key": "comercial",
       "label": "Comercial",
       "features": [
-        { "key": "funil", "label": "Funil", "type": "boolean", "description": "Pipeline Kanban de deals/oportunidades (lead → ganho)" },
-        { "key": "orcamentos", "label": "Orçamentos", "type": "boolean", "description": "Criação e gestão de orçamentos para clientes" },
-        { "key": "contratos", "label": "Contratos", "type": "boolean", "description": "Geração e acompanhamento de contratos de serviço" },
-        { "key": "chamados", "label": "Chamados", "type": "boolean", "description": "Abertura e atendimento de chamados/solicitações de clientes" }
+        { "key": "funil", "label": "Funil de vendas", "type": "boolean", "description": "Pipeline Kanban de deals + orçamentos" },
+        { "key": "contratos", "label": "Contratos recorrentes", "type": "boolean", "description": "Contratos periódicos com reajuste e faturamento" }
       ]
     },
     {
       "key": "operacao",
       "label": "Operação",
       "features": [
-        { "key": "os", "label": "Ordens de serviço", "type": "boolean", "description": "Cadastro e execução de ordens de serviço de dedetização" },
-        { "key": "estoque", "label": "Estoque", "type": "boolean", "description": "Controle de estoque de produtos e insumos" },
-        { "key": "compras", "label": "Compras / Pedidos", "type": "boolean", "description": "Pedidos de compra e reposição junto a fornecedores" },
-        { "key": "mip", "label": "MIP / Monitoramento", "type": "boolean", "description": "Manejo Integrado de Pragas e monitoramento contínuo" },
-        { "key": "agenda", "label": "Agenda de operadores", "type": "boolean", "description": "Agendamento e alocação de operadores/técnicos" },
-        { "key": "roteiros", "label": "Roteiros do dia", "type": "boolean", "description": "Roteirização diária das visitas de campo" },
-        { "key": "mapa", "label": "Mapa da operação", "type": "boolean", "description": "Visualização geográfica das operações e equipes" },
-        { "key": "comunicacao", "label": "Comunicação & NPS", "type": "boolean", "description": "Comunicação com clientes e pesquisas de satisfação (NPS)" }
+        { "key": "os", "label": "Ordens de serviço", "type": "boolean", "description": "Agendamento, execução (ficha de campo) e faturamento de OS" },
+        { "key": "agenda", "label": "Agenda", "type": "boolean", "description": "Calendário e roteiros de técnicos" },
+        { "key": "estoque", "label": "Estoque", "type": "boolean", "description": "Produtos/saneantes ANVISA, lotes e movimentações" },
+        { "key": "mip", "label": "MIP (monitoramento de pragas)", "type": "boolean", "description": "Dispositivos e leituras de monitoramento" },
+        { "key": "gps", "label": "Rastreamento GPS da frota", "type": "boolean", "description": "Rastreamento de veículos em tempo real (Traccar)" }
       ]
     },
     {
       "key": "financeiro",
       "label": "Financeiro",
       "features": [
-        { "key": "financeiro", "label": "Visão geral financeira", "type": "boolean", "description": "Painel financeiro consolidado da empresa" },
-        { "key": "contas_receber", "label": "A receber", "type": "boolean", "description": "Gestão de contas a receber" },
-        { "key": "contas_pagar", "label": "A pagar", "type": "boolean", "description": "Gestão de contas a pagar" },
-        { "key": "comissoes", "label": "Comissões", "type": "boolean", "description": "Cálculo e controle de comissões de vendas/equipe" },
-        { "key": "notas", "label": "Notas fiscais", "type": "boolean", "description": "Emissão e gestão de notas fiscais (NFS-e)" },
-        { "key": "plano_de_contas", "label": "Plano de contas", "type": "boolean", "description": "Estrutura de plano de contas contábil" },
-        { "key": "relatorios", "label": "Relatórios", "type": "boolean", "description": "Relatórios financeiros e gerenciais" }
+        { "key": "financeiro", "label": "Financeiro", "type": "boolean", "description": "Fluxo de caixa, contas a pagar/receber, plano de contas" },
+        { "key": "cobranca", "label": "Cobrança (PIX/boleto)", "type": "boolean", "description": "Cobrança automática via Asaas (PIX/boleto/cartão)" },
+        { "key": "nfse", "label": "Nota Fiscal (NFS-e)", "type": "boolean", "description": "Emissão de NFS-e" }
       ]
     },
     {
       "key": "marketing",
       "label": "Marketing",
       "features": [
-        { "key": "trafego", "label": "Tráfego (Meta Ads)", "type": "boolean", "description": "Gestão de campanhas de tráfego pago no Meta Ads" },
-        { "key": "whatsapp_campanhas", "label": "Campanhas WhatsApp", "type": "boolean", "description": "Disparo e gestão de campanhas via WhatsApp" },
-        { "key": "whatsapp_leads", "label": "Leads do WhatsApp", "type": "boolean", "description": "Captura e qualificação de leads recebidos no WhatsApp" },
-        { "key": "whatsapp_contatos", "label": "Contatos do WhatsApp", "type": "boolean", "description": "Base de contatos do WhatsApp" },
-        { "key": "whatsapp_scripts", "label": "Scripts de WhatsApp", "type": "boolean", "description": "Modelos/scripts de mensagens para atendimento" }
-      ]
-    },
-    {
-      "key": "cadastros",
-      "label": "Cadastros",
-      "features": [
-        { "key": "clientes", "label": "Clientes", "type": "boolean", "description": "Cadastro de clientes (PF/PJ) e unidades" },
-        { "key": "servicos", "label": "Serviços", "type": "boolean", "description": "Catálogo de serviços oferecidos" },
-        { "key": "produtos", "label": "Produtos", "type": "boolean", "description": "Cadastro de produtos químicos/insumos" },
-        { "key": "pragas", "label": "Pragas", "type": "boolean", "description": "Cadastro de pragas tratadas" },
-        { "key": "estruturas", "label": "Estruturas", "type": "boolean", "description": "Cadastro de estruturas/ambientes atendidos" },
-        { "key": "fornecedores", "label": "Fornecedores", "type": "boolean", "description": "Cadastro de fornecedores" },
-        { "key": "veiculos", "label": "Veículos", "type": "boolean", "description": "Cadastro e gestão da frota de veículos" }
+        { "key": "whatsapp", "label": "WhatsApp", "type": "boolean", "description": "Campanhas, leads, contatos e scripts de WhatsApp" }
       ]
     },
     {
       "key": "recursos_humanos",
       "label": "Recursos Humanos",
       "features": [
-        { "key": "funcionarios", "label": "Funcionários", "type": "boolean", "description": "Cadastro e gestão de funcionários" },
-        { "key": "prestadores", "label": "Prestadores de serviços", "type": "boolean", "description": "Cadastro de prestadores de serviços terceirizados" },
-        { "key": "folha_de_ponto", "label": "Folha de ponto", "type": "boolean", "description": "Registro e controle de ponto da equipe" },
-        { "key": "conformidade_rh", "label": "Conformidade", "type": "boolean", "description": "Conformidade e documentação trabalhista/regulatória de RH" }
+        { "key": "rh", "label": "RH e conformidade", "type": "boolean", "description": "Funcionários, ponto, CIPA, treinamentos, exames, EPI" }
       ]
     },
     {
       "key": "empresa",
       "label": "Empresa",
       "features": [
-        { "key": "equipe", "label": "Equipe", "type": "boolean", "description": "Gestão de usuários, papéis e permissões da equipe" },
-        { "key": "integracoes", "label": "Integrações", "type": "boolean", "description": "Conexão com serviços externos (Meta, WhatsApp, NFS-e etc.)" },
-        { "key": "auditoria", "label": "Atividade", "type": "boolean", "description": "Log de atividades e auditoria de ações no sistema" },
-        { "key": "lgpd", "label": "LGPD", "type": "boolean", "description": "Gestão de privacidade e conformidade com a LGPD" }
+        { "key": "portal", "label": "Portal do cliente", "type": "boolean", "description": "Área do cliente: acompanhar OS, pagar, responder NPS" }
       ]
     }
   ],
   "limits": [
-    { "key": "limite.usuarios", "label": "Usuários", "type": "limit", "column": "limite_usuarios" },
-    { "key": "limite.os_mes", "label": "Ordens de serviço por mês", "type": "limit", "column": "limite_os_mes" },
+    { "key": "limite.usuarios", "label": "Usuários", "type": "limit", "column": "limite_usuarios", "note": "vazio = ilimitado" },
+    { "key": "limite.os_mes", "label": "Ordens de serviço por mês", "type": "limit", "column": "limite_os_mes", "note": "vazio = ilimitado" },
     { "key": "limite.storage_gb", "label": "Armazenamento (GB)", "type": "limit", "column": "limite_storage_gb" }
   ]
 }

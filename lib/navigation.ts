@@ -163,37 +163,6 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    titulo: "WhatsApp",
-    icon: MessageCircle,
-    accent: "emerald",
-    itens: [
-      {
-        href: "/whatsapp/leads",
-        label: "Leads do WhatsApp",
-        icon: ScanSearch,
-        roles: ["owner", "comercial"],
-      },
-      {
-        href: "/whatsapp/campanhas",
-        label: "Campanhas",
-        icon: Megaphone,
-        roles: ["owner", "comercial", "financeiro"],
-      },
-      {
-        href: "/whatsapp/contatos",
-        label: "Contatos",
-        icon: Contact,
-        roles: ["owner", "comercial", "financeiro"],
-      },
-      {
-        href: "/whatsapp/scripts",
-        label: "Scripts",
-        icon: Send,
-        roles: ["owner", "comercial", "financeiro"],
-      },
-    ],
-  },
-  {
     titulo: "Financeiro",
     icon: CircleDollarSign,
     accent: "sky",
@@ -228,23 +197,53 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: Receipt,
         roles: ["owner", "financeiro"],
       },
-    ],
-  },
-  {
-    titulo: "Gestão",
-    icon: BarChart3,
-    accent: "indigo",
-    itens: [
+      {
+        href: "/plano-de-contas",
+        label: "Plano de Contas",
+        icon: Landmark,
+        roles: ["owner", "financeiro"],
+      },
       {
         href: "/relatorios",
         label: "Relatórios",
         icon: BarChart3,
         roles: ["owner", "financeiro"],
       },
+    ],
+  },
+  {
+    titulo: "Marketing",
+    icon: Megaphone,
+    accent: "emerald",
+    itens: [
       {
         href: "/trafego",
         label: "Tráfego (Meta Ads)",
         icon: Megaphone,
+        roles: ["owner", "comercial", "financeiro"],
+      },
+      {
+        href: "/whatsapp/campanhas",
+        label: "Campanhas WhatsApp",
+        icon: MessageCircle,
+        roles: ["owner", "comercial", "financeiro"],
+      },
+      {
+        href: "/whatsapp/leads",
+        label: "Leads do WhatsApp",
+        icon: ScanSearch,
+        roles: ["owner", "comercial"],
+      },
+      {
+        href: "/whatsapp/contatos",
+        label: "Contatos",
+        icon: Contact,
+        roles: ["owner", "comercial", "financeiro"],
+      },
+      {
+        href: "/whatsapp/scripts",
+        label: "Scripts",
+        icon: Send,
         roles: ["owner", "comercial", "financeiro"],
       },
     ],
@@ -295,12 +294,6 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Veículos",
         icon: Truck,
         roles: ["owner", "operacional"],
-      },
-      {
-        href: "/plano-de-contas",
-        label: "Plano de Contas",
-        icon: Landmark,
-        roles: ["owner", "financeiro"],
       },
     ],
   },

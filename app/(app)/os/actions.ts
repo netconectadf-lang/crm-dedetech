@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { osQuotaError } from "@/lib/entitlements";
 import { enviarNpsDaOS } from "@/lib/nps/enviar";
 import type { SaveState } from "@/lib/crud-helpers";
 import { osSchema, criarOSSchema, fichaSchema, osProductSchema } from "@/lib/validators/os";
@@ -23,6 +24,8 @@ export async function criarOS(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
+  const quota = await osQuotaError();
+  if (quota) return { error: quota };
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("service_orders")

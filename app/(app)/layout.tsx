@@ -4,6 +4,8 @@ import Image from "next/image";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireTenant } from "@/lib/auth";
+import { getEntitlements } from "@/lib/entitlements";
+import { EntitlementsProvider } from "@/lib/entitlements/provider";
 import { Sidebar } from "@/components/app/sidebar";
 import { Topbar } from "@/components/app/topbar";
 
@@ -17,6 +19,7 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const ctx = await requireTenant();
+  const entitlements = await getEntitlements();
 
   const supabase = await createClient();
   const { data } = await supabase
@@ -37,6 +40,7 @@ export default async function AppLayout({
   }));
 
   return (
+    <EntitlementsProvider value={entitlements}>
     <div className="flex flex-1">
       <a
         href="#conteudo"
@@ -82,5 +86,6 @@ export default async function AppLayout({
         </div>
       </div>
     </div>
+    </EntitlementsProvider>
   );
 }

@@ -1,9 +1,13 @@
 import "server-only";
 
+import { redirect } from "next/navigation";
+
 import { getAuthContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
   buildFeatures,
+  can,
+  limitOf,
   EMPTY_ENTITLEMENTS,
   type EntitlementData,
   type SubStatus,
@@ -57,6 +61,59 @@ export async function getEntitlements(): Promise<EntitlementData> {
         })
       : {},
   };
+}
+
+/**
+ * Guard de rota: exige que o plano do tenant tenha a feature.
+ * Se não tiver, redireciona pro dashboard com aviso. Defesa em profundidade
+ * (a UI já esconde/bloqueia via nav, mas isto impede acesso direto por URL).
+ */
+export async function requireFeature(feature: string): Promise<EntitlementData> {
+  const ent = await getEntitlements();
+  if (!can(ent, feature)) redirect(`/dashboard?bloqueado=${encodeURIComponent(feature)}`);
+  return ent;
+}
+
+/** Erro de cota de OS no mês corrente (null = ok). */
+export async function osQuotaError(): Promise<string | null> {
+  const ent = await getEntitlements();
+  const limit = limitOf(ent, "limite.os_mes");
+  if (limit === null || !ent.tenantId) return null;
+  const supabase = await createClient();
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const { count } = await supabase
+    .from("service_orders")
+    .select("*", { count: "exact", head: true })
+    .eq("tenant_id", ent.tenantId)
+    .gte("created_at", start);
+  const current = count ?? 0;
+  if (current >= limit)
+    return `Limite do plano: ${limit} ordens de serviço por mês atingido (${current}/${limit}). Faça upgrade para criar mais.`;
+  return null;
+}
+
+/** Erro de cota de usuários/assentos (null = ok). Conta membros + convites pendentes. */
+export async function seatQuotaError(): Promise<string | null> {
+  const ent = await getEntitlements();
+  const limit = limitOf(ent, "limite.usuarios");
+  if (limit === null || !ent.tenantId) return null;
+  const supabase = await createClient();
+  const [members, invites] = await Promise.all([
+    supabase
+      .from("memberships")
+      .select("*", { count: "exact", head: true })
+      .eq("tenant_id", ent.tenantId),
+    supabase
+      .from("invitations")
+      .select("*", { count: "exact", head: true })
+      .eq("tenant_id", ent.tenantId)
+      .eq("status", "pending"),
+  ]);
+  const used = (members.count ?? 0) + (invites.count ?? 0);
+  if (used >= limit)
+    return `Limite do plano: ${limit} usuários atingido (${used}/${limit}). Faça upgrade para convidar mais.`;
+  return null;
 }
 
 export {

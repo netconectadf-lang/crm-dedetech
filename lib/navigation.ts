@@ -363,3 +363,38 @@ export function visibleSections(role: AppRole | null): NavSection[] {
     itens: s.itens.filter((i) => !i.roles || (role && i.roles.includes(role))),
   })).filter((s) => s.itens.length > 0);
 }
+
+/**
+ * Feature de plano (Cortex) exigida por rota. Rotas ausentes aqui = sempre
+ * disponíveis (cadastros base, dashboard, admin). Keys = features.catalog.json.
+ */
+export const FEATURE_BY_HREF: Record<string, string> = {
+  "/funil": "funil",
+  "/orcamentos": "funil",
+  "/contratos": "contratos",
+  "/os": "os",
+  "/estoque": "estoque",
+  "/compras": "estoque",
+  "/mip": "mip",
+  "/agenda": "agenda",
+  "/roteiros": "agenda",
+  "/mapa": "gps",
+  "/financeiro": "financeiro",
+  "/financeiro/receber": "financeiro",
+  "/financeiro/pagar": "financeiro",
+  "/comissoes": "financeiro",
+  "/plano-de-contas": "financeiro",
+  "/notas": "nfse",
+  "/whatsapp/campanhas": "whatsapp",
+  "/whatsapp/leads": "whatsapp",
+  "/whatsapp/contatos": "whatsapp",
+  "/whatsapp/scripts": "whatsapp",
+  "/funcionarios": "rh",
+  "/prestadores": "rh",
+  "/folha-de-ponto": "rh",
+  "/rh": "rh",
+};
+
+export function featureForHref(href: string): string | undefined {
+  return FEATURE_BY_HREF[href];
+}

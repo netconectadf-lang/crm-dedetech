@@ -1,11 +1,11 @@
-# Entitlements (Lado B do Cérebro)
+# Entitlements (Lado B do Cortex)
 
 Faz o CRM **aplicar** os planos de assinatura: responde "este tenant pode usar
-a feature X?" e "qual o limite de Y?". Os planos são geridos no hub **Cérebro**
+a feature X?" e "qual o limite de Y?". Os planos são geridos no hub **Cortex**
 e gravados na tabela `plans` (features no JSONB + colunas `limite_*`); a
 assinatura do tenant está em `subscriptions`.
 
-As keys de feature seguem o `.cerebro/features.catalog.json`
+As keys de feature seguem o `.cortex/features.catalog.json`
 (ex.: `os`, `funil`, `nfse`, `cobranca`, `whatsapp`, `rh`, `gps`, `portal`…)
 e os limites são `limite.usuarios`, `limite.os_mes`, `limite.storage_gb`.
 

@@ -2,7 +2,7 @@
  * Entitlements — lógica PURA (sem I/O), usável no servidor e no cliente.
  * Responde "este tenant pode usar a feature X?" e "qual o limite de Y?",
  * a partir do plano da assinatura. Fonte da verdade dos planos = tabela `plans`
- * (gerida pelo hub Cérebro). As keys de feature seguem o features.catalog.json.
+ * (gerida pelo hub Cortex). As keys de feature seguem o features.catalog.json.
  */
 
 export type SubStatus = "active" | "trialing" | "past_due" | "canceled" | "none";

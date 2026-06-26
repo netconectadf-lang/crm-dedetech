@@ -20,9 +20,19 @@ const PUBLIC_PREFIXES = [
   "/api/cron",
   "/api/planos",
   "/api/leads",
+  "/api/whatsapp",
   "/manifest",
   "/robots",
   "/sitemap",
+  "/llms.txt",
+  // ─── Landing pública (route group app/(site)) ───
+  "/precos",
+  "/funcionalidades",
+  "/para-quem",
+  "/contato",
+  "/comecar",
+  "/blog",
+  "/app/privacidade",
 ];
 
 /**

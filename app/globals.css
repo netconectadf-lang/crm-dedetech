@@ -167,3 +167,26 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Tokens da LANDING (route group app/(site)). Namespace próprio (--color-bg,
+   --color-emerald, --color-cream…) que NÃO colide com os tokens shadcn do CRM.
+   Aplicados via utilitários (bg-bg, text-cream, text-emerald) dentro de (site).
+   O tema escuro esmeralda é "pintado" no wrapper de (site), não no body global.
+   ───────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-bg: #08130f;
+  --color-bg-2: #0b1a15;
+  --color-surface: #0f1f19;
+  --color-emerald: #12ce8e;
+  --color-emerald-deep: #07ad79;
+  --color-mint: #5eead4;
+  --color-cream: #e9f3ef;
+  --color-fog: #9fb6ad;
+  --color-line: #1c302a;
+
+  --font-display: var(--font-display);
+
+  --radius-card: 1.25rem;
+  --shadow-glow: 0 20px 60px -20px rgba(18, 206, 142, 0.45);
+}

@@ -1,0 +1,93 @@
+{
+  "project": "crm-dedetizadora",
+  "generatedBy": "cortex (claude-opus-4-8) — derivado de lib/navigation.ts",
+  "version": 1,
+  "categories": [
+    {
+      "key": "comercial",
+      "label": "Comercial",
+      "features": [
+        { "key": "funil", "label": "Funil de vendas", "type": "boolean", "description": "Pipeline/kanban de oportunidades comerciais." },
+        { "key": "orcamentos", "label": "Orçamentos", "type": "boolean", "description": "Criação e envio de orçamentos/propostas." },
+        { "key": "contratos", "label": "Contratos", "type": "boolean", "description": "Geração e gestão de contratos." },
+        { "key": "chamados", "label": "Chamados / Suporte", "type": "boolean", "description": "Abertura e acompanhamento de chamados." }
+      ]
+    },
+    {
+      "key": "operacao",
+      "label": "Operação",
+      "features": [
+        { "key": "os", "label": "Ordens de serviço", "type": "boolean", "description": "Gestão de ordens de serviço (execução em campo)." },
+        { "key": "mip", "label": "MIP / Monitoramento", "type": "boolean", "description": "Manejo Integrado de Pragas e monitoramento de pontos." },
+        { "key": "agenda", "label": "Agenda de operadores", "type": "boolean", "description": "Agendamento de operadores/técnicos." },
+        { "key": "roteiros", "label": "Roteiros do dia", "type": "boolean", "description": "Roteirização das visitas do dia." },
+        { "key": "gps", "label": "Mapa & rastreamento GPS", "type": "boolean", "description": "Mapa da operação e rastreamento por GPS." },
+        { "key": "estoque", "label": "Estoque", "type": "boolean", "description": "Controle de estoque de produtos/insumos." },
+        { "key": "compras", "label": "Compras / Pedidos", "type": "boolean", "description": "Pedidos de compra e reposição." },
+        { "key": "comunicacao", "label": "Comunicação & NPS", "type": "boolean", "description": "Comunicação com cliente e pesquisas de NPS." }
+      ]
+    },
+    {
+      "key": "financeiro",
+      "label": "Financeiro",
+      "features": [
+        { "key": "financeiro", "label": "Financeiro (contas a pagar/receber)", "type": "boolean", "description": "Visão geral, a pagar e a receber." },
+        { "key": "cobranca", "label": "Cobrança automática", "type": "boolean", "description": "Geração e envio automático de cobranças." },
+        { "key": "comissoes", "label": "Comissões", "type": "boolean", "description": "Cálculo de comissões da equipe comercial/operacional." },
+        { "key": "nfse", "label": "Notas fiscais (NF-e/NFS-e)", "type": "boolean", "description": "Emissão de notas fiscais." },
+        { "key": "plano_contas", "label": "Plano de contas", "type": "boolean", "description": "Plano de contas e classificação financeira." },
+        { "key": "relatorios", "label": "Relatórios", "type": "boolean", "description": "Relatórios financeiros e gerenciais." }
+      ]
+    },
+    {
+      "key": "marketing",
+      "label": "Marketing",
+      "features": [
+        { "key": "trafego", "label": "Tráfego (Meta Ads)", "type": "boolean", "description": "Gestão de campanhas de tráfego pago (Meta Ads)." },
+        { "key": "whatsapp", "label": "WhatsApp (campanhas, leads, scripts)", "type": "boolean", "description": "Campanhas, leads, contatos e scripts de WhatsApp." }
+      ]
+    },
+    {
+      "key": "cadastros",
+      "label": "Cadastros",
+      "features": [
+        { "key": "clientes", "label": "Clientes", "type": "boolean", "description": "Cadastro de clientes." },
+        { "key": "servicos", "label": "Serviços", "type": "boolean", "description": "Catálogo de serviços." },
+        { "key": "produtos", "label": "Produtos", "type": "boolean", "description": "Cadastro de produtos/insumos." },
+        { "key": "pragas", "label": "Pragas", "type": "boolean", "description": "Cadastro de pragas-alvo." },
+        { "key": "estruturas", "label": "Estruturas", "type": "boolean", "description": "Cadastro de estruturas/pontos de inspeção." },
+        { "key": "fornecedores", "label": "Fornecedores", "type": "boolean", "description": "Cadastro de fornecedores." },
+        { "key": "veiculos", "label": "Veículos", "type": "boolean", "description": "Frota de veículos." }
+      ]
+    },
+    {
+      "key": "rh",
+      "label": "Recursos Humanos",
+      "features": [
+        { "key": "rh", "label": "RH & DP", "type": "boolean", "description": "Funcionários, prestadores, folha de ponto e conformidade." }
+      ]
+    },
+    {
+      "key": "portais",
+      "label": "Portais",
+      "features": [
+        { "key": "portal", "label": "Portal do cliente", "type": "boolean", "description": "Área de autoatendimento do cliente." },
+        { "key": "colaborador", "label": "Área do colaborador", "type": "boolean", "description": "Portal do colaborador/técnico em campo." }
+      ]
+    },
+    {
+      "key": "empresa",
+      "label": "Empresa",
+      "features": [
+        { "key": "integracoes", "label": "Integrações", "type": "boolean", "description": "Integrações com serviços externos." },
+        { "key": "auditoria", "label": "Auditoria de atividade", "type": "boolean", "description": "Histórico/log de atividades do sistema." },
+        { "key": "lgpd", "label": "LGPD", "type": "boolean", "description": "Ferramentas de conformidade com a LGPD." }
+      ]
+    }
+  ],
+  "limits": [
+    { "key": "limite.usuarios", "label": "Usuários", "type": "limit", "description": "Número máximo de usuários ativos.", "column": "limite_usuarios" },
+    { "key": "limite.os_mes", "label": "Ordens de serviço / mês", "type": "limit", "description": "Limite de ordens de serviço criadas por mês.", "column": "limite_os_mes" },
+    { "key": "limite.storage_gb", "label": "Armazenamento (GB)", "type": "limit", "description": "Espaço de armazenamento de arquivos/anexos.", "column": "limite_storage_gb" }
+  ]
+}

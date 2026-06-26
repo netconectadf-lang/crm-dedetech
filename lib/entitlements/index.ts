@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import { getAuthContext } from "@/lib/auth";
@@ -27,8 +28,12 @@ import {
  *   plano) — fica pronta para quando o Cortex passar a gravar overrides por tenant.
  *
  * @param tenantId opcional — se omitido, usa o tenant ativo da sessão.
+ *
+ * Memoizado por request (React cache): o layout do app, o provider e os
+ * layouts de segmento (requireFeature) compartilham UMA única resolução por
+ * render, sem múltiplas idas ao banco.
  */
-export async function getEntitlements(tenantId?: string): Promise<EntitlementData> {
+export const getEntitlements = cache(async (tenantId?: string): Promise<EntitlementData> => {
   let resolvedTenantId = tenantId ?? null;
   if (!resolvedTenantId) {
     const ctx = await getAuthContext();
@@ -99,7 +104,7 @@ export async function getEntitlements(tenantId?: string): Promise<EntitlementDat
     flags,
     now: new Date(),
   });
-}
+});
 
 /**
  * Guard de rota: exige que o plano do tenant tenha a feature.
@@ -156,6 +161,7 @@ export async function seatQuotaError(): Promise<string | null> {
 
 export {
   can,
+  featureLabel,
   limitOf,
   withinLimit,
   canAddMore,

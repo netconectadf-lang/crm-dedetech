@@ -3,7 +3,6 @@ import { ArrowRight } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { requireFeature } from "@/lib/entitlements";
 import { excluirCampanha } from "./actions";
 import { NovaCampanha } from "@/components/whatsapp/nova-campanha";
 import { AjudaTela } from "@/components/app/ajuda-tela";
@@ -34,7 +33,6 @@ type Campanha = {
 
 export default async function CampanhasPage() {
   await requireRole(["owner", "comercial", "financeiro"]);
-  await requireFeature("whatsapp");
   const supabase = await createClient();
 
   const [{ data: campData }, { data: scriptData }] = await Promise.all([

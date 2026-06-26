@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { requireTenant, hasRole } from "@/lib/auth";
+import { featureLabel } from "@/lib/entitlements";
 import { getDashboardMetrics } from "@/lib/data/dashboard";
 import { formatBRL } from "@/lib/format";
 import { ROLE_LABELS } from "@/lib/types";
@@ -89,8 +90,13 @@ function Chip({
   );
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ bloqueado?: string }>;
+}) {
   const ctx = await requireTenant();
+  const { bloqueado } = await searchParams;
   const m = await getDashboardMetrics();
   const primeiroNome = ctx.fullName?.split(" ")[0] ?? "bem-vindo";
   const hojeLabel = new Date().toLocaleDateString("pt-BR", {
@@ -139,6 +145,27 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-6 lg:p-8">
+      {/* Aviso de feature bloqueada pelo plano (redirect do requireFeature) */}
+      {bloqueado && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm">
+          <div className="flex items-center gap-2.5 text-amber-200">
+            <AlertTriangle className="size-4 shrink-0" />
+            <span>
+              <strong className="font-semibold">{featureLabel(bloqueado)}</strong> não está
+              incluído no seu plano atual.
+            </span>
+          </div>
+          {hasRole(ctx.role, ["owner"]) && (
+            <Link
+              href="/configuracoes?tab=plano"
+              className="shrink-0 rounded-lg bg-amber-500/20 px-3 py-1.5 font-medium text-amber-100 ring-1 ring-inset ring-amber-500/30 transition-colors hover:bg-amber-500/30"
+            >
+              Ver planos
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

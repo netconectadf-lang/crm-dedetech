@@ -63,6 +63,16 @@ export const KNOWN_FEATURE_KEYS: string[] = (catalog.features ?? [])
   .filter((f: { type?: string }) => f.type === "boolean")
   .map((f: { key: string }) => f.key);
 
+/** Mapa key → label legível (catálogo). Para mensagens de bloqueio/upgrade. */
+const FEATURE_LABELS: Record<string, string> = Object.fromEntries(
+  (catalog.features ?? []).map((f: { key: string; label?: string }) => [f.key, f.label ?? f.key]),
+);
+
+/** Nome amigável de uma feature ("nfse" → "Nota Fiscal (NFS-e)"). Fallback = a própria key. */
+export function featureLabel(key: string): string {
+  return FEATURE_LABELS[key] ?? key;
+}
+
 /** Assinatura ativa por status simples (sem considerar vencimento do trial). */
 export function isActive(status: SubStatus): boolean {
   return status === "active" || status === "trialing";

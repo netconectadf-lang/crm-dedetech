@@ -1,8 +1,26 @@
 {
   "project": "crm-dedetizadora",
   "generatedBy": "reconciliado-com-banco",
-  "version": 2,
-  "note": "Keys alinhadas às features reais usadas na tabela plans (pacote comercial). Granularidade por módulo; sub-telas estão dobradas na feature do módulo (ex.: 'whatsapp' cobre campanhas/leads/contatos/scripts).",
+  "version": 3,
+  "note": "Keys alinhadas às features reais usadas na tabela plans (pacote comercial). Granularidade por módulo; sub-telas estão dobradas na feature do módulo (ex.: 'whatsapp' cobre campanhas/leads/contatos/scripts). `features` (flat) é o contrato lido pelo Cortex e por lib/entitlements/core.ts (KNOWN_FEATURE_KEYS); `categories` é a mesma lista agrupada para a UI. Mantenha os dois em dia ao criar features novas.",
+  "features": [
+    { "key": "os", "label": "Ordens de serviço", "type": "boolean" },
+    { "key": "funil", "label": "Funil de vendas", "type": "boolean" },
+    { "key": "agenda", "label": "Agenda", "type": "boolean" },
+    { "key": "nfse", "label": "Nota Fiscal (NFS-e)", "type": "boolean" },
+    { "key": "estoque", "label": "Estoque", "type": "boolean" },
+    { "key": "cobranca", "label": "Cobrança (PIX/boleto)", "type": "boolean" },
+    { "key": "whatsapp", "label": "WhatsApp", "type": "boolean" },
+    { "key": "contratos", "label": "Contratos recorrentes", "type": "boolean" },
+    { "key": "financeiro", "label": "Financeiro", "type": "boolean" },
+    { "key": "rh", "label": "RH e conformidade", "type": "boolean" },
+    { "key": "gps", "label": "Rastreamento GPS da frota", "type": "boolean" },
+    { "key": "mip", "label": "MIP (monitoramento de pragas)", "type": "boolean" },
+    { "key": "portal", "label": "Portal do cliente", "type": "boolean" },
+    { "key": "limite.usuarios", "label": "Usuários", "type": "limit" },
+    { "key": "limite.os_mes", "label": "Ordens de serviço por mês", "type": "limit" },
+    { "key": "limite.storage_gb", "label": "Armazenamento (GB)", "type": "limit" }
+  ],
   "categories": [
     {
       "key": "comercial",

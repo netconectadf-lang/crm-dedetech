@@ -1,16 +1,31 @@
 # Entitlements (Lado B do Cortex)
 
 Faz o CRM **aplicar** os planos de assinatura: responde "este tenant pode usar
-a feature X?" e "qual o limite de Y?". Os planos são geridos no hub **Cortex**
-e gravados na tabela `plans` (features no JSONB + colunas `limite_*`); a
-assinatura do tenant está em `subscriptions`.
+a feature X?" e "qual o limite de Y?". O hub **Cortex** é a FONTE DA VERDADE e
+escreve direto no banco: `plans` (master, features no JSONB + colunas `limite_*`)
+e `platform_plans` (vitrine). A assinatura do tenant está em `subscriptions`
+(o Cortex lê, é READ-ONLY pra ele).
 
 As keys de feature seguem o `.cortex/features.catalog.json`
 (ex.: `os`, `funil`, `nfse`, `cobranca`, `whatsapp`, `rh`, `gps`, `portal`…)
 e os limites são `limite.usuarios`, `limite.os_mes`, `limite.storage_gb`.
 
-> **Aditivo e não-quebra-nada:** nada importa este módulo ainda. Adote por tela,
-> aos poucos. Assinatura `past_due`/`canceled` bloqueia tudo (`can` = false).
+## Reconciliação (precedência)
+
+`getEntitlements(tenantId?)` resolve `subscriptions → plans` (base) e
+**reconcilia** com `feature_flags` (override por tenant). Para cada key:
+
+```
+efetivo[key] = feature_flags[key] ?? (assinaturaUtilizável ? plano[key] : false)
+```
+
+O **feature_flag VENCE o plano** — é a exceção manual por tenant, vale até com
+assinatura cancelada. Sem flag, vale o plano, mas só se a assinatura estiver
+utilizável: `active`, ou `trialing` com `current_period_end` no futuro. **Trial
+vencido = pago bloqueado**; `past_due`/`canceled`/`none` também bloqueiam.
+Toda essa lógica é pura em `core.ts` (`reconcileEntitlements`) e coberta por
+`tests/entitlements.test.ts`. **Não** consulte `plans`/`feature_flags` fora
+desta camada.
 
 ## Servidor (Server Components / Route Handlers / Server Actions)
 

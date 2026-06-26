@@ -5,34 +5,70 @@ import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
-  buildFeatures,
   can,
   limitOf,
+  reconcileEntitlements,
   EMPTY_ENTITLEMENTS,
   type EntitlementData,
   type SubStatus,
 } from "./core";
 
 /**
- * Resolve os entitlements do tenant ativo no servidor:
- * assinatura → plano → features/limites. Respeita a RLS (usa o client da sessão).
- * Use o resultado com os helpers de ./core (can, limitOf, withinLimit).
+ * Resolve os entitlements de um tenant no servidor a partir do banco:
+ *   subscriptions → plans  (base)  ⊕  feature_flags (override por tenant).
+ * Toda a lógica de precedência/trial vive em reconcileEntitlements (./core, pura).
+ * Respeita a RLS (usa o client da sessão).
+ *
+ * PRECEDÊNCIA (ver reconcileEntitlements): efetivo[key] = feature_flags[key] ??
+ *   (assinaturaUtilizável ? plano[key] : false). O feature_flag VENCE o plano.
+ *
+ * NOTA (verificado 26/06/2026): a tabela feature_flags está VAZIA em produção
+ *   (0 linhas). A reconciliação abaixo é, portanto, um no-op hoje (cai sempre no
+ *   plano) — fica pronta para quando o Cortex passar a gravar overrides por tenant.
+ *
+ * @param tenantId opcional — se omitido, usa o tenant ativo da sessão.
  */
-export async function getEntitlements(): Promise<EntitlementData> {
-  const ctx = await getAuthContext();
-  const tenantId = ctx?.tenantId ?? null;
-  if (!tenantId) return EMPTY_ENTITLEMENTS;
+export async function getEntitlements(tenantId?: string): Promise<EntitlementData> {
+  let resolvedTenantId = tenantId ?? null;
+  if (!resolvedTenantId) {
+    const ctx = await getAuthContext();
+    resolvedTenantId = ctx?.tenantId ?? null;
+  }
+  if (!resolvedTenantId) return EMPTY_ENTITLEMENTS;
 
   const supabase = await createClient();
 
   const { data: sub } = await supabase
     .from("subscriptions")
-    .select("status, plan_id")
-    .eq("tenant_id", tenantId)
+    .select("status, plan_id, current_period_end")
+    .eq("tenant_id", resolvedTenantId)
     .maybeSingle();
-  if (!sub) return { ...EMPTY_ENTITLEMENTS, tenantId };
 
-  const subRow = sub as { status: string | null; plan_id: string };
+  // Flags valem mesmo sem assinatura (override explícito por exceção).
+  const { data: flagRows } = await supabase
+    .from("feature_flags")
+    .select("key, enabled")
+    .eq("tenant_id", resolvedTenantId);
+  const flags = (flagRows ?? []) as Array<{ key: string; enabled: boolean }>;
+
+  if (!sub) {
+    return reconcileEntitlements({
+      tenantId: resolvedTenantId,
+      planName: null,
+      status: "none",
+      currentPeriodEnd: null,
+      planFeatures: null,
+      planLimits: { usuarios: null, os_mes: null, storage_gb: null },
+      flags,
+      now: new Date(),
+    });
+  }
+
+  const subRow = sub as {
+    status: string | null;
+    plan_id: string;
+    current_period_end: string | null;
+  };
   const { data: plan } = await supabase
     .from("plans")
     .select("nome, features, limite_usuarios, limite_os_mes, limite_storage_gb")
@@ -49,18 +85,20 @@ export async function getEntitlements(): Promise<EntitlementData> {
       }
     | null;
 
-  return {
-    tenantId,
+  return reconcileEntitlements({
+    tenantId: resolvedTenantId,
     planName: planRow?.nome ?? null,
     status: (subRow.status ?? "none") as SubStatus,
-    features: planRow
-      ? buildFeatures(planRow.features, {
-          usuarios: planRow.limite_usuarios,
-          os_mes: planRow.limite_os_mes,
-          storage_gb: planRow.limite_storage_gb,
-        })
-      : {},
-  };
+    currentPeriodEnd: subRow.current_period_end,
+    planFeatures: planRow?.features ?? null,
+    planLimits: {
+      usuarios: planRow?.limite_usuarios ?? null,
+      os_mes: planRow?.limite_os_mes ?? null,
+      storage_gb: planRow?.limite_storage_gb ?? null,
+    },
+    flags,
+    now: new Date(),
+  });
 }
 
 /**

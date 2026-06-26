@@ -30,8 +30,10 @@ export function useEntitlements() {
   const data = useContext(Ctx);
   return {
     data,
-    planName: data.planName,
+    plan: data.plan,
+    planName: data.plan,
     status: data.status,
+    trialEndsAt: data.trialEndsAt,
     can: (feature: string) => canFn(data, feature),
     limitOf: (key: string) => limitFn(data, key),
     withinLimit: (key: string, current: number) => withinFn(data, key, current),

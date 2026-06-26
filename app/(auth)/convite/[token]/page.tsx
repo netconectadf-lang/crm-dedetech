@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthContext } from "@/lib/auth";
 import { ROLE_LABELS, type AppRole } from "@/lib/types";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -58,7 +59,8 @@ export default async function ConvitePage({
 
   if (invalido) {
     return (
-      <Card>
+      <AuthShell>
+        <Card>
         <CardHeader>
           <CardTitle>Convite inválido</CardTitle>
           <CardDescription>
@@ -70,7 +72,8 @@ export default async function ConvitePage({
             <Link href="/login">Ir para o login</Link>
           </Button>
         </CardContent>
-      </Card>
+        </Card>
+      </AuthShell>
     );
   }
 
@@ -78,7 +81,8 @@ export default async function ConvitePage({
   const empresa = invitation.tenants?.razao_social ?? "a empresa";
 
   return (
-    <Card>
+    <AuthShell>
+      <Card>
       <CardHeader>
         <CardTitle>Convite para {empresa}</CardTitle>
         <CardDescription>
@@ -112,6 +116,7 @@ export default async function ConvitePage({
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </AuthShell>
   );
 }

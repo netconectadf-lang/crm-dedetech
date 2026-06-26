@@ -11,6 +11,7 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { requireFeature } from "@/lib/entitlements";
 import { formatBRL, formatDate } from "@/lib/format";
 import { resumoCertificado } from "@/lib/nfse-gov/store";
 import { sincronizarNota } from "./actions";
@@ -53,6 +54,7 @@ const STATUS: Record<string, { label: string; tone: string }> = {
 
 export default async function NotasPage() {
   const ctx = await requireRole(["owner", "financeiro"]);
+  await requireFeature("nfse");
   const supabase = await createClient();
 
   const [{ data: notasData }, { data: tData }, cert] = await Promise.all([

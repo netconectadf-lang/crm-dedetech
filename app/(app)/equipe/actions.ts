@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
+import { seatQuotaError } from "@/lib/entitlements";
 import { sendEmail, inviteEmailHtml } from "@/lib/email";
 import { inviteSchema } from "@/lib/validators/auth";
 import type { AppRole } from "@/lib/types";
@@ -32,6 +33,9 @@ export async function inviteMember(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
+
+  const quota = await seatQuotaError();
+  if (quota) return { error: quota };
 
   const supabase = await createClient();
   const { data, error } = await supabase

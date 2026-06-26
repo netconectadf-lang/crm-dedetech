@@ -5,6 +5,7 @@ import { useActionState } from "react";
 
 import { resetRequestAction, type FormState } from "@/app/(auth)/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { AuthShell } from "@/components/auth/auth-shell";
 import {
   Card,
   CardContent,
@@ -22,7 +23,8 @@ export default function RecuperarPage() {
   );
 
   return (
-    <Card>
+    <AuthShell>
+      <Card>
       <CardHeader>
         <CardTitle>Recuperar senha</CardTitle>
         <CardDescription>
@@ -49,6 +51,7 @@ export default function RecuperarPage() {
           </Link>
         </p>
       </CardContent>
-    </Card>
+      </Card>
+    </AuthShell>
   );
 }

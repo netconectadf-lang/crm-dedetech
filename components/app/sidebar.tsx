@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { visibleSections, type NavItem } from "@/lib/navigation";
+import { visibleSections, featureForHref, type NavItem } from "@/lib/navigation";
+import { useEntitlements } from "@/lib/entitlements/provider";
 import type { AppRole } from "@/lib/types";
 
 const STORAGE = "dedetech-nav-open";
@@ -30,8 +31,21 @@ const DEFAULT_ACCENT: AccentStyle = {
   icon: "text-primary",
 };
 
-function NavLink({ item, active, accent }: { item: NavItem; active: boolean; accent: AccentStyle }) {
+function NavLink({ item, active, accent, locked }: { item: NavItem; active: boolean; accent: AccentStyle; locked?: boolean }) {
   const Icon = item.icon;
+  if (locked) {
+    return (
+      <div
+        title="Disponível em outro plano de assinatura"
+        aria-disabled="true"
+        className="group relative flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-muted-foreground/40"
+      >
+        <Icon className="size-[18px] shrink-0 text-muted-foreground/40" />
+        <span className="flex-1">{item.label}</span>
+        <Lock className="size-3.5 shrink-0 text-muted-foreground/50" />
+      </div>
+    );
+  }
   return (
     <Link
       href={item.href}
@@ -61,7 +75,12 @@ function NavLink({ item, active, accent }: { item: NavItem; active: boolean; acc
 export function Sidebar({ role }: { role: AppRole | null }) {
   const pathname = usePathname();
   const sections = visibleSections(role);
+  const { can } = useEntitlements();
 
+  const isLocked = (href: string) => {
+    const feat = featureForHref(href);
+    return feat ? !can(feat) : false;
+  };
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
   const temAtivo = (itens: NavItem[]) => itens.some((i) => isActive(i.href));
@@ -101,7 +120,7 @@ export function Sidebar({ role }: { role: AppRole | null }) {
           return (
             <div key={i} className="flex flex-col gap-0.5">
               {section.itens.map((item) => (
-                <NavLink key={item.href} item={item} active={isActive(item.href)} accent={DEFAULT_ACCENT} />
+                <NavLink key={item.href} item={item} active={isActive(item.href)} accent={DEFAULT_ACCENT} locked={isLocked(item.href)} />
               ))}
             </div>
           );
@@ -131,7 +150,7 @@ export function Sidebar({ role }: { role: AppRole | null }) {
             {open && (
               <div className="flex flex-col gap-0.5">
                 {section.itens.map((item) => (
-                  <NavLink key={item.href} item={item} active={isActive(item.href)} accent={acc} />
+                  <NavLink key={item.href} item={item} active={isActive(item.href)} accent={acc} locked={isLocked(item.href)} />
                 ))}
               </div>
             )}

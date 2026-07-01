@@ -3,6 +3,8 @@
  * Só duas operações no MVP: enviar texto e ler a mensagem recebida do webhook.
  */
 
+import { reportarErro } from "@/lib/observability";
+
 const GRAPH_VERSION = "v21.0";
 
 const TOKEN = process.env.WHATSAPP_TOKEN!;
@@ -27,7 +29,7 @@ export async function enviarTexto(para: string, texto: string): Promise<void> {
 
   if (!resp.ok) {
     const erro = await resp.text();
-    console.error("[whatsapp] falha ao enviar:", resp.status, erro);
+    reportarErro("whatsapp-envio", new Error(`Meta ${resp.status}: ${erro}`), { para });
   }
 }
 

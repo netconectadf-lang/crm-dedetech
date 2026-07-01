@@ -4,7 +4,10 @@ const opt = (s: z.ZodTypeAny) =>
   z.preprocess((v) => (v === "" || v == null ? undefined : v), s.optional());
 
 // ─── Pragas / Estruturas (listas selecionáveis na OS) ────────────────
-const switchBool = z.preprocess(
+// Converte o valor do switch (hidden input manda a STRING "true"/"false").
+// NÃO usar z.coerce.boolean(): Boolean("false") === true (string não-vazia é
+// truthy) → impossível desligar o switch. Este preprocess trata a string certa.
+export const switchBool = z.preprocess(
   (v) => v === "on" || v === "true" || v === true,
   z.boolean(),
 );
@@ -92,7 +95,7 @@ export const clientSchema = z.object({
   segmento: opt(z.string()),
   origem: opt(z.string()),
   observacoes: opt(z.string()),
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });
 
 // ─── Unidade / Local ─────────────────────────────────────────────────
@@ -119,7 +122,7 @@ export const serviceSchema = z.object({
   preco_base: z.coerce.number().min(0).default(0),
   garantia_padrao_meses: z.coerce.number().int().min(0).default(0),
   unidade_cobranca: z.enum(["m2", "visita", "ponto", "hora"]),
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });
 
 // ─── Fornecedor ──────────────────────────────────────────────────────
@@ -133,7 +136,7 @@ export const supplierSchema = z.object({
   uf: opt(z.string().max(2)),
   categoria: opt(z.string()),
   observacoes: opt(z.string()),
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });
 
 // ─── Produto / Saneante ──────────────────────────────────────────────
@@ -158,7 +161,7 @@ export const productSchema = z.object({
     (v) => (v === "" || v == null || v === "none" ? undefined : v),
     z.string().uuid().optional(),
   ),
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });
 
 // ─── Funcionário ─────────────────────────────────────────────────────
@@ -178,10 +181,10 @@ export const employeeSchema = z.object({
   ),
   data_admissao: opt(z.string()),
   tipo_contrato: z.enum(["clt", "pj", "estagio", "temporario"]),
-  responsavel_tecnico: z.coerce.boolean().default(false),
+  responsavel_tecnico: switchBool.default(false),
   registro_conselho: opt(z.string()),
   vencimento_anuidade: opt(z.string()),
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });
 
 // ─── Veículo ─────────────────────────────────────────────────────────
@@ -203,7 +206,7 @@ export const vehicleSchema = z.object({
   // Consumo em km/litro — usado no cálculo do custo de combustível da OS
   // (combustível = km × preço/L ÷ consumo). Sem isso o consumo não persistia.
   consumo_km_l: numero,
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });
 
 // ─── Prestadores de serviço (terceiros) ─────────────────────────────
@@ -229,5 +232,5 @@ export const accountSchema = z.object({
     (v) => (v === "" || v == null ? undefined : v),
     z.string().uuid().optional(),
   ),
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });

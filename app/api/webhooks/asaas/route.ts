@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { liberarComissoesDaAr } from "@/lib/comissoes";
 
 /**
  * Webhook do Asaas (multi-tenant). O token enviado no header identifica a
@@ -14,12 +15,15 @@ export async function POST(req: NextRequest) {
 
   const db = createAdminClient();
 
-  // token global do ambiente (compatibilidade) OU token por empresa
+  // Token por empresa (payment_integrations.webhook_token) é o caminho correto.
+  // O token GLOBAL legado quita cobrança de qualquer tenant → desativado por
+  // padrão. Só é aceito se ASAAS_WEBHOOK_ALLOW_LEGACY === "true" (emergência).
   const globalToken = process.env.ASAAS_WEBHOOK_TOKEN;
+  const permiteLegado = process.env.ASAAS_WEBHOOK_ALLOW_LEGACY === "true";
   let tenantId: string | null = null;
 
-  if (globalToken && token === globalToken) {
-    tenantId = null; // aceita qualquer tenant (modo legado)
+  if (globalToken && permiteLegado && token === globalToken) {
+    tenantId = null; // aceita qualquer tenant (modo legado, opt-in)
   } else {
     const { data: integ } = await db
       .from("payment_integrations")
@@ -56,14 +60,18 @@ export async function POST(req: NextRequest) {
       .eq("id", charge.ar_id)
       .maybeSingle();
     if (ar) {
+      const valorPago = (ar as { valor: number }).valor;
       await db
         .from("accounts_receivable")
         .update({
-          valor_pago: (ar as { valor: number }).valor,
+          valor_pago: valorPago,
           status: "quitado",
           pago_em: new Date().toISOString(),
         })
         .eq("id", charge.ar_id);
+      // Libera as comissões provisionadas dessa AR (idempotente: só age nas
+      // que ainda estão "provisionada"). Espelha o fluxo da baixa manual.
+      await liberarComissoesDaAr(db, charge.tenant_id, charge.ar_id, valorPago);
     }
   }
 

@@ -37,6 +37,7 @@ export async function gerarCobrancaCore(
       "id, descricao, valor, vencimento, client_id, clients(id, razao_social, documento, telefone, email, asaas_customer_id)",
     )
     .eq("id", arId)
+    .eq("tenant_id", tenantId) // impede IDOR cross-tenant (AR de outra empresa)
     .maybeSingle();
   const ar = arData as unknown as {
     id: string;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { switchBool } from "./cadastros";
 
 const opt = (s: z.ZodTypeAny) =>
   z.preprocess((v) => (v === "" || v == null ? undefined : v), s.optional());
@@ -13,7 +14,7 @@ export const deviceSchema = z.object({
     "outro",
   ]),
   numero: z.string().min(1, "Informe o número/identificação"),
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });
 
 export const readingSchema = z.object({

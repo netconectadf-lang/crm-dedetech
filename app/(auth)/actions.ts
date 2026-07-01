@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 import {
   loginSchema,
   signupSchema,
@@ -11,6 +12,9 @@ import {
 } from "@/lib/validators/auth";
 
 export type FormState = { error?: string; message?: string } | null;
+
+const RATE_MSG =
+  "Muitas tentativas. Aguarde um minuto e tente novamente.";
 
 async function appUrl() {
   const env = process.env.NEXT_PUBLIC_APP_URL;
@@ -31,6 +35,12 @@ export async function loginAction(
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+
+  // Anti força-bruta: 8 tentativas/min por e-mail+IP.
+  const chave = `${parsed.data.email}:${await clientIp()}`;
+  if (!(await rateLimit("login", { limit: 8, windowSeconds: 60, key: chave }))) {
+    return { error: RATE_MSG };
   }
 
   const supabase = await createClient();
@@ -56,6 +66,11 @@ export async function signupAction(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
   const { fullName, empresa, cnpj, email, password } = parsed.data;
+
+  // Anti-abuso: 5 cadastros/min por IP.
+  if (!(await rateLimit("signup", { limit: 5, windowSeconds: 60, key: await clientIp() }))) {
+    return { error: RATE_MSG };
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -96,6 +111,12 @@ export async function resetRequestAction(
 ): Promise<FormState> {
   const parsed = resetRequestSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) return { error: "E-mail inválido" };
+
+  // Anti-abuso de e-mails de reset: 4/min por e-mail+IP.
+  const chave = `${parsed.data.email}:${await clientIp()}`;
+  if (!(await rateLimit("reset", { limit: 4, windowSeconds: 60, key: chave }))) {
+    return { error: RATE_MSG };
+  }
 
   const supabase = await createClient();
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {

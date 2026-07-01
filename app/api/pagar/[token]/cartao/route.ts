@@ -7,12 +7,23 @@ import {
   type AsaasConfig,
 } from "@/lib/asaas";
 import { calcularParcelas } from "@/lib/parcelas";
+import { liberarComissoesDaAr } from "@/lib/comissoes";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+
+  // Anti card-testing: no máx. 6 tentativas / 5 min por token de cobrança.
+  if (!(await rateLimit("cartao", { limit: 6, windowSeconds: 300, key: token }))) {
+    return NextResponse.json(
+      { ok: false, error: "Muitas tentativas. Aguarde alguns minutos." },
+      { status: 429 },
+    );
+  }
+
   let body: {
     parcelas?: number;
     card?: { number?: string; holderName?: string; expiryMonth?: string; expiryYear?: string; ccv?: string };
@@ -140,6 +151,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
       .from("accounts_receivable")
       .update({ status: "quitado", valor_pago: charge.valor } as never)
       .eq("id", charge.ar_id);
+    // Libera comissões provisionadas (base = principal da AR, sem os juros do
+    // cartão). Idempotente. Espelha a baixa manual e o webhook.
+    await liberarComissoesDaAr(admin, charge.tenant_id, charge.ar_id, Number(charge.valor));
   }
   if (charge.provider_charge_id && charge.provider_charge_id !== pg.id) {
     await deletarCobrancaAsaas(config, charge.provider_charge_id);

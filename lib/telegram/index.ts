@@ -1,5 +1,7 @@
 import "server-only";
 
+import { reportarErro } from "@/lib/observability";
+
 export function telegramEnabled() {
   return Boolean(process.env.TELEGRAM_BOT_TOKEN);
 }
@@ -18,8 +20,8 @@ export async function enviarTelegram(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" }),
     });
-  } catch {
-    /* silencioso — não derruba o webhook */
+  } catch (e) {
+    reportarErro("telegram-send", e, { chatId }); // não derruba o webhook
   }
 }
 

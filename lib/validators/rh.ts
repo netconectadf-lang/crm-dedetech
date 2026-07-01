@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { switchBool } from "./cadastros";
 
 const opt = (s: z.ZodTypeAny) =>
   z.preprocess((v) => (v === "" || v == null ? undefined : v), s.optional());
@@ -14,7 +15,7 @@ export const epiSchema = z.object({
   descricao: z.string().min(2, "Descreva o EPI"),
   entregue_em: z.string().min(1, "Informe a data de entrega"),
   validade: opt(z.string()),
-  assinado: z.coerce.boolean().default(false),
+  assinado: switchBool.default(false),
 });
 
 export const examSchema = z.object({

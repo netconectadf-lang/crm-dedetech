@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { switchBool } from "./cadastros";
 
 const opt = (s: z.ZodTypeAny) =>
   z.preprocess((v) => (v === "" || v == null ? undefined : v), s.optional());
@@ -38,12 +39,12 @@ export const bankAccountSchema = z.object({
   tipo: z.enum(["corrente", "poupanca", "caixa", "cartao"]),
   banco: opt(z.string()),
   saldo_inicial: z.coerce.number().default(0),
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });
 
 export const costCenterSchema = z.object({
   nome: z.string().min(2, "Informe o nome"),
-  ativo: z.coerce.boolean().default(true),
+  ativo: switchBool.default(true),
 });
 
 export const baixaSchema = z.object({

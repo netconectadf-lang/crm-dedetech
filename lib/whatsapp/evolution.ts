@@ -1,5 +1,7 @@
 import "server-only";
 
+import { reportarErro } from "@/lib/observability";
+
 /**
  * Helpers da Evolution API para CONECTAR o número (QR Code / status).
  *
@@ -115,9 +117,13 @@ export async function sendText(numero: string, text: string): Promise<SendTextRe
       body: JSON.stringify({ number: num, text }),
     });
     const d = (await res.json().catch(() => ({}))) as { key?: { id?: string }; message?: string };
-    if (!res.ok) return { ok: false, error: d?.message ?? JSON.stringify(d) };
+    if (!res.ok) {
+      reportarErro("evolution-send", new Error(d?.message ?? JSON.stringify(d)), { numero: num });
+      return { ok: false, error: d?.message ?? JSON.stringify(d) };
+    }
     return { ok: true, providerId: d?.key?.id };
   } catch (e) {
+    reportarErro("evolution-send", e, { numero: num });
     return { ok: false, error: String(e) };
   }
 }

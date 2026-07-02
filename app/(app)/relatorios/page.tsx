@@ -7,6 +7,10 @@ import {
   Gauge,
   Users,
   Smile,
+  FileCheck2,
+  Percent,
+  Target,
+  Clock,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
@@ -23,7 +27,11 @@ import {
   periodoAnterior,
   rotuloPeriodo,
   variacao,
+  resumoOrcamentos,
+  produtividadePorTecnico,
+  agingInadimplencia,
   type Periodo,
+  type QuoteLite,
 } from "@/lib/relatorios";
 import { OS_STATUS } from "@/lib/os-status";
 import { PageHeader } from "@/components/app/page-header";
@@ -50,6 +58,22 @@ type OsRow = {
   scheduled_at: string | null;
   client_id: string | null;
   clients: { bairro: string | null } | null;
+  tempo_execucao_min: number | null;
+  km_rodado: number | null;
+  custo_produtos: number | null;
+  custo_combustivel: number | null;
+  custo_mao_obra: number | null;
+  custo_total: number | null;
+  employees: { nome: string | null } | null;
+};
+type QuoteItemRow = { subtotal: number | null };
+type QuoteRow = {
+  status: string;
+  enviado_em: string | null;
+  aceito_em: string | null;
+  recusado_em: string | null;
+  desconto: number | null;
+  quote_items: QuoteItemRow[] | null;
 };
 type ComissaoRow = { valor: number; created_at: string; employees: { nome: string | null } | null };
 type NpsRow = { score: number | null; respondido_em: string | null };
@@ -80,7 +104,7 @@ export default async function RelatoriosPage({
   const janFim = `${ano}-12-31`;
   const janProx = `${ano + 1}-01-01`;
 
-  const [arFatRes, arRecRes, osRes, comissRes, npsRes] = await Promise.all([
+  const [arFatRes, arRecRes, osRes, comissRes, npsRes, quotesRes] = await Promise.all([
     supabase
       .from("accounts_receivable")
       .select("valor, valor_pago, status, vencimento, pago_em, clients:client_id(razao_social)")
@@ -94,7 +118,9 @@ export default async function RelatoriosPage({
       .lt("pago_em", janProx),
     supabase
       .from("service_orders")
-      .select("status, scheduled_at, client_id, clients:client_id(bairro)")
+      .select(
+        "status, scheduled_at, client_id, clients:client_id(bairro), tempo_execucao_min, km_rodado, custo_produtos, custo_combustivel, custo_mao_obra, custo_total, employees:tecnico_id(nome)",
+      )
       .gte("scheduled_at", janIni)
       .lt("scheduled_at", janProx),
     supabase
@@ -109,6 +135,11 @@ export default async function RelatoriosPage({
       .not("respondido_em", "is", null)
       .gte("respondido_em", janIni)
       .lt("respondido_em", janProx),
+    supabase
+      .from("quotes")
+      .select("status, enviado_em, aceito_em, recusado_em, desconto, quote_items(subtotal)")
+      .neq("status", "rascunho")
+      .or(`enviado_em.gte.${janIni},aceito_em.gte.${janIni},recusado_em.gte.${janIni}`),
   ]);
 
   const arFat = (arFatRes.data ?? []) as unknown as ArRow[];
@@ -116,6 +147,7 @@ export default async function RelatoriosPage({
   const os = (osRes.data ?? []) as unknown as OsRow[];
   const comiss = (comissRes.data ?? []) as unknown as ComissaoRow[];
   const nps = (npsRes.data ?? []) as NpsRow[];
+  const quotes = (quotesRes.data ?? []) as unknown as QuoteRow[];
 
   // ─── recortes do período atual ──────────────────────────────
   const fatPer = arFat.filter((r) => noPeriodo(r.vencimento, periodo));
@@ -191,6 +223,62 @@ export default async function RelatoriosPage({
   )
     .slice(0, 8)
     .map((r) => ({ label: r.chave, value: r.valor, display: formatBRL(r.valor), sub: `${r.qtd}×` }));
+
+  // ─── Conversão de orçamentos ────────────────────────────────
+  const quotesLite: QuoteLite[] = quotes.map((q) => ({
+    status: q.status,
+    enviado_em: q.enviado_em,
+    aceito_em: q.aceito_em,
+    recusado_em: q.recusado_em,
+    valor:
+      (q.quote_items ?? []).reduce((s, i) => s + Number(i.subtotal ?? 0), 0) -
+      Number(q.desconto ?? 0),
+  }));
+  const orc = resumoOrcamentos(quotesLite, periodo);
+
+  // ─── Margem / DRE do período (custo já gravado na OS executada) ──
+  const custoProdutos = execPer.reduce((s, o) => s + Number(o.custo_produtos ?? 0), 0);
+  const custoCombustivel = execPer.reduce((s, o) => s + Number(o.custo_combustivel ?? 0), 0);
+  const custoMaoObra = execPer.reduce((s, o) => s + Number(o.custo_mao_obra ?? 0), 0);
+  const custoTotal = custoProdutos + custoCombustivel + custoMaoObra;
+  const margem = faturado - custoTotal;
+  const margemPct = faturado > 0 ? Math.round((margem / faturado) * 100) : 0;
+  const donutCustos = [
+    { label: "Mão de obra", value: Math.round(custoMaoObra), color: "#f59e0b" },
+    { label: "Produtos", value: Math.round(custoProdutos), color: "#8b5cf6" },
+    { label: "Combustível", value: Math.round(custoCombustivel), color: "#38bdf8" },
+  ].filter((d) => d.value > 0);
+
+  // ─── Produtividade por técnico ──────────────────────────────
+  const tecnicos = produtividadePorTecnico(
+    execPer.map((o) => ({
+      tecnico: o.employees?.nome ?? null,
+      tempo_execucao_min: o.tempo_execucao_min,
+      km_rodado: o.km_rodado,
+      custo_total: o.custo_total,
+    })),
+  );
+  const tecnicoRows: BarRow[] = tecnicos.slice(0, 8).map((t) => ({
+    label: t.tecnico,
+    value: t.qtd,
+    display: `${t.qtd} OS`,
+    sub: t.tempoMedioMin != null ? `${t.tempoMedioMin} min/OS · ${t.kmTotal} km` : `${t.kmTotal} km`,
+  }));
+
+  // ─── Aging de inadimplência (snapshot de hoje) ──────────────
+  const aging = agingInadimplencia(
+    arFat,
+    hoje,
+    (r) => r.vencimento,
+    (r) => Number(r.valor) - Number(r.valor_pago),
+    (r) => r.status !== "quitado",
+  );
+  const agingRows: BarRow[] = aging.map((f) => ({
+    label: f.faixa,
+    value: f.valor,
+    display: formatBRL(f.valor),
+    sub: `${f.qtd} conta(s)`,
+  }));
 
   const vsLabel = mes == null ? "vs. ano anterior" : "vs. mês anterior";
   const highlight = mes != null ? mes - 1 : undefined;
@@ -291,6 +379,55 @@ export default async function RelatoriosPage({
       <Panel title="Comissões por funcionário" accent="amber">
         <BarList rows={comissRows} tone="amber" emptyLabel="Nenhuma comissão no período." />
       </Panel>
+
+      {/* ─── Conversão de orçamentos ─── */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Conversão de orçamentos</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <MiniStat icon={FileCheck2} label="Enviados" value={String(orc.enviados)} tone="bg-sky-500/15 text-sky-300" />
+          <MiniStat icon={Target} label="Taxa de ganho" value={`${orc.taxaGanho}%`} tone="bg-emerald-500/15 text-emerald-300" />
+          <MiniStat icon={Banknote} label="Valor fechado" value={formatBRL(orc.valorAceito)} tone="bg-violet-500/15 text-violet-300" />
+          <MiniStat
+            icon={Clock}
+            label="Ciclo médio"
+            value={orc.cicloDias != null ? `${orc.cicloDias} dias` : "—"}
+            tone="bg-amber-500/15 text-amber-300"
+          />
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {orc.aceitos} aceito(s) · {orc.recusados} recusado(s) · ticket médio {formatBRL(orc.ticketAceito)}
+        </p>
+      </div>
+
+      {/* ─── Margem / DRE ─── */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title="Margem do período" accent="emerald">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <MiniStat icon={TrendingUp} label="Receita (faturado)" value={formatBRL(faturado)} tone="bg-sky-500/15 text-sky-300" />
+            <MiniStat icon={Receipt} label="Custo das OS" value={formatBRL(custoTotal)} tone="bg-rose-500/15 text-rose-300" />
+            <MiniStat icon={Banknote} label="Margem bruta" value={formatBRL(margem)} tone="bg-emerald-500/15 text-emerald-300" />
+            <MiniStat icon={Percent} label="Margem %" value={`${margemPct}%`} tone="bg-violet-500/15 text-violet-300" />
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Custo apurado nas OS executadas (produtos + combustível + mão de obra).
+          </p>
+        </Panel>
+        <Panel title="Composição do custo" accent="amber">
+          <DonutChart data={donutCustos} centerLabel="custo" empty="Sem custo apurado no período." />
+        </Panel>
+      </div>
+
+      {/* ─── Produtividade + Aging ─── */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title="Produtividade por técnico" accent="cyan">
+          <p className="-mt-1 text-xs text-muted-foreground">OS executadas por técnico no período.</p>
+          <BarList rows={tecnicoRows} tone="cyan" emptyLabel="Nenhuma OS executada no período." />
+        </Panel>
+        <Panel title="Inadimplência por faixa de atraso" accent="rose">
+          <p className="-mt-1 text-xs text-muted-foreground">Contas vencidas em aberto, hoje.</p>
+          <BarList rows={agingRows} tone="rose" emptyLabel="Nenhuma conta vencida em aberto." />
+        </Panel>
+      </div>
     </main>
   );
 }

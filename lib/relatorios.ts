@@ -96,6 +96,139 @@ export function somaNoPeriodo<T>(
   return rows.reduce((s, r) => (noPeriodo(getDate(r), p) ? s + getValor(r) : s), 0);
 }
 
+// ─── Conversão de orçamentos (funil comercial) ─────────────────────────
+
+export type QuoteLite = {
+  status: string;
+  enviado_em: string | null;
+  aceito_em: string | null;
+  recusado_em: string | null;
+  valor: number;
+};
+
+export type ResumoOrcamentos = {
+  enviados: number;
+  aceitos: number;
+  recusados: number;
+  valorAceito: number;
+  ticketAceito: number;
+  /** Taxa de ganho = aceitos / (aceitos + recusados decididos). 0–100. */
+  taxaGanho: number;
+  /** Ciclo médio de fechamento (dias entre enviado_em e aceito_em). */
+  cicloDias: number | null;
+};
+
+/** Funil de orçamentos do período: contagem por evento (enviado/aceito/recusado). */
+export function resumoOrcamentos(quotes: QuoteLite[], p: Periodo): ResumoOrcamentos {
+  const enviadosArr = quotes.filter((q) => noPeriodo(q.enviado_em, p));
+  const aceitosArr = quotes.filter((q) => noPeriodo(q.aceito_em, p));
+  const recusadosArr = quotes.filter((q) => noPeriodo(q.recusado_em, p));
+
+  const valorAceito = aceitosArr.reduce((s, q) => s + Number(q.valor), 0);
+  const decididos = aceitosArr.length + recusadosArr.length;
+
+  let somaDias = 0;
+  let comAmbas = 0;
+  for (const q of aceitosArr) {
+    if (q.enviado_em && q.aceito_em) {
+      const d = (new Date(q.aceito_em).getTime() - new Date(q.enviado_em).getTime()) / 86_400_000;
+      if (d >= 0) {
+        somaDias += d;
+        comAmbas += 1;
+      }
+    }
+  }
+
+  return {
+    enviados: enviadosArr.length,
+    aceitos: aceitosArr.length,
+    recusados: recusadosArr.length,
+    valorAceito,
+    ticketAceito: aceitosArr.length ? valorAceito / aceitosArr.length : 0,
+    taxaGanho: decididos ? Math.round((aceitosArr.length / decididos) * 100) : 0,
+    cicloDias: comAmbas ? Math.round(somaDias / comAmbas) : null,
+  };
+}
+
+// ─── Produtividade por técnico ─────────────────────────────────────────
+
+export type OsProdutividade = {
+  tecnico: string | null;
+  tempo_execucao_min: number | null;
+  km_rodado: number | null;
+  custo_total: number | null;
+};
+
+export type TecnicoStat = {
+  tecnico: string;
+  qtd: number;
+  tempoMedioMin: number | null;
+  kmTotal: number;
+  custoTotal: number;
+};
+
+/** Agrega OS executadas por técnico: nº de OS, tempo médio, km e custo. */
+export function produtividadePorTecnico(rows: OsProdutividade[]): TecnicoStat[] {
+  const map = new Map<string, { qtd: number; somaTempo: number; comTempo: number; km: number; custo: number }>();
+  for (const o of rows) {
+    const nome = (o.tecnico || "Sem técnico").trim() || "Sem técnico";
+    const cur = map.get(nome) ?? { qtd: 0, somaTempo: 0, comTempo: 0, km: 0, custo: 0 };
+    cur.qtd += 1;
+    if (o.tempo_execucao_min != null) {
+      cur.somaTempo += Number(o.tempo_execucao_min);
+      cur.comTempo += 1;
+    }
+    cur.km += Number(o.km_rodado ?? 0);
+    cur.custo += Number(o.custo_total ?? 0);
+    map.set(nome, cur);
+  }
+  return [...map.entries()]
+    .map(([tecnico, v]) => ({
+      tecnico,
+      qtd: v.qtd,
+      tempoMedioMin: v.comTempo ? Math.round(v.somaTempo / v.comTempo) : null,
+      kmTotal: Math.round(v.km),
+      custoTotal: Math.round(v.custo * 100) / 100,
+    }))
+    .sort((a, b) => b.qtd - a.qtd);
+}
+
+// ─── Aging de inadimplência ────────────────────────────────────────────
+
+export type AgingFaixa = { faixa: string; valor: number; qtd: number };
+
+/**
+ * Distribui as contas a receber VENCIDAS em aberto por faixa de atraso.
+ * `getSaldo` devolve o valor em aberto (valor − valor_pago).
+ */
+export function agingInadimplencia<T>(
+  rows: T[],
+  hojeIso: string,
+  getVencimento: (r: T) => string | null | undefined,
+  getSaldo: (r: T) => number,
+  estaAberto: (r: T) => boolean,
+): AgingFaixa[] {
+  const faixas: AgingFaixa[] = [
+    { faixa: "1–30 dias", valor: 0, qtd: 0 },
+    { faixa: "31–60 dias", valor: 0, qtd: 0 },
+    { faixa: "61–90 dias", valor: 0, qtd: 0 },
+    { faixa: "90+ dias", valor: 0, qtd: 0 },
+  ];
+  const hoje = new Date(`${hojeIso}T00:00:00Z`).getTime();
+  for (const r of rows) {
+    const venc = getVencimento(r);
+    if (!venc || !estaAberto(r)) continue;
+    const dias = Math.floor((hoje - new Date(`${venc.slice(0, 10)}T00:00:00Z`).getTime()) / 86_400_000);
+    if (dias <= 0) continue; // ainda não venceu
+    const saldo = getSaldo(r);
+    if (saldo <= 0) continue;
+    const i = dias <= 30 ? 0 : dias <= 60 ? 1 : dias <= 90 ? 2 : 3;
+    faixas[i].valor += saldo;
+    faixas[i].qtd += 1;
+  }
+  return faixas;
+}
+
 export type Variacao = { pct: number | null; dir: "up" | "down" | "flat" };
 
 /** Variação percentual de `atual` sobre `anterior` (null se base 0). */

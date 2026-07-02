@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
 import { ResourceDialog } from "@/components/app/resource-dialog";
 import { DeleteButton } from "@/components/app/delete-button";
+import { ExportarCsv } from "@/components/app/exportar-csv";
 import { ClientesFiltros } from "@/components/clientes/filtros";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,30 @@ export default async function ClientesPage({
     return true;
   });
 
+  // Linhas p/ export CSV (respeita os filtros aplicados, valores formatados).
+  const csvRows = clientes.map((c) => ({
+    nome: c.razao_social,
+    fantasia: c.nome_fantasia ?? "",
+    tipo: c.tipo,
+    documento: formatCpfCnpj(c.documento),
+    telefone: formatPhone(c.telefone),
+    cidade: c.cidade ?? "",
+    uf: c.uf ?? "",
+    segmento: c.segmento ?? "",
+    ativo: c.ativo ? "Sim" : "Não",
+  }));
+  const csvColunas = [
+    { header: "Nome / Razão social", key: "nome" },
+    { header: "Nome fantasia", key: "fantasia" },
+    { header: "Tipo", key: "tipo" },
+    { header: "CPF/CNPJ", key: "documento" },
+    { header: "Telefone", key: "telefone" },
+    { header: "Cidade", key: "cidade" },
+    { header: "UF", key: "uf" },
+    { header: "Segmento", key: "segmento" },
+    { header: "Ativo", key: "ativo" },
+  ];
+
   const novoBtn = (
     <ResourceDialog
       trigger={
@@ -125,6 +150,7 @@ export default async function ClientesPage({
               ]}
               dica="Cliente com endereço e unidades completos agiliza o agendamento de OS e o roteiro do técnico."
             />
+            <ExportarCsv rows={csvRows} colunas={csvColunas} filename="clientes-dedetech" />
             {novoBtn}
           </div>
         }

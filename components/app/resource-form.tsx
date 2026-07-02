@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Loader2, ScanLine } from "lucide-react";
 
 import type { SaveState } from "@/lib/crud-helpers";
+import { maskCpfCnpj, maskPhone, maskCurrency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +28,10 @@ export type FieldType =
   | "select"
   | "switch"
   | "cep"
-  | "cnpj";
+  | "cnpj"
+  | "cpf"
+  | "telefone"
+  | "currency";
 
 export type Field = {
   name: string;
@@ -181,6 +185,7 @@ export function ResourceForm({
             key={f.name}
             field={f}
             defaultValue={defaultValues?.[f.name]}
+            error={state?.fieldErrors?.[f.name]}
             onCep={handleCep}
             onCnpj={handleCnpj}
           />
@@ -199,17 +204,20 @@ export function ResourceForm({
 function FieldControl({
   field: f,
   defaultValue,
+  error,
   onCep,
   onCnpj,
 }: {
   field: Field;
   defaultValue: unknown;
+  error?: string;
   onCep: (v: string) => void;
   onCnpj: (v: string) => void;
 }) {
   const type = f.type ?? "text";
   const dv = defaultValue == null ? "" : String(defaultValue);
   const wrap = f.full || type === "textarea" ? "sm:col-span-2" : "";
+  const errId = error ? `${f.name}-erro` : undefined;
 
   if (type === "switch") {
     return (
@@ -227,10 +235,17 @@ function FieldControl({
         {f.required && <span className="text-destructive"> *</span>}
       </Label>
       {type === "textarea" ? (
-        <Textarea id={f.name} name={f.name} defaultValue={dv} placeholder={f.placeholder} />
+        <Textarea
+          id={f.name}
+          name={f.name}
+          defaultValue={dv}
+          placeholder={f.placeholder}
+          aria-invalid={!!error}
+          aria-describedby={errId}
+        />
       ) : type === "select" ? (
         <Select name={f.name} defaultValue={dv || f.options?.[0]?.value}>
-          <SelectTrigger id={f.name}>
+          <SelectTrigger id={f.name} aria-invalid={!!error} aria-describedby={errId}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -241,6 +256,19 @@ function FieldControl({
             ))}
           </SelectContent>
         </Select>
+      ) : type === "currency" ? (
+        <CurrencyField name={f.name} defaultValue={dv} placeholder={f.placeholder} required={f.required} error={!!error} errId={errId} />
+      ) : type === "cpf" || type === "telefone" ? (
+        <MaskedField
+          name={f.name}
+          defaultValue={dv}
+          placeholder={f.placeholder}
+          required={f.required}
+          mask={type === "cpf" ? maskCpfCnpj : maskPhone}
+          inputMode="numeric"
+          error={!!error}
+          errId={errId}
+        />
       ) : (
         <Input
           id={f.name}
@@ -250,6 +278,8 @@ function FieldControl({
           defaultValue={dv}
           placeholder={f.placeholder}
           required={f.required}
+          aria-invalid={!!error}
+          aria-describedby={errId}
           onBlur={
             type === "cep"
               ? (e) => onCep(e.target.value)
@@ -259,7 +289,86 @@ function FieldControl({
           }
         />
       )}
+      {error && (
+        <p id={errId} className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </div>
+  );
+}
+
+/** Input com máscara ao vivo (CPF/telefone). Envia o texto mascarado; os
+ * schemas normalizam para dígitos no submit. */
+function MaskedField({
+  name,
+  defaultValue,
+  placeholder,
+  required,
+  mask,
+  inputMode,
+  error,
+  errId,
+}: {
+  name: string;
+  defaultValue: string;
+  placeholder?: string;
+  required?: boolean;
+  mask: (v: string) => string;
+  inputMode?: "numeric" | "text";
+  error?: boolean;
+  errId?: string;
+}) {
+  const [val, setVal] = useState(defaultValue ? mask(defaultValue) : "");
+  return (
+    <Input
+      id={name}
+      name={name}
+      value={val}
+      placeholder={placeholder}
+      required={required}
+      inputMode={inputMode}
+      aria-invalid={error}
+      aria-describedby={errId}
+      onChange={(e) => setVal(mask(e.target.value))}
+    />
+  );
+}
+
+/** Campo de moeda: input mascarado visível + hidden com o valor numérico
+ * (ex.: "1.234,56" na tela, "1234.56" no FormData p/ o zod). */
+function CurrencyField({
+  name,
+  defaultValue,
+  placeholder,
+  required,
+  error,
+  errId,
+}: {
+  name: string;
+  defaultValue: string;
+  placeholder?: string;
+  required?: boolean;
+  error?: boolean;
+  errId?: string;
+}) {
+  const inicial = defaultValue ? maskCurrency(String(Math.round(Number(defaultValue) * 100))) : "";
+  const [val, setVal] = useState(inicial);
+  const numerico = val ? String(Number(val.replace(/\./g, "").replace(",", ".")) || 0) : "";
+  return (
+    <>
+      <input type="hidden" name={name} value={numerico} />
+      <Input
+        id={name}
+        value={val}
+        placeholder={placeholder ?? "0,00"}
+        required={required}
+        inputMode="numeric"
+        aria-invalid={error}
+        aria-describedby={errId}
+        onChange={(e) => setVal(maskCurrency(e.target.value))}
+      />
+    </>
   );
 }
 

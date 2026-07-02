@@ -13,7 +13,7 @@ export const clienteFields: Field[] = [
   { name: "documento", label: "CPF / CNPJ", type: "cnpj", placeholder: "Só números" },
   { name: "razao_social", label: "Nome / Razão social", required: true, full: true },
   { name: "nome_fantasia", label: "Nome fantasia" },
-  { name: "telefone", label: "Telefone" },
+  { name: "telefone", label: "Telefone", type: "telefone", placeholder: "(00) 00000-0000" },
   { name: "email", label: "E-mail", type: "email" },
   {
     name: "segmento",

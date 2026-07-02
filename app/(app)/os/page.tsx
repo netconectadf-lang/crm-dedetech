@@ -21,6 +21,7 @@ import { AjudaTela } from "@/components/app/ajuda-tela";
 import { DeleteButton } from "@/components/app/delete-button";
 import { PageHeader } from "@/components/app/page-header";
 import { EmptyState } from "@/components/app/empty-state";
+import { Paginacao } from "@/components/app/paginacao";
 import { NovaOSDialog } from "@/components/os/nova-os-dialog";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Button } from "@/components/ui/button";
@@ -90,12 +91,18 @@ function tipoServicoDasObs(obs: string | null): string | null {
 export default async function OsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; nova?: string }>;
+  searchParams: Promise<{ status?: string; nova?: string; page?: string }>;
 }) {
   const ctx = await requireRole(["owner", "operacional", "tecnico", "financeiro"]);
   const podeExcluir = ["owner", "operacional", "financeiro"].includes(ctx.role);
-  const { status, nova } = await searchParams;
+  const { status, nova, page: pageParam } = await searchParams;
   const supabase = await createClient();
+
+  // Paginação server-side (bounded fetch).
+  const PAGE_SIZE = 50;
+  const page = Math.max(1, Number(pageParam) || 1);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
   const hoje = new Date().toISOString().slice(0, 10);
   const semanaDate = new Date();
@@ -104,12 +111,16 @@ export default async function OsPage({
 
   let query = supabase
     .from("service_orders")
-    .select("id, numero, status, scheduled_at, contract_id, quote_id, observacoes, clients(razao_social, nome_fantasia, cidade, uf), employees(nome)")
-    .order("scheduled_at", { ascending: true, nullsFirst: false });
+    .select(
+      "id, numero, status, scheduled_at, contract_id, quote_id, observacoes, clients(razao_social, nome_fantasia, cidade, uf), employees(nome)",
+      { count: "exact" },
+    )
+    .order("scheduled_at", { ascending: true, nullsFirst: false })
+    .range(from, to);
   if (status) query = query.eq("status", status as never);
 
   const [
-    { data: osData },
+    { data: osData, count: osCount },
     { data: allOs },
     { data: clientsData },
     { data: tecData },
@@ -381,6 +392,7 @@ export default async function OsPage({
                 })}
               </TableBody>
             </Table>
+            <Paginacao page={page} pageSize={PAGE_SIZE} total={osCount ?? oss.length} />
           </CardContent>
         </Card>
       )}

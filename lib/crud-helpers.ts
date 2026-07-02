@@ -13,7 +13,12 @@ async function untypedClient(): Promise<SupabaseClient> {
   return (await createClient()) as unknown as SupabaseClient;
 }
 
-export type SaveState = { error?: string; message?: string } | null;
+export type SaveState = {
+  error?: string;
+  message?: string;
+  /** Erros por campo (nome do campo → mensagem) p/ exibição inline no form. */
+  fieldErrors?: Record<string, string>;
+} | null;
 
 type SaveArgs = {
   table: string;
@@ -47,7 +52,18 @@ export async function saveRecord({
 
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+    // Erro por campo (inline no form) + a 1ª mensagem no toast.
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const campo = issue.path[0];
+      if (typeof campo === "string" && !fieldErrors[campo]) {
+        fieldErrors[campo] = issue.message;
+      }
+    }
+    return {
+      error: parsed.error.issues[0]?.message ?? "Dados inválidos",
+      fieldErrors,
+    };
   }
 
   let payload: Record<string, unknown> = {

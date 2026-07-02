@@ -6,6 +6,15 @@ export type OsStatus =
   | "faturada"
   | "cancelada";
 
+/**
+ * Número visível da OS: prioriza o sequencial POR TENANT (numero_local, da
+ * migration 20260702130000) e cai para o `numero` global legado nas OS antigas
+ * ainda não backfilladas.
+ */
+export function numeroOS(o: { numero_local?: number | null; numero?: number | null }): string {
+  return String(o.numero_local ?? o.numero ?? "");
+}
+
 export type ApplicationMethod =
   | "pulverizacao"
   | "polvilhamento"

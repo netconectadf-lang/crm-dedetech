@@ -203,12 +203,13 @@ export async function gerarCobrancaDaOS(osId: string) {
 
   const { data: osData } = await supabase
     .from("service_orders")
-    .select("id, numero, status, client_id, contract_id, quote_id")
+    .select("id, numero, numero_local, status, client_id, contract_id, quote_id")
     .eq("id", osId)
     .maybeSingle();
   const os = osData as {
     id: string;
     numero: number;
+    numero_local: number | null;
     status: string;
     client_id: string;
     contract_id: string | null;
@@ -246,7 +247,7 @@ export async function gerarCobrancaDaOS(osId: string) {
     client_id: os.client_id,
     os_id: os.id,
     contract_id: os.contract_id,
-    descricao: `OS #${os.numero}`,
+    descricao: `OS #${os.numero_local ?? os.numero}`,
     valor,
     vencimento: venc.toISOString().slice(0, 10),
   });
@@ -282,6 +283,7 @@ export async function faturarEGerarCobranca(
   const os = osData as {
     id: string;
     numero: number;
+    numero_local: number | null;
     status: string;
     client_id: string;
     contract_id: string | null;
@@ -313,7 +315,7 @@ export async function faturarEGerarCobranca(
         client_id: os.client_id,
         os_id: os.id,
         contract_id: os.contract_id,
-        descricao: `OS #${os.numero}`,
+        descricao: `OS #${os.numero_local ?? os.numero}`,
         valor,
         vencimento: venc,
       } as never)

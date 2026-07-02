@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth";
 import { formatCpfCnpj, formatDate } from "@/lib/format";
-import { METHOD_LABEL, type ApplicationMethod } from "@/lib/os";
+import { METHOD_LABEL, numeroOS, type ApplicationMethod } from "@/lib/os";
 import type { CSSProperties, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/print-button";
@@ -71,6 +71,7 @@ function Seal({ color }: { color: string }) {
 
 type OS = {
   numero: number;
+  numero_local: number | null;
   status: string;
   executada_em: string | null;
   pragas: string[];
@@ -104,7 +105,7 @@ export default async function CertificadoPage({
 
   const { data: osData } = await supabase
     .from("service_orders")
-    .select("numero, status, executada_em, pragas, estruturas, metodo, garantia_meses, periodo_reentrada_horas, proxima_revisao_em, recomendacoes, assinatura_cliente_url, tenant_id, clients(razao_social, documento, logradouro, numero, bairro, cidade, uf)")
+    .select("numero, numero_local, status, executada_em, pragas, estruturas, metodo, garantia_meses, periodo_reentrada_horas, proxima_revisao_em, recomendacoes, assinatura_cliente_url, tenant_id, clients(razao_social, documento, logradouro, numero, bairro, cidade, uf)")
     .eq("id", id)
     .maybeSingle();
   if (!osData) notFound();
@@ -176,7 +177,7 @@ export default async function CertificadoPage({
           <Link href={`/os/${id}`}><ArrowLeft className="size-4" /> Voltar à OS</Link>
         </Button>
         <div className="flex gap-2">
-          <BaixarCertificado numero={os.numero} />
+          <BaixarCertificado numero={os.numero_local ?? os.numero} />
           <PrintButton />
         </div>
       </div>
@@ -226,7 +227,7 @@ export default async function CertificadoPage({
                   >
                     Certificado de Execução
                   </span>
-                  <p className="mt-2 text-2xl font-black leading-none" style={{ color: cor }}>OS #{os.numero}</p>
+                  <p className="mt-2 text-2xl font-black leading-none" style={{ color: cor }}>OS #{numeroOS(os)}</p>
                   {os.executada_em && <p className="mt-1 text-[11px] text-muted-foreground">Emitido em {formatDate(os.executada_em)}</p>}
                 </div>
               </header>
@@ -330,7 +331,7 @@ export default async function CertificadoPage({
             style={{ borderTop: `1px solid ${hexToRgba(cor, 0.12)}`, paddingTop: 10 }}
           >
             <span>Documento emitido eletronicamente por {empresa}</span>
-            <span>OS #{os.numero}{os.executada_em ? ` · ${formatDate(os.executada_em)}` : ""}</span>
+            <span>OS #{numeroOS(os)}{os.executada_em ? ` · ${formatDate(os.executada_em)}` : ""}</span>
           </div>
             </div>
           </div>

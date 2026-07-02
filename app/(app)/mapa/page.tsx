@@ -20,7 +20,7 @@ export default async function MapaPage() {
   const [{ data: osData }, { data: pontoData }, { data: cliData }] = await Promise.all([
     supabase
       .from("service_orders")
-      .select("id, numero, status, scheduled_at, executada_em, lat, lng, cliente:client_id(razao_social), tecnico:tecnico_id(nome)")
+      .select("id, numero, numero_local, status, scheduled_at, executada_em, lat, lng, cliente:client_id(razao_social), tecnico:tecnico_id(nome)")
       .not("lat", "is", null)
       .order("scheduled_at", { ascending: false })
       .limit(400),
@@ -44,7 +44,7 @@ export default async function MapaPage() {
     camada: "os",
     lat: num(o.lat),
     lng: num(o.lng),
-    titulo: `OS #${o.numero ?? ""}`,
+    titulo: `OS #${o.numero_local ?? o.numero ?? ""}`,
     sub: [
       (o.cliente as { razao_social?: string } | null)?.razao_social,
       (o.tecnico as { nome?: string } | null)?.nome,

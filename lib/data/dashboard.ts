@@ -74,7 +74,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     supabase.from("clients").select("id", { count: "exact", head: true }).eq("ativo", true),
     supabase
       .from("service_orders")
-      .select("id, numero, status, scheduled_at, clients(razao_social, nome_fantasia, cidade)")
+      .select("id, numero, numero_local, status, scheduled_at, clients(razao_social, nome_fantasia, cidade)")
       .in("status", OS_PENDENTE)
       .order("scheduled_at", { ascending: true, nullsFirst: false })
       .limit(6),
@@ -90,7 +90,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       .limit(6),
     supabase
       .from("service_orders")
-      .select("id, numero, proxima_revisao_em, clients(razao_social, nome_fantasia, cidade)")
+      .select("id, numero, numero_local, proxima_revisao_em, clients(razao_social, nome_fantasia, cidade)")
       .not("proxima_revisao_em", "is", null)
       .lte("proxima_revisao_em", em30dias)
       .order("proxima_revisao_em", { ascending: true })
@@ -175,6 +175,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   type ProxRaw = {
     id: string;
     numero: number;
+    numero_local: number | null;
     status: string;
     scheduled_at: string | null;
     clients: ProxCliente | ProxCliente[] | null;
@@ -183,7 +184,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     const c = Array.isArray(o.clients) ? o.clients[0] : o.clients;
     return {
       id: o.id,
-      numero: o.numero,
+      numero: o.numero_local ?? o.numero,
       status: o.status,
       scheduled_at: o.scheduled_at,
       cliente: nomeExibicao(c),
@@ -214,10 +215,10 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     return { id: c.id, titulo: c.titulo, valor: Number(c.valor), vigencia_fim: c.vigencia_fim, cliente: nomeExibicao(cli) };
   });
   const revisoesProximas = (
-    (revisoesData as { id: string; numero: number; proxima_revisao_em: string; clients: CliMini | CliMini[] | null }[] | null) ?? []
+    (revisoesData as { id: string; numero: number; numero_local: number | null; proxima_revisao_em: string; clients: CliMini | CliMini[] | null }[] | null) ?? []
   ).map((o) => {
     const cli = Array.isArray(o.clients) ? o.clients[0] : o.clients;
-    return { id: o.id, numero: o.numero, proxima_revisao_em: o.proxima_revisao_em, cliente: nomeExibicao(cli), cidade: cli?.cidade ?? null };
+    return { id: o.id, numero: o.numero_local ?? o.numero, proxima_revisao_em: o.proxima_revisao_em, cliente: nomeExibicao(cli), cidade: cli?.cidade ?? null };
   });
 
   return {

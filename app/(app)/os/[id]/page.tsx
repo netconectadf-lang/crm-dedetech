@@ -10,7 +10,7 @@ import { ExecucaoMidia } from "@/components/execucao-midia";
 import { requireRole } from "@/lib/auth";
 import { formatDate, formatPhone, formatBRL, onlyDigits } from "@/lib/format";
 import { nomeExibicao } from "@/lib/clientes";
-import { OS_STATUS_LABEL, OS_STATUS_TONE, type OsStatus, type ApplicationMethod } from "@/lib/os";
+import { OS_STATUS_LABEL, OS_STATUS_TONE, numeroOS, type OsStatus, type ApplicationMethod } from "@/lib/os";
 import { StatusStepper } from "@/components/os/status-stepper";
 import { OsTimeline } from "@/components/os/os-timeline";
 import { OsMapaLoader } from "@/components/os/os-mapa-loader";
@@ -54,6 +54,7 @@ type ClienteOpcao = {
 type OS = {
   id: string;
   numero: number;
+  numero_local: number | null;
   status: OsStatus;
   client_id: string;
   unit_id: string | null;
@@ -164,7 +165,7 @@ export default async function OsDetailPage({
   const waDigits = cli?.telefone ? onlyDigits(cli.telefone) : "";
   const waLink = waDigits
     ? `https://wa.me/${waDigits.startsWith("55") ? waDigits : `55${waDigits}`}?text=${encodeURIComponent(
-        `Olá! Sobre a OS #${os.numero} da ${cli?.razao_social ?? ""}.`,
+        `Olá! Sobre a OS #${numeroOS(os)} da ${cli?.razao_social ?? ""}.`,
       )}`
     : null;
   const endereco = cli
@@ -188,7 +189,7 @@ export default async function OsDetailPage({
       </Button>
 
       <PageHeader
-        title={`OS #${os.numero}`}
+        title={`OS #${numeroOS(os)}`}
         description={nomeExibicao(os.clients)}
         action={
           <div className="flex gap-2">
@@ -223,7 +224,7 @@ export default async function OsDetailPage({
               action={atualizarOS.bind(null, os.id)}
             />
             <DeleteButton
-              nome={`OS #${os.numero}`}
+              nome={`OS #${numeroOS(os)}`}
               action={excluirOS.bind(null, os.id)}
               successMessage="OS excluída com sucesso"
               redirectTo="/os"
@@ -449,7 +450,7 @@ export default async function OsDetailPage({
             <Card>
               <CardHeader><CardTitle className="text-base">Localização</CardTitle></CardHeader>
               <CardContent>
-                <OsMapaLoader lat={latNum} lng={lngNum} label={`OS #${os.numero}`} />
+                <OsMapaLoader lat={latNum} lng={lngNum} label={`OS #${numeroOS(os)}`} />
               </CardContent>
             </Card>
           )}

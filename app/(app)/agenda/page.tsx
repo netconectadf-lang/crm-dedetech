@@ -42,6 +42,7 @@ export const metadata = { title: "Agenda de operadores" };
 type OsRow = {
   id: string;
   numero: number;
+  numero_local: number | null;
   status: string;
   scheduled_at: string;
   tecnico_id: string | null;
@@ -83,7 +84,7 @@ export default async function AgendaPage({
   const [osRes, empRes] = await Promise.all([
     supabase
       .from("service_orders")
-      .select("id, numero, status, scheduled_at, tecnico_id, clients:client_id(razao_social)")
+      .select("id, numero, numero_local, status, scheduled_at, tecnico_id, clients:client_id(razao_social)")
       .gte("scheduled_at", inicio)
       .lt("scheduled_at", fimExcl)
       .order("scheduled_at"),
@@ -314,7 +315,7 @@ export default async function AgendaPage({
                               )}
                             >
                               <span className="font-semibold tabular-nums">{horaNoFuso(os.scheduled_at)}</span>{" "}
-                              <span className="opacity-80">#{os.numero}</span>
+                              <span className="opacity-80">#{os.numero_local ?? os.numero}</span>
                               <span className="block truncate opacity-90">
                                 {os.clients?.razao_social ?? "—"}
                               </span>

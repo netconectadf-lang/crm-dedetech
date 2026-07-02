@@ -14,6 +14,7 @@ export const metadata = { title: "Roteiros do dia" };
 type Row = {
   id: string;
   numero: number;
+  numero_local: number | null;
   status: string;
   scheduled_at: string | null;
   lat: number | null;
@@ -58,7 +59,7 @@ export default async function RoteirosPage({
     supabase
       .from("service_orders")
       .select(
-        "id, numero, status, scheduled_at, lat, lng, rota_seq, tecnico_id, clients:client_id(razao_social, logradouro, numero, bairro, cidade)",
+        "id, numero, numero_local, status, scheduled_at, lat, lng, rota_seq, tecnico_id, clients:client_id(razao_social, logradouro, numero, bairro, cidade)",
       )
       .gte("scheduled_at", ini)
       .lt("scheduled_at", fim.toISOString())
@@ -82,7 +83,7 @@ export default async function RoteirosPage({
       : "—";
     return {
       id: r.id,
-      numero: r.numero,
+      numero: r.numero_local ?? r.numero,
       cliente: c?.razao_social ?? "—",
       endereco,
       hora,

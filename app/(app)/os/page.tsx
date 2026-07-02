@@ -14,6 +14,7 @@ import {
   OS_STATUS_LABEL,
   OS_STATUS_TONE,
   OS_PENDENTE,
+  numeroOS,
   type OsStatus,
 } from "@/lib/os";
 import { excluirOS } from "./actions";
@@ -52,6 +53,7 @@ type ClienteOpcao = {
 type OS = {
   id: string;
   numero: number;
+  numero_local: number | null;
   status: OsStatus;
   scheduled_at: string | null;
   contract_id: string | null;
@@ -112,7 +114,7 @@ export default async function OsPage({
   let query = supabase
     .from("service_orders")
     .select(
-      "id, numero, status, scheduled_at, contract_id, quote_id, observacoes, clients(razao_social, nome_fantasia, cidade, uf), employees(nome)",
+      "id, numero, numero_local, status, scheduled_at, contract_id, quote_id, observacoes, clients(razao_social, nome_fantasia, cidade, uf), employees(nome)",
       { count: "exact" },
     )
     .order("scheduled_at", { ascending: true, nullsFirst: false })
@@ -338,7 +340,7 @@ export default async function OsPage({
                     o.scheduled_at.slice(0, 10) < hoje;
                   return (
                     <TableRow key={o.id}>
-                      <TableCell className="font-medium tabular-nums">#{o.numero}</TableCell>
+                      <TableCell className="font-medium tabular-nums">#{numeroOS(o)}</TableCell>
                       <TableCell className="font-medium">{nomeExibicao(o.clients)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{o.clients?.cidade ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{o.clients?.uf ?? "—"}</TableCell>
@@ -380,7 +382,7 @@ export default async function OsPage({
                           </Button>
                           {podeExcluir && (
                             <DeleteButton
-                              nome={`OS #${o.numero}`}
+                              nome={`OS #${numeroOS(o)}`}
                               action={excluirOS.bind(null, o.id)}
                               successMessage="OS excluída com sucesso"
                             />

@@ -8,8 +8,11 @@ import { requireRole } from "@/lib/auth";
 import { deleteRecord, type SaveState } from "@/lib/crud-helpers";
 import { campanhaSchema, normalizarTelefone } from "@/lib/validators/whatsapp";
 import { descobrirRedes } from "@/lib/clientes";
-import { renderScript } from "@/lib/whatsapp/render";
-import { sendText } from "@/lib/whatsapp/evolution";
+import {
+  enviarProximoDisparo,
+  sincronizarContadores,
+  type DisparoResult,
+} from "@/lib/whatsapp/campanha-core";
 import type { AppRole } from "@/lib/types";
 
 const ROLES: AppRole[] = ["owner", "comercial", "financeiro"];
@@ -402,147 +405,22 @@ export async function limparPendentes(campanhaId: string): Promise<void> {
     .eq("campanha_id", campanhaId)
     .eq("tenant_id", ctx.tenantId)
     .eq("status", "pendente");
-  await sincronizarContadores(campanhaId, ctx.tenantId);
+  await sincronizarContadores(supabase, campanhaId, ctx.tenantId);
   revalidatePath(`${LISTA}/${campanhaId}`);
 }
 
-async function sincronizarContadores(campanhaId: string, tenantId: string) {
-  const supabase = await createClient();
-  const counts = await Promise.all(
-    ["enviado", "falha", "pendente"].map((s) =>
-      supabase
-        .from("wa_disparos")
-        .select("id", { count: "exact", head: true })
-        .eq("campanha_id", campanhaId)
-        .eq("status", s),
-    ),
-  );
-  const [enviados, falhas, pendentes] = counts.map((c) => c.count ?? 0);
-  await supabase
-    .from("wa_campanhas")
-    .update({
-      enviados,
-      falhas,
-      total_contatos: enviados + falhas + pendentes,
-    })
-    .eq("id", campanhaId)
-    .eq("tenant_id", tenantId);
-  return { enviados, falhas, pendentes };
-}
-
-export type DisparoResult = {
-  enviado: boolean;
-  restantes: number;
-  concluido: boolean;
-  erro?: string;
-};
-
 /**
- * Envia a PRÓXIMA mensagem pendente da campanha. O intervalo anti-ban é
- * controlado pelo cliente (espera entre chamadas), mantendo cada execução
- * curta e segura contra timeout de função.
+ * Envia a PRÓXIMA mensagem pendente da campanha (fluxo com a aba aberta).
+ * O núcleo está em lib/whatsapp/campanha-core (reusado pelo cron que drena
+ * campanhas em "enviando" mesmo com a aba fechada). Intervalo anti-ban é
+ * controlado pelo cliente entre chamadas.
  */
 export async function dispararProxima(campanhaId: string): Promise<DisparoResult> {
   const ctx = await requireRole(ROLES);
   const supabase = await createClient();
-
-  const { data: campRaw } = await supabase
-    .from("wa_campanhas")
-    .select("id, script_id, status")
-    .eq("id", campanhaId)
-    .eq("tenant_id", ctx.tenantId)
-    .maybeSingle();
-  const camp = campRaw as { id: string; script_id: string | null; status: string } | null;
-  if (!camp) return { enviado: false, restantes: 0, concluido: true, erro: "Campanha não encontrada." };
-  if (!camp.script_id) return { enviado: false, restantes: 0, concluido: true, erro: "Campanha sem script." };
-
-  const [{ data: scriptRaw }, { data: tenantRaw }] = await Promise.all([
-    supabase.from("wa_scripts").select("corpo").eq("id", camp.script_id).maybeSingle(),
-    supabase.from("tenants").select("razao_social, nome_fantasia").eq("id", ctx.tenantId).maybeSingle(),
-  ]);
-  const corpo = (scriptRaw as { corpo: string } | null)?.corpo;
-  if (!corpo) return { enviado: false, restantes: 0, concluido: true, erro: "Script não encontrado." };
-  const tnt = tenantRaw as { razao_social: string; nome_fantasia: string | null } | null;
-  const empresa = tnt?.nome_fantasia || tnt?.razao_social || "";
-
-  const { data: dispRaw } = await supabase
-    .from("wa_disparos")
-    .select("id, telefone, nome, contato_id")
-    .eq("campanha_id", campanhaId)
-    .eq("tenant_id", ctx.tenantId)
-    .eq("status", "pendente")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  const disp = dispRaw as { id: string; telefone: string; nome: string | null; contato_id: string | null } | null;
-
-  if (!disp) {
-    await supabase
-      .from("wa_campanhas")
-      .update({ status: "concluida", concluida_em: new Date().toISOString() })
-      .eq("id", campanhaId)
-      .eq("tenant_id", ctx.tenantId);
-    return { enviado: false, restantes: 0, concluido: true };
-  }
-
-  // marca campanha como enviando na primeira mensagem
-  if (camp.status !== "enviando") {
-    await supabase
-      .from("wa_campanhas")
-      .update({ status: "enviando", iniciada_em: new Date().toISOString() })
-      .eq("id", campanhaId)
-      .eq("tenant_id", ctx.tenantId);
-  }
-
-  // variáveis do contato
-  let v1: string | null = null;
-  let v2: string | null = null;
-  let v3: string | null = null;
-  if (disp.contato_id) {
-    const { data: c } = await supabase
-      .from("wa_contatos")
-      .select("variavel_1, variavel_2, variavel_3")
-      .eq("id", disp.contato_id)
-      .maybeSingle();
-    const cc = c as { variavel_1: string | null; variavel_2: string | null; variavel_3: string | null } | null;
-    v1 = cc?.variavel_1 ?? null;
-    v2 = cc?.variavel_2 ?? null;
-    v3 = cc?.variavel_3 ?? null;
-  }
-
-  const msg = renderScript(corpo, {
-    nome: disp.nome,
-    empresa,
-    variavel_1: v1,
-    variavel_2: v2,
-    variavel_3: v3,
-  });
-
-  const r = await sendText(disp.telefone, msg);
-
-  await supabase
-    .from("wa_disparos")
-    .update({
-      status: r.ok ? "enviado" : "falha",
-      mensagem_enviada: msg,
-      erro: r.ok ? null : r.error ?? "Falha no envio",
-      provider_message_id: r.providerId ?? null,
-      enviado_em: new Date().toISOString(),
-    })
-    .eq("id", disp.id)
-    .eq("tenant_id", ctx.tenantId);
-
-  const { pendentes } = await sincronizarContadores(campanhaId, ctx.tenantId);
-  const concluido = pendentes === 0;
-  if (concluido) {
-    await supabase
-      .from("wa_campanhas")
-      .update({ status: "concluida", concluida_em: new Date().toISOString() })
-      .eq("id", campanhaId)
-      .eq("tenant_id", ctx.tenantId);
-  }
+  const r = await enviarProximoDisparo(supabase, ctx.tenantId, campanhaId);
   revalidatePath(`${LISTA}/${campanhaId}`);
-  return { enviado: r.ok, restantes: pendentes, concluido, erro: r.ok ? undefined : r.error };
+  return r;
 }
 
 export async function excluirCampanha(id: string): Promise<void> {

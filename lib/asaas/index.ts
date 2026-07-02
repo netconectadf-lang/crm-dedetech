@@ -246,6 +246,46 @@ export async function deletarCobrancaAsaas(config: AsaasConfig, paymentId: strin
 }
 
 /**
+ * Registra (ou re-registra) o webhook de pagamentos no Asaas, para não depender
+ * de o dono colar a URL no painel. Idempotente por URL: se já existe um webhook
+ * apontando para `url`, não duplica. Best-effort — devolve {ok:false} sem lançar.
+ * `authToken` DEVE ser o mesmo webhook_token que o CRM valida no header.
+ */
+export async function registrarWebhookAsaas(
+  config: AsaasConfig,
+  args: { url: string; authToken: string; email?: string },
+): Promise<{ ok: boolean; error?: string; jaExistia?: boolean }> {
+  try {
+    // já existe um webhook para esta URL?
+    const lista = await asaasFetch(config, "/webhooks");
+    if (lista.ok) {
+      const d = (await lista.json().catch(() => ({}))) as { data?: { url?: string }[] };
+      if ((d.data ?? []).some((w) => w.url === args.url)) return { ok: true, jaExistia: true };
+    }
+    const resp = await asaasFetch(config, "/webhooks", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "Dedetech CRM",
+        url: args.url,
+        email: args.email || undefined,
+        enabled: true,
+        interrupted: false,
+        authToken: args.authToken,
+        sendType: "SEQUENTIALLY",
+        events: ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"],
+      }),
+    });
+    if (!resp.ok) {
+      const erro = await resp.text();
+      return { ok: false, error: erro.slice(0, 200) };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/**
  * Cria uma cobrança no Asaas (boleto, PIX ou link de cartão). Sem config ou
  * sem customerId, devolve skipped — o chamador registra cobrança MANUAL.
  */

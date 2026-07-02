@@ -1,10 +1,23 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
-import { pingAsaas } from "@/lib/asaas";
+import { pingAsaas, registrarWebhookAsaas } from "@/lib/asaas";
+
+/** Base pública do app (para montar a URL do webhook). */
+async function appOrigin(): Promise<string> {
+  const env = process.env.NEXT_PUBLIC_APP_URL;
+  if (env) return env.replace(/\/$/, "");
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  return `${proto}://${host}`;
+}
 
 const ROLES = ["owner"] as const;
 
@@ -76,9 +89,37 @@ export async function salvarPagamentos(
     if (error) return { ok: false, error: "Não foi possível conectar." };
   }
 
+  // Auto-registra o webhook no Asaas (best-effort) — evita o dono ter que colar
+  // a URL no painel. Usa o webhook_token do tenant (gera se ainda não houver).
+  let webhookMsg = "";
+  try {
+    const { data: integ } = await supabase
+      .from("payment_integrations")
+      .select("webhook_token")
+      .eq("tenant_id", ctx.tenantId)
+      .maybeSingle();
+    let token = (integ as { webhook_token: string | null } | null)?.webhook_token ?? null;
+    if (!token) {
+      token = randomUUID();
+      await supabase
+        .from("payment_integrations")
+        .update({ webhook_token: token } as never)
+        .eq("tenant_id", ctx.tenantId);
+    }
+    const url = `${await appOrigin()}/api/webhooks/asaas`;
+    const reg = await registrarWebhookAsaas({ apiKey, environment }, { url, authToken: token });
+    webhookMsg = reg.ok
+      ? reg.jaExistia
+        ? " Webhook já configurado."
+        : " Webhook registrado automaticamente."
+      : " (Configure o webhook manualmente no Asaas — não consegui registrar.)";
+  } catch {
+    webhookMsg = " (Configure o webhook manualmente no Asaas.)";
+  }
+
   revalidatePath("/integracoes/pagamentos");
   revalidatePath("/integracoes");
-  return { ok: true, message: `Conta conectada (${ping.nome ?? "Asaas"}).` };
+  return { ok: true, message: `Conta conectada (${ping.nome ?? "Asaas"}).${webhookMsg}` };
 }
 
 /** Desconecta a conta de pagamento (desativa as cobranças automáticas). */

@@ -9,7 +9,7 @@ import { onlyDigits } from "@/lib/format";
 const DIAS_REVISAO = 3;
 const DIAS_RENOVACAO = 7;
 
-type Cli = { razao_social: string; nome_fantasia: string | null; telefone: string | null };
+type Cli = { razao_social: string; nome_fantasia: string | null; telefone: string | null; email: string | null };
 type ItemEnviado = { tipo: "revisao" | "renovacao" | "aniversario"; cliente: string; destino: string; status: string };
 
 export type LembretesResultado = {
@@ -58,14 +58,14 @@ export async function enviarLembretes(
   const [{ data: revData }, { data: contraData }] = await Promise.all([
     db
       .from("service_orders")
-      .select("id, numero, proxima_revisao_em, clients(razao_social, nome_fantasia, telefone)")
+      .select("id, numero, proxima_revisao_em, clients(razao_social, nome_fantasia, telefone, email)")
       .eq("tenant_id", tenantId)
       .not("proxima_revisao_em", "is", null)
       .gte("proxima_revisao_em", hoje)
       .lte("proxima_revisao_em", dataStr(DIAS_REVISAO)),
     db
       .from("contracts")
-      .select("id, titulo, vigencia_fim, clients(razao_social, nome_fantasia, telefone)")
+      .select("id, titulo, vigencia_fim, clients(razao_social, nome_fantasia, telefone, email)")
       .eq("tenant_id", tenantId)
       .eq("status", "ativo")
       .not("vigencia_fim", "is", null)
@@ -100,11 +100,16 @@ export async function enviarLembretes(
     id: string,
     cli: Cli | null,
     corpo: string,
+    assunto: string,
   ) {
     const nome = nomeExibicao(cli);
     const tel = cli?.telefone ? onlyDigits(cli.telefone) : "";
-    if (!tel) {
-      pulados++;
+    const email = cli?.email?.trim() || "";
+    // Preferência: WhatsApp; se não houver telefone, cai para e-mail.
+    const canal: "whatsapp" | "email" = tel ? "whatsapp" : "email";
+    const destino = tel ? cli!.telefone! : email;
+    if (!destino) {
+      pulados++; // sem telefone e sem e-mail
       return;
     }
     if (await jaAvisado(kind, id)) {
@@ -114,18 +119,19 @@ export async function enviarLembretes(
     const tipo =
       kind === "lembrete_revisao" ? "revisao" : kind === "lembrete_renovacao" ? "renovacao" : "aniversario";
     if (dryRun) {
-      enviados.push({ tipo, cliente: nome, destino: cli!.telefone!, status: "simulado" });
+      enviados.push({ tipo, cliente: nome, destino, status: `simulado (${canal})` });
       return;
     }
     const r = await dispatch({
       tenantId,
-      canal: "whatsapp",
-      destino: cli!.telefone!,
+      canal,
+      destino,
+      assunto: canal === "email" ? assunto : undefined,
       corpo,
       related_kind: kind,
       related_id: id,
     });
-    enviados.push({ tipo, cliente: nome, destino: cli!.telefone!, status: r.ok ? "enviado" : "falha" });
+    enviados.push({ tipo, cliente: nome, destino, status: r.ok ? `enviado (${canal})` : "falha" });
   }
 
   for (const r of revisoes) {
@@ -136,7 +142,7 @@ export async function enviarLembretes(
       `Está chegando a data da *revisão* do seu controle de pragas (${fmt(r.proxima_revisao_em)}). ` +
       `Para manter seu ambiente protegido, podemos já agendar?\n\n` +
       `É só responder esta mensagem que combinamos o melhor dia. 🐜🛡️`;
-    await processar("lembrete_revisao", r.id, cli, corpo);
+    await processar("lembrete_revisao", r.id, cli, corpo, `Revisão do controle de pragas — ${empresa}`);
   }
 
   for (const c of contratos) {
@@ -147,7 +153,7 @@ export async function enviarLembretes(
       `Seu contrato de controle de pragas vence em *${fmt(c.vigencia_fim)}*. ` +
       `Deseja renovar e seguir com a proteção do seu ambiente sem interrupção?\n\n` +
       `Estamos à disposição para combinar a renovação. 🛡️`;
-    await processar("lembrete_renovacao", c.id, cli, corpo);
+    await processar("lembrete_renovacao", c.id, cli, corpo, `Seu contrato está por vencer — ${empresa}`);
   }
 
   // Aniversariantes do dia (clientes ativos com data_nascimento = hoje, mês+dia).
@@ -158,24 +164,23 @@ export async function enviarLembretes(
   try {
     const { data: cliData } = await db
       .from("clients")
-      .select("id, razao_social, nome_fantasia, telefone, data_nascimento")
+      .select("id, razao_social, nome_fantasia, telefone, email, data_nascimento")
       .eq("tenant_id", tenantId)
       .eq("ativo", true)
-      .not("data_nascimento", "is", null)
-      .not("telefone", "is", null);
+      .not("data_nascimento", "is", null);
     const aniversariantesHoje = (
-      (cliData as { id: string; razao_social: string; nome_fantasia: string | null; telefone: string | null; data_nascimento: string | null }[] | null) ?? []
+      (cliData as { id: string; razao_social: string; nome_fantasia: string | null; telefone: string | null; email: string | null; data_nascimento: string | null }[] | null) ?? []
     ).filter((c) => (c.data_nascimento ?? "").slice(5, 10) === hojeMMDD);
     aniversariantes = aniversariantesHoje.length;
     for (const c of aniversariantesHoje) {
-      const cli: Cli = { razao_social: c.razao_social, nome_fantasia: c.nome_fantasia, telefone: c.telefone };
+      const cli: Cli = { razao_social: c.razao_social, nome_fantasia: c.nome_fantasia, telefone: c.telefone, email: c.email };
       const nome = nomeExibicao(cli);
       const corpo =
         `🎉 Feliz aniversário, ${nome}! 🎂\n\n` +
         `A ${empresa} deseja a você um dia maravilhoso! Conte sempre com a gente para manter ` +
         `seu ambiente protegido e saudável. Um abraço! 🐜🛡️`;
       // related_id por ano: não repete no mesmo ano, mas envia de novo no próximo aniversário.
-      await processar("lembrete_aniversario", `${c.id}:${anoAtual}`, cli, corpo);
+      await processar("lembrete_aniversario", `${c.id}:${anoAtual}`, cli, corpo, `Feliz aniversário! 🎂 — ${empresa}`);
     }
   } catch {
     // coluna data_nascimento ainda não existe — ignora até a migration rodar

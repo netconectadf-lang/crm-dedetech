@@ -1,3 +1,5 @@
+import { ymdNoFuso, horaNoFuso } from "@/lib/agenda";
+
 export type AbsenceType = "ferias" | "atestado" | "licenca" | "folga" | "falta";
 export type AbsenceStatus = "solicitada" | "aprovada" | "recusada";
 export type ExamType = "admissional" | "periodico" | "demissional" | "retorno" | "mudanca";
@@ -132,13 +134,15 @@ export function espelhoPonto(
 ): { dias: DiaPonto[]; totalMs: number; jornadaMs: number; saldoMs: number } {
   const porDia = new Map<string, { tipo: string; ts: number }[]>();
   for (const e of entries) {
-    const dia = e.registrado_em.slice(0, 10);
+    // Agrupa pelo dia de calendário em Brasília (não pelo prefixo UTC cru —
+    // uma batida às 22h BRT = 01h UTC do dia seguinte cairia no dia errado).
+    const dia = ymdNoFuso(e.registrado_em);
     const arr = porDia.get(dia) ?? [];
     arr.push({ tipo: e.tipo, ts: new Date(e.registrado_em).getTime() });
     porDia.set(dia, arr);
   }
   const hhmm = (ts: number | null) =>
-    ts != null ? new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : null;
+    ts != null ? horaNoFuso(new Date(ts).toISOString()) : null;
 
   const dias: DiaPonto[] = [];
   let totalMs = 0;

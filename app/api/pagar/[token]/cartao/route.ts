@@ -16,6 +16,15 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
+  // Mutex anti dupla-cobrança: o consume_rate_limit incrementa atômico no
+  // Postgres, então de 2 submits simultâneos do MESMO token só um passa (o
+  // outro é barrado por ~20s). Fecha a corrida check-status→cobra→marca-pago.
+  if (!(await rateLimit("cartao-lock", { limit: 1, windowSeconds: 20, key: token }))) {
+    return NextResponse.json(
+      { ok: false, error: "Pagamento em processamento. Aguarde alguns segundos." },
+      { status: 429 },
+    );
+  }
   // Anti card-testing: no máx. 6 tentativas / 5 min por token de cobrança.
   if (!(await rateLimit("cartao", { limit: 6, windowSeconds: 300, key: token }))) {
     return NextResponse.json(

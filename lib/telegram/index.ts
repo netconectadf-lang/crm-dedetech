@@ -1,6 +1,7 @@
 import "server-only";
 
 import { reportarErro } from "@/lib/observability";
+import { fetchWithTimeout } from "@/lib/http";
 
 export function telegramEnabled() {
   return Boolean(process.env.TELEGRAM_BOT_TOKEN);
@@ -15,7 +16,7 @@ export async function enviarTelegram(
   const tk = token ?? process.env.TELEGRAM_BOT_TOKEN;
   if (!tk) return;
   try {
-    await fetch(`https://api.telegram.org/bot${tk}/sendMessage`, {
+    await fetchWithTimeout(`https://api.telegram.org/bot${tk}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" }),
@@ -30,7 +31,7 @@ export async function validarBot(
   token: string,
 ): Promise<{ ok: boolean; username?: string; nome?: string }> {
   try {
-    const d = await fetch(`https://api.telegram.org/bot${token}/getMe`).then((r) => r.json());
+    const d = await fetchWithTimeout(`https://api.telegram.org/bot${token}/getMe`).then((r) => r.json());
     if (!d?.ok) return { ok: false };
     return { ok: true, username: d.result?.username, nome: d.result?.first_name };
   } catch {
@@ -41,7 +42,7 @@ export async function validarBot(
 /** Registra o webhook do bot apontando para a URL (com secret_token). */
 export async function registrarWebhookTelegram(token: string, url: string, secret: string) {
   try {
-    const d = await fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
+    const d = await fetchWithTimeout(`https://api.telegram.org/bot${token}/setWebhook`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, secret_token: secret, allowed_updates: ["message"] }),
@@ -55,7 +56,7 @@ export async function registrarWebhookTelegram(token: string, url: string, secre
 /** Remove o webhook do bot. */
 export async function removerWebhookTelegram(token: string) {
   try {
-    await fetch(`https://api.telegram.org/bot${token}/deleteWebhook`, { method: "POST" });
+    await fetchWithTimeout(`https://api.telegram.org/bot${token}/deleteWebhook`, { method: "POST" });
   } catch {
     /* ignora */
   }
@@ -69,12 +70,12 @@ export async function baixarArquivoTelegram(
   const tk = token ?? process.env.TELEGRAM_BOT_TOKEN;
   if (!tk) return null;
   try {
-    const info = await fetch(
+    const info = await fetchWithTimeout(
       `https://api.telegram.org/bot${tk}/getFile?file_id=${fileId}`,
     ).then((r) => r.json());
     const path = info?.result?.file_path;
     if (!path) return null;
-    const res = await fetch(`https://api.telegram.org/file/bot${tk}/${path}`);
+    const res = await fetchWithTimeout(`https://api.telegram.org/file/bot${tk}/${path}`);
     if (!res.ok) return null;
     return await res.arrayBuffer();
   } catch {

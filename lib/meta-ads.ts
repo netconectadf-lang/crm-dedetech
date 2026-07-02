@@ -1,5 +1,7 @@
 import "server-only";
 
+import { fetchWithTimeout } from "@/lib/http";
+
 /**
  * Cliente da Meta Marketing API (Graph v21.0) para o dashboard de Tráfego.
  * Somente leitura. Token de usuário de longa duração (renovar a cada ~60 dias
@@ -101,7 +103,7 @@ async function graphGet<T>(
   token: string,
 ): Promise<{ data?: T; error?: { message: string; code?: number } }> {
   const qs = new URLSearchParams({ ...params, access_token: token });
-  const res = await fetch(`${GRAPH}/${path}?${qs}`, {
+  const res = await fetchWithTimeout(`${GRAPH}/${path}?${qs}`, {
     // painel sempre fresco, mas tolera 60s de cache p/ navegação entre abas
     next: { revalidate: 60 },
   });

@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { fetchWithTimeout } from "@/lib/http";
+
 /** Credenciais do gateway de uma empresa (vêm de payment_integrations). */
 export type AsaasConfig = {
   apiKey: string;
@@ -28,8 +30,9 @@ async function asaasFetch(
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
-  return fetch(`${baseUrl(config.environment)}${path}`, {
+  return fetchWithTimeout(`${baseUrl(config.environment)}${path}`, {
     ...init,
+    timeoutMs: 15_000,
     headers: {
       access_token: config.apiKey,
       "content-type": "application/json",

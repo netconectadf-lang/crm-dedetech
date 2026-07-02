@@ -4,6 +4,7 @@
  */
 
 import { reportarErro } from "@/lib/observability";
+import { fetchWithTimeout } from "@/lib/http";
 
 const GRAPH_VERSION = "v21.0";
 
@@ -13,7 +14,7 @@ const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID!;
 /** Envia uma mensagem de texto para um número (formato E.164 sem '+': ex 5561999999999). */
 export async function enviarTexto(para: string, texto: string): Promise<void> {
   const url = `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/messages`;
-  const resp = await fetch(url, {
+  const resp = await fetchWithTimeout(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${TOKEN}`,

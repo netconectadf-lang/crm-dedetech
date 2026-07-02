@@ -68,6 +68,9 @@ export function requestMtls(
         });
       },
     );
+    // Webservice de prefeitura/Sefin pode travar — sem timeout a emissão
+    // (server action síncrona) penduraria a função até o limite da Vercel.
+    req.setTimeout(20_000, () => req.destroy(new Error("Timeout na NFS-e (20s).")));
     req.on("error", reject);
     if (payload) req.write(payload);
     req.end();

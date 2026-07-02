@@ -12,3 +12,6 @@ onlyBuiltDependencies:
   - "@sentry/cli"
   - esbuild
 verifyDepsBeforeRun: false
+overrides:
+  # Trava o dompurify no patch corrigido (advisories de sanitização via jspdf).
+  dompurify: '>=3.4.11'

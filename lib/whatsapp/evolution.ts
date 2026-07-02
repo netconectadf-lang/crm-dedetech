@@ -1,6 +1,7 @@
 import "server-only";
 
 import { reportarErro } from "@/lib/observability";
+import { fetchWithTimeout } from "@/lib/http";
 
 /**
  * Helpers da Evolution API para CONECTAR o número (QR Code / status).
@@ -28,7 +29,7 @@ function headers() {
 export async function getConnectionState(): Promise<WaState> {
   if (!evolutionConfigured()) return "unknown";
   try {
-    const res = await fetch(`${URL}/instance/connectionState/${INSTANCE}`, {
+    const res = await fetchWithTimeout(`${URL}/instance/connectionState/${INSTANCE}`, {
       headers: headers(),
       cache: "no-store",
     });
@@ -60,7 +61,7 @@ export async function connectInstance(): Promise<ConnectResult> {
     return { state: "unknown", error: "WhatsApp não configurado (faltam credenciais da Evolution)." };
   }
   try {
-    const res = await fetch(`${URL}/instance/connect/${INSTANCE}`, {
+    const res = await fetchWithTimeout(`${URL}/instance/connect/${INSTANCE}`, {
       headers: headers(),
       cache: "no-store",
     });
@@ -91,7 +92,7 @@ export async function connectInstance(): Promise<ConnectResult> {
 export async function logoutInstance(): Promise<boolean> {
   if (!evolutionConfigured()) return false;
   try {
-    const res = await fetch(`${URL}/instance/logout/${INSTANCE}`, {
+    const res = await fetchWithTimeout(`${URL}/instance/logout/${INSTANCE}`, {
       method: "DELETE",
       headers: headers(),
     });
@@ -111,7 +112,7 @@ export async function sendText(numero: string, text: string): Promise<SendTextRe
   const num = (numero ?? "").replace(/\D/g, "");
   if (!num) return { ok: false, error: "Número inválido." };
   try {
-    const res = await fetch(`${URL}/message/sendText/${INSTANCE}`, {
+    const res = await fetchWithTimeout(`${URL}/message/sendText/${INSTANCE}`, {
       method: "POST",
       headers: headers(),
       body: JSON.stringify({ number: num, text }),
@@ -138,7 +139,7 @@ function numeroDeJid(jid: string): string {
 export async function findContacts(): Promise<ContatoWa[]> {
   if (!evolutionConfigured()) return [];
   try {
-    const res = await fetch(`${URL}/chat/findContacts/${INSTANCE}`, {
+    const res = await fetchWithTimeout(`${URL}/chat/findContacts/${INSTANCE}`, {
       method: "POST",
       headers: headers(),
       body: JSON.stringify({ where: {} }),
@@ -186,7 +187,7 @@ export type MensagemWa = {
 export async function findMessages(limite = 5000): Promise<MensagemWa[]> {
   if (!evolutionConfigured()) return [];
   try {
-    const res = await fetch(`${URL}/chat/findMessages/${INSTANCE}`, {
+    const res = await fetchWithTimeout(`${URL}/chat/findMessages/${INSTANCE}`, {
       method: "POST",
       headers: headers(),
       body: JSON.stringify({ where: {}, offset: limite }),
@@ -239,7 +240,7 @@ export type GrupoWa = { jid: string; nome: string; participantes: number };
 export async function fetchGroups(): Promise<GrupoWa[]> {
   if (!evolutionConfigured()) return [];
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `${URL}/group/fetchAllGroups/${INSTANCE}?getParticipants=false`,
       { headers: headers(), cache: "no-store" },
     );
@@ -262,7 +263,7 @@ export async function fetchGroups(): Promise<GrupoWa[]> {
 export async function groupParticipants(groupJid: string): Promise<ContatoWa[]> {
   if (!evolutionConfigured()) return [];
   try {
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `${URL}/group/participants/${INSTANCE}?groupJid=${encodeURIComponent(groupJid)}`,
       { headers: headers(), cache: "no-store" },
     );

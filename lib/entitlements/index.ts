@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { getAuthContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { inicioDoMesBR } from "@/lib/agenda";
 import {
   can,
   limitOf,
@@ -123,8 +124,9 @@ export async function osQuotaError(): Promise<string | null> {
   const limit = limitOf(ent, "limite.os_mes");
   if (limit === null || !ent.tenantId) return null;
   const supabase = await createClient();
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  // Fronteira do mês no fuso de Brasília (não UTC — senão a virada acontece 3h
+  // cedo e OS das últimas horas do mês contam no mês seguinte).
+  const start = inicioDoMesBR(new Date().toISOString());
   const { count } = await supabase
     .from("service_orders")
     .select("*", { count: "exact", head: true })

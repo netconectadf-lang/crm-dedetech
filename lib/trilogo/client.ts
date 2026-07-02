@@ -1,6 +1,7 @@
 import "server-only";
 
 import { TRILOGO_STATUS, type TrilogoSession, type TrilogoTicket } from "./types";
+import { fetchWithTimeout } from "@/lib/http";
 
 const BASE = "https://web.api.trilogo.app/api";
 
@@ -21,7 +22,7 @@ function getCredentials(): { email: string; password: string } {
 /** Faz login no Trílogo e devolve o token de acesso (JWT de validade curta). */
 export async function signIn(): Promise<TrilogoSession> {
   const { email, password } = getCredentials();
-  const res = await fetch(`${BASE}/Login/SignIn`, {
+  const res = await fetchWithTimeout(`${BASE}/Login/SignIn`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ UserEmail: email, UserPassword: password }),
@@ -58,7 +59,7 @@ export async function listTickets(
   };
   if (opts.status?.length) body.Status = opts.status;
 
-  const res = await fetch(`${BASE}/Ticket/ListTicketsByUser`, {
+  const res = await fetchWithTimeout(`${BASE}/Ticket/ListTicketsByUser`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

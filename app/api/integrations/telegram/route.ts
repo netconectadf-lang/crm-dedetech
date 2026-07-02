@@ -10,6 +10,7 @@ import {
   parseDespesa,
 } from "@/lib/telegram";
 import { resolverIntegracao, registrarChat, statusChat } from "@/lib/telegram/tenant";
+import { rateLimit } from "@/lib/rate-limit";
 
 /**
  * Webhook multi-empresa do Telegram. A empresa é identificada pelo
@@ -28,6 +29,19 @@ export async function POST(req: NextRequest) {
   const doc = msg?.document;
   const text = String(msg?.text ?? "").trim();
   if (!chatId || (!text && !doc)) return NextResponse.json({ ok: true });
+
+  // Idempotência: o Telegram REENVIA o mesmo update em timeout. Sem dedup, a
+  // despesa/pedido seria lançada 2×. `update_id` é único por bot; a 1ª vez
+  // passa, reentregas dentro de 1h são descartadas (reusa o rate-limit).
+  const updateId = update?.update_id;
+  if (updateId != null) {
+    const primeira = await rateLimit("tg-update", {
+      limit: 1,
+      windowSeconds: 3600,
+      key: `${ctx.tenantId}:${updateId}`,
+    });
+    if (!primeira) return NextResponse.json({ ok: true });
+  }
 
   const nome =
     msg?.chat?.title ?? msg?.from?.first_name ?? msg?.chat?.first_name ?? null;

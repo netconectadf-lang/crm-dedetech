@@ -41,6 +41,17 @@ export function ymdNoFuso(iso: string, tz = TZ_BR): string {
   }).format(new Date(iso));
 }
 
+/**
+ * Instante ISO (UTC) do 1º dia do mês corrente às 00:00 no fuso de Brasília.
+ * BR = UTC-3 sem horário de verão desde 2019 → 00:00 BR = 03:00Z.
+ * Usado p/ contar cota mensal na fronteira LOCAL, não na UTC (que viraria o
+ * mês 3h antes, contando OS das últimas horas do mês no mês seguinte).
+ */
+export function inicioDoMesBR(nowIso: string, tz = TZ_BR): string {
+  const [y, m] = ymdNoFuso(nowIso, tz).split("-");
+  return `${y}-${m}-01T03:00:00.000Z`;
+}
+
 /** Hora:minuto (HH:MM) de um instante ISO, no fuso de Brasília. */
 export function horaNoFuso(iso: string, tz = TZ_BR): string {
   return new Intl.DateTimeFormat("pt-BR", {

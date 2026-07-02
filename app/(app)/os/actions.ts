@@ -38,6 +38,8 @@ export async function criarOS(
 
 export async function criarOSDoOrcamento(quoteId: string) {
   const ctx = await requireRole(MANAGE);
+  // Cota do plano vale para TODO caminho de criação (não só criarOS).
+  if (await osQuotaError()) redirect(`/orcamentos/${quoteId}?erro=limite-os`);
   const supabase = await createClient();
   const { data: quote } = await supabase
     .from("quotes")
@@ -70,6 +72,7 @@ export async function criarOSDoOrcamento(quoteId: string) {
 
 export async function criarOSDoContrato(contractId: string) {
   const ctx = await requireRole(MANAGE);
+  if (await osQuotaError()) redirect(`/contratos/${contractId}?erro=limite-os`);
   const supabase = await createClient();
   const { data: contract } = await supabase
     .from("contracts")
@@ -260,6 +263,21 @@ export async function finalizarOS(
       rest -= take;
     }
     planos[l.product_id] = plano;
+  }
+
+  // 1.5) CLAIM atômico: transita o status p/ "executada" só se ainda não estava
+  // finalizada. Fecha a corrida (dois cliques) que baixaria o estoque em dobro —
+  // a validação acima é read-only, então só quem vencer o claim escreve abaixo.
+  const { data: claimed } = await supabase
+    .from("service_orders")
+    .update({ status: "executada", executada_em: new Date().toISOString() } as never)
+    .eq("id", id)
+    .eq("tenant_id", ctx.tenantId)
+    .neq("status", "executada")
+    .neq("status", "faturada")
+    .select("id");
+  if (!claimed || claimed.length === 0) {
+    return { error: "OS já finalizada." };
   }
 
   // 2) aplica as baixas (rastreável à OS)

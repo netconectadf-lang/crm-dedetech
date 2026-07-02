@@ -1,5 +1,7 @@
 import "server-only";
 
+import { fetchWithTimeout } from "@/lib/http";
+
 const RESEND_API = "https://api.resend.com/emails";
 const DEFAULT_FROM = "Dedetech <onboarding@resend.dev>";
 
@@ -36,7 +38,7 @@ export async function sendEmail({ to, subject, html, from, replyTo }: SendArgs) 
     return { ok: true as const, skipped: true as const };
   }
 
-  const res = await fetch(RESEND_API, {
+  const res = await fetchWithTimeout(RESEND_API, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,

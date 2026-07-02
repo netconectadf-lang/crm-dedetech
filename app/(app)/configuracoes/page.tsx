@@ -19,7 +19,7 @@ export default async function ConfiguracoesPage() {
   const { data } = await supabase
     .from("tenants")
     .select(
-      "razao_social, nome_fantasia, registro_vigilancia_sanitaria, cor_primaria, logo_url, preco_combustivel_litro, custo_hora_padrao, nfse_inscricao_municipal, nfse_codigo_municipio, nfse_item_lista_servico, nfse_aliquota_iss, nfse_iss_retido, email_remetente_nome, email_responder_para",
+      "razao_social, nome_fantasia, registro_vigilancia_sanitaria, cor_primaria, logo_url, preco_combustivel_litro, custo_hora_padrao, nfse_inscricao_municipal, nfse_codigo_municipio, nfse_item_lista_servico, nfse_aliquota_iss, nfse_iss_retido, email_remetente_nome, email_responder_para, google_review_url",
     )
     .eq("id", ctx.tenantId)
     .single();
@@ -39,6 +39,7 @@ export default async function ConfiguracoesPage() {
     nfse_iss_retido: boolean | null;
     email_remetente_nome: string | null;
     email_responder_para: string | null;
+    google_review_url: string | null;
   } | null;
 
   return (

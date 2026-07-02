@@ -119,6 +119,25 @@ export function ymdLocal(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
+/** Primeira data de visita de um contrato (dia de faturamento >= início da vigência). */
+export function primeiraVisita(vigenciaInicio: string, diaFaturamento: number): Date {
+  const inicio = new Date(`${vigenciaInicio}T00:00:00`);
+  const dia = Math.min(Math.max(diaFaturamento, 1), 28);
+  let cursor = new Date(inicio.getFullYear(), inicio.getMonth(), dia);
+  if (cursor < inicio) cursor = new Date(inicio.getFullYear(), inicio.getMonth() + 1, dia);
+  return cursor;
+}
+
+/** Avança uma data de visita em 1 período (respeitando o dia de faturamento). */
+export function avancarPeriodo(
+  d: Date,
+  periodicidade: ContractPeriodicity,
+  diaFaturamento: number,
+): Date {
+  const dia = Math.min(Math.max(diaFaturamento, 1), 28);
+  return new Date(d.getFullYear(), d.getMonth() + PERIODICITY_MONTHS[periodicidade], dia);
+}
+
 /**
  * Quantos aniversários anuais completos transcorreram entre o início da
  * vigência e a data de referência (ex.: a data de vencimento). Usado para saber

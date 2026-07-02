@@ -40,6 +40,11 @@ const schema = z.object({
     .email("E-mail de resposta inválido")
     .optional()
     .or(z.literal("")),
+  google_review_url: z
+    .string()
+    .url("Link inválido (cole a URL completa)")
+    .optional()
+    .or(z.literal("")),
 });
 
 export async function updateTenant(
@@ -63,6 +68,7 @@ export async function updateTenant(
     nfse_iss_retido: formData.get("nfse_iss_retido") ?? false,
     email_remetente_nome: formData.get("email_remetente_nome") || undefined,
     email_responder_para: formData.get("email_responder_para") || undefined,
+    google_review_url: formData.get("google_review_url") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
@@ -108,6 +114,7 @@ export async function updateTenant(
       nfse_iss_retido: parsed.data.nfse_iss_retido,
       email_remetente_nome: parsed.data.email_remetente_nome ?? null,
       email_responder_para: parsed.data.email_responder_para || null,
+      google_review_url: parsed.data.google_review_url || null,
       ...(logoUrl ? { logo_url: logoUrl } : {}),
     } as never)
     .eq("id", ctx.tenantId);

@@ -23,6 +23,7 @@ type Tenant = {
   nfse_iss_retido: boolean | null;
   email_remetente_nome: string | null;
   email_responder_para: string | null;
+  google_review_url: string | null;
 };
 
 export function ConfigForm({ tenant }: { tenant: Tenant }) {
@@ -187,6 +188,19 @@ export function ConfigForm({ tenant }: { tenant: Tenant }) {
           placeholder="contato@suaempresa.com.br"
           defaultValue={tenant.email_responder_para ?? ""}
         />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="google_review_url">Link de avaliação no Google</Label>
+        <Input
+          id="google_review_url"
+          name="google_review_url"
+          type="url"
+          placeholder="https://g.page/r/..."
+          defaultValue={tenant.google_review_url ?? ""}
+        />
+        <p className="text-xs text-muted-foreground">
+          Clientes que derem nota alta no NPS (9-10) recebem este link para avaliar no Google.
+        </p>
       </div>
 
       <div>

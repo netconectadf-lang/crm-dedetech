@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 import { osQuotaError } from "@/lib/entitlements";
 import { enviarNpsDaOS } from "@/lib/nps/enviar";
+import { avisarClienteACaminho } from "@/lib/os-notify";
 import type { SaveState } from "@/lib/crud-helpers";
 import { osSchema, criarOSSchema, fichaSchema, osProductSchema } from "@/lib/validators/os";
 import type { AppRole } from "@/lib/types";
@@ -126,6 +127,10 @@ export async function mudarStatusOS(id: string, status: OsStatus) {
     .update(patch as never)
     .eq("id", id)
     .eq("tenant_id", ctx.tenantId);
+  // "Técnico a caminho": avisa o cliente ao entrar nesse status (best-effort).
+  if (status === "a_caminho") {
+    await avisarClienteACaminho(supabase, ctx.tenantId, id);
+  }
   revalidatePath(`/os/${id}`);
 }
 
